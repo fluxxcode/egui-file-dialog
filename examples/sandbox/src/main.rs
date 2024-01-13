@@ -6,9 +6,7 @@ struct MyApp {
 }
 
 impl MyApp {
-    pub fn new(cc: &eframe::CreationContext) -> Self {
-        egui_extras::install_image_loaders(&cc.egui_ctx);
-
+    pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
             file_explorer: FileExplorer::new()
         }

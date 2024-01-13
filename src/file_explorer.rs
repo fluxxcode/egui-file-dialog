@@ -97,19 +97,18 @@ impl FileExplorer {
 
         ui.label("User:");
 
-        let folder_icon = egui::include_image!("../data/folder_icon.png");
-
         // NOTE: These are currently only hardcoded test values!
+        // TODO: Align button text to the left!
         ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::image_and_text(folder_icon.clone(), "Desktop"));
+                     egui::Button::new("🗀  Desktop"));
         ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::image_and_text(folder_icon.clone(), "Documents"));
+                     egui::Button::new("🗀  Documents"));
         ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::image_and_text(folder_icon.clone(), "Downloads"));
+                     egui::Button::new("🗀  Downloads"));
         ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::image_and_text(folder_icon.clone(), "Music"));
+                     egui::Button::new("🗀  Music"));
         ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::image_and_text(folder_icon.clone(), "Pictures"));
+                     egui::Button::new("🗀  Pictures"));
     }
 
     fn update_bottom_panel(&mut self, ui: &mut egui::Ui) {
