@@ -1,9 +1,11 @@
 
-pub struct FileExplorer;
+pub struct FileExplorer {
+    search_value: String
+}
 
 impl FileExplorer {
     pub fn new() -> Self {
-        FileExplorer { }
+        FileExplorer { search_value: String::new() }
     }
 
     pub fn update(&mut self, ctx: &egui::Context) {
@@ -55,6 +57,7 @@ impl FileExplorer {
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
                 .rounding(egui::Rounding::from(5.0))
                 .show(ui, |ui| {
+                    // TODO: Set scroll area width to available width
                     egui::ScrollArea::horizontal()
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
@@ -75,9 +78,20 @@ impl FileExplorer {
                                                     egui::Button::new("projects"));
                         });
                     });
-                })
+                });
 
-            // TODO: Search bar
+            egui::Frame::default()
+                .stroke(egui::Stroke::new(1.0, egui::Color32::GRAY))
+                .inner_margin(egui::Margin::symmetric(4.0, 4.0))
+                .rounding(egui::Rounding::from(5.0))
+                .show(ui, |ui| {
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+                        ui.add_space(ctx.style().spacing.item_spacing.y);
+                        ui.label("🔍");
+                        ui.add_sized(egui::Vec2::new(120.0, ui.available_height()),
+                                     egui::TextEdit::singleline(&mut self.search_value));
+                    });
+                });
         });
 
         ui.add_space(ctx.style().spacing.item_spacing.y);
