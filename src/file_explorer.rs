@@ -24,7 +24,7 @@ impl FileExplorer {
                     .default_width(150.0)
                     .width_range(80.0..=300.0)
                     .show_inside(ui, |ui| {
-                        self.update_left_panel(ui);
+                        self.update_left_panel(ctx, ui);
                     });
 
                 egui::TopBottomPanel::bottom("fe_bottom_panel")
@@ -76,13 +76,40 @@ impl FileExplorer {
                         });
                     });
                 })
+
+            // TODO: Search bar
         });
 
         ui.add_space(ctx.style().spacing.item_spacing.y);
     }
 
-    fn update_left_panel(&mut self, ui: &mut egui::Ui) {
-        ui.label("This is the left panel!");
+    fn update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        ui.label("Drives:");
+
+        // NOTE: These are currently only hardcoded test values!
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0), egui::Button::new("(C:)"));
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0), egui::Button::new("Toshiba(D:)"));
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
+                     egui::Button::new("Samsung 980..(E:)"));
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0), egui::Button::new("(F:)"));
+
+        ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
+
+        ui.label("User:");
+
+        let folder_icon = egui::include_image!("../data/folder_icon.png");
+
+        // NOTE: These are currently only hardcoded test values!
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
+                     egui::Button::image_and_text(folder_icon.clone(), "Desktop"));
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
+                     egui::Button::image_and_text(folder_icon.clone(), "Documents"));
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
+                     egui::Button::image_and_text(folder_icon.clone(), "Downloads"));
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
+                     egui::Button::image_and_text(folder_icon.clone(), "Music"));
+        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
+                     egui::Button::image_and_text(folder_icon.clone(), "Pictures"));
     }
 
     fn update_bottom_panel(&mut self, ui: &mut egui::Ui) {

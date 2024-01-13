@@ -6,7 +6,9 @@ struct MyApp {
 }
 
 impl MyApp {
-    pub fn new() -> Self {
+    pub fn new(cc: &eframe::CreationContext) -> Self {
+        egui_extras::install_image_loaders(&cc.egui_ctx);
+
         Self {
             file_explorer: FileExplorer::new()
         }
@@ -32,6 +34,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "My egui application",
         options,
-        Box::new(|_| Box::new(MyApp::new()))
+        Box::new(|ctx| Box::new(MyApp::new(ctx)))
     )
 }
