@@ -130,7 +130,15 @@ impl FileExplorer {
     }
 
     fn update_central_panel(&mut self, ui: &mut egui::Ui) {
-        ui.label("This is the central panel!");
+        // NOTE: These are currently only hardcoded test values!
+        let _ = ui.selectable_label(false, "🗀  projects");
+        let _ = ui.selectable_label(false, "🗀  documents");
+        let _ = ui.selectable_label(false, "🗀  images");
+        let _ = ui.selectable_label(false, "🗀  music");
+
+        let _ = ui.selectable_label(false, "🖹  some_config.txt");
+        let _ = ui.selectable_label(false, "🖹  README.md");
+        let _ = ui.selectable_label(false, "🖹  LICENSE.md");
     }
 
 }
