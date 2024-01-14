@@ -3,6 +3,12 @@ pub struct FileExplorer {
     search_value: String
 }
 
+impl Default for FileExplorer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileExplorer {
     pub fn new() -> Self {
         FileExplorer { search_value: String::new() }
@@ -12,7 +18,7 @@ impl FileExplorer {
         // TODO: Make window title and options configurable
         egui::Window::new("File explorer")
             .default_size([800.0, 500.0])
-            .show(&ctx, |ui| {
+            .show(ctx, |ui| {
                 egui::TopBottomPanel::top("fe_top_panel")
                     .resizable(false)
                     .show_inside(ui, |ui| {
