@@ -53,7 +53,7 @@ impl FileExplorer {
 
             // Current path display
             egui::Frame::default()
-                .stroke(egui::Stroke::new(1.0, egui::Color32::GRAY))
+                .stroke(egui::Stroke::new(2.0, ctx.style().visuals.window_stroke.color))
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
                 .rounding(egui::Rounding::from(5.0))
                 .show(ui, |ui| {
@@ -81,7 +81,7 @@ impl FileExplorer {
                 });
 
             egui::Frame::default()
-                .stroke(egui::Stroke::new(1.0, egui::Color32::GRAY))
+                .stroke(egui::Stroke::new(2.0, ctx.style().visuals.window_stroke.color))
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
                 .rounding(egui::Rounding::from(5.0))
                 .show(ui, |ui| {
