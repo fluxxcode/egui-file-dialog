@@ -13,8 +13,6 @@ impl FileExplorer {
         egui::Window::new("File explorer")
             .default_size([800.0, 500.0])
             .show(&ctx, |ui| {
-                ui.style_mut().spacing.window_margin = egui::Margin::symmetric(0.0, 0.0);
-
                 egui::TopBottomPanel::top("fe_top_panel")
                     .resizable(false)
                     .show_inside(ui, |ui| {
