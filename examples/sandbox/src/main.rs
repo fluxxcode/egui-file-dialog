@@ -7,9 +7,11 @@ struct MyApp {
 
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
-        Self {
+        let mut obj = Self {
             file_explorer: FileExplorer::new()
-        }
+        };
+        obj.file_explorer.open();
+        obj
     }
 }
 

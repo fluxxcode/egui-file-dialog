@@ -1,5 +1,7 @@
+use std::{fs, io};
 
 pub struct FileExplorer {
+    directory_content: Vec<fs::DirEntry>,
     search_value: String
 }
 
@@ -11,7 +13,15 @@ impl Default for FileExplorer {
 
 impl FileExplorer {
     pub fn new() -> Self {
-        FileExplorer { search_value: String::new() }
+        FileExplorer {
+            directory_content: vec![],
+            search_value: String::new() }
+    }
+
+    // TODO: Enable option to set initial directory
+    pub fn open(&mut self) {
+        // TODO: Error handling
+        let _ = self.load_directory("./");
     }
 
     pub fn update(&mut self, ctx: &egui::Context) {
@@ -146,15 +156,40 @@ impl FileExplorer {
     }
 
     fn update_central_panel(&mut self, ui: &mut egui::Ui) {
-        // NOTE: These are currently only hardcoded test values!
-        let _ = ui.selectable_label(false, "🗀  projects");
-        let _ = ui.selectable_label(false, "🗀  documents");
-        let _ = ui.selectable_label(false, "🗀  images");
-        let _ = ui.selectable_label(false, "🗀  music");
+        for item in self.directory_content.iter() {
+            let path = item.path();
 
-        let _ = ui.selectable_label(false, "🖹  some_config.txt");
-        let _ = ui.selectable_label(false, "🖹  README.md");
-        let _ = ui.selectable_label(false, "🖹  LICENSE.md");
+            let icon = match path.is_dir() {
+                true => "🗀",
+                _ => "🖹"
+            };
+
+            // Is there a way to write this better?
+            let file_name = match path.file_name() {
+                Some(x) => {
+                    match x.to_str() {
+                        Some(v) => v,
+                        _ => continue
+                    }
+                },
+                _ => continue
+            };
+
+            let _ = ui.selectable_label(false, format!("{} {}", icon, file_name));
+        }
     }
 
+    fn load_directory(&mut self, path: &str) -> io::Result<()> {
+        let paths = fs::read_dir(path)?;
+
+        self.directory_content.clear();
+        for path in paths {
+            match path {
+                Ok(entry) => self.directory_content.push(entry),
+                _ => continue
+            };
+        }
+
+        Ok(())
+    }
 }
