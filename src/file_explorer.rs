@@ -36,7 +36,7 @@ impl FileExplorer {
                 egui::TopBottomPanel::bottom("fe_bottom_panel")
                     .resizable(false)
                     .show_inside(ui, |ui| {
-                        self.update_bottom_panel(ui);
+                        self.update_bottom_panel(ctx, ui);
                     });
 
                 egui::CentralPanel::default().show_inside(ui, |ui| {
@@ -129,8 +129,20 @@ impl FileExplorer {
                      egui::Button::new("🗀  Pictures"));
     }
 
-    fn update_bottom_panel(&mut self, ui: &mut egui::Ui) {
-        ui.label("This is the bottom panel!");
+    fn update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
+
+        ui.add_space(5.0);
+
+        ui.horizontal(|ui|{
+            ui.label("Selected item: Desktop");
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Open"));
+                ui.add_space(ctx.style().spacing.item_spacing.y);
+                let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Abort"));
+            });
+        });
     }
 
     fn update_central_panel(&mut self, ui: &mut egui::Ui) {
