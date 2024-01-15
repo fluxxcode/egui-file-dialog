@@ -144,27 +144,31 @@ impl FileExplorer {
     }
 
     fn update_central_panel(&mut self, ui: &mut egui::Ui) {
-        for item in self.directory_content.iter() {
-            let path = item.path();
+        egui::containers::ScrollArea::vertical()
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+            for item in self.directory_content.iter() {
+                let path = item.path();
 
-            let icon = match path.is_dir() {
-                true => "🗀",
-                _ => "🖹"
-            };
+                let icon = match path.is_dir() {
+                    true => "🗀",
+                    _ => "🖹"
+                };
 
-            // Is there a way to write this better?
-            let file_name = match path.file_name() {
-                Some(x) => {
-                    match x.to_str() {
-                        Some(v) => v,
-                        _ => continue
-                    }
-                },
-                _ => continue
-            };
+                // Is there a way to write this better?
+                let file_name = match path.file_name() {
+                    Some(x) => {
+                        match x.to_str() {
+                            Some(v) => v,
+                            _ => continue
+                        }
+                    },
+                    _ => continue
+                };
 
-            let _ = ui.selectable_label(false, format!("{} {}", icon, file_name));
-        }
+                let _ = ui.selectable_label(false, format!("{} {}", icon, file_name));
+            }
+        });
     }
 
     fn update_user_directories(&mut self, ui: &mut egui::Ui) {
