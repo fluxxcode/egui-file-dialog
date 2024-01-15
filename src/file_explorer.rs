@@ -1,7 +1,9 @@
 use std::{fs, io};
+use directories::UserDirs;
 
 pub struct FileExplorer {
     directory_content: Vec<fs::DirEntry>,
+    user_directories: Option<UserDirs>,
     search_value: String
 }
 
@@ -15,6 +17,7 @@ impl FileExplorer {
     pub fn new() -> Self {
         FileExplorer {
             directory_content: vec![],
+            user_directories: UserDirs::new(),
             search_value: String::new() }
     }
 
@@ -112,16 +115,7 @@ impl FileExplorer {
     }
 
     fn update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        ui.label("Places");
-
-        // NOTE: These are currently only hardcoded test values!
-        // TODO: Align button text to the left!
-        let _ = ui.selectable_label(false, "🏠  Home");
-        let _ = ui.selectable_label(false, "🗐  Documents");
-        let _ = ui.selectable_label(false, "📥  Downloads");
-        let _ = ui.selectable_label(false, "🎵  Music");
-        let _ = ui.selectable_label(false, "🖼  Pictures");
-        let _ = ui.selectable_label(false, "🎞  Videos");
+        self.update_user_directories(ui);
 
         ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
 
@@ -170,6 +164,30 @@ impl FileExplorer {
             };
 
             let _ = ui.selectable_label(false, format!("{} {}", icon, file_name));
+        }
+    }
+
+    fn update_user_directories(&mut self, ui: &mut egui::Ui) {
+        if let Some(dirs) = &self.user_directories {
+            ui.label("Places");
+
+            let _ = ui.selectable_label(false, "🏠  Home");
+
+            if dirs.document_dir().is_some() {
+                let _ = ui.selectable_label(false, "🗐  Documents");
+            }
+            if dirs.download_dir().is_some() {
+                let _ = ui.selectable_label(false, "📥  Downloads");
+            }
+            if dirs.audio_dir().is_some() {
+                let _ = ui.selectable_label(false, "🎵  Audio");
+            }
+            if dirs.picture_dir().is_some() {
+                let _ = ui.selectable_label(false, "🖼  Pictures");
+            }
+            if dirs.video_dir().is_some() {
+                let _ = ui.selectable_label(false, "🎞  Videos");
+            }
         }
     }
 
