@@ -173,6 +173,9 @@ impl FileExplorer {
 
             let _ = ui.selectable_label(false, "🏠  Home");
 
+            if dirs.desktop_dir().is_some() {
+                let _ = ui.selectable_label(false, "🖵  Desktop");
+            }
             if dirs.document_dir().is_some() {
                 let _ = ui.selectable_label(false, "🗐  Documents");
             }
