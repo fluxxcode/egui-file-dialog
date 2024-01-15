@@ -12,3 +12,6 @@ edition = "2021"
 
 [dependencies]
 egui = "0.25.0"
+
+# Used to fetch user folders
+directories = "5.0"
