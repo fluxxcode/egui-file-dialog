@@ -1,4 +1,4 @@
-use std::{fs, io};
+use std::{fs, io, path::Path};
 use directories::UserDirs;
 
 pub struct FileExplorer {
@@ -24,7 +24,7 @@ impl FileExplorer {
     // TODO: Enable option to set initial directory
     pub fn open(&mut self) {
         // TODO: Error handling
-        let _ = self.load_directory("./");
+        let _ = self.load_directory(Path::new("./"));
     }
 
     pub fn update(&mut self, ctx: &egui::Context) {
@@ -168,33 +168,47 @@ impl FileExplorer {
     }
 
     fn update_user_directories(&mut self, ui: &mut egui::Ui) {
-        if let Some(dirs) = &self.user_directories {
+        if let Some(dirs) = self.user_directories.clone() {
             ui.label("Places");
 
-            let _ = ui.selectable_label(false, "🏠  Home");
+            if ui.selectable_label(false, "🏠  Home").clicked() {
+                let _ = self.load_directory(dirs.home_dir());
+            }
 
-            if dirs.desktop_dir().is_some() {
-                let _ = ui.selectable_label(false, "🖵  Desktop");
+            if let Some(path) = dirs.desktop_dir() {
+                if ui.selectable_label(false, "🖵  Desktop").clicked() {
+                    let _ = self.load_directory(path);
+                }
             }
-            if dirs.document_dir().is_some() {
-                let _ = ui.selectable_label(false, "🗐  Documents");
+            if let Some(path) = dirs.document_dir() {
+                if ui.selectable_label(false, "🗐  Documents").clicked() {
+                    let _ = self.load_directory(path);
+                }
             }
-            if dirs.download_dir().is_some() {
-                let _ = ui.selectable_label(false, "📥  Downloads");
+            if let Some(path) = dirs.download_dir() {
+                if ui.selectable_label(false, "📥  Downloads").clicked() {
+                    let _ = self.load_directory(path);
+                }
             }
-            if dirs.audio_dir().is_some() {
-                let _ = ui.selectable_label(false, "🎵  Audio");
+            if let Some(path) = dirs.audio_dir() {
+                if ui.selectable_label(false, "🎵  Audio").clicked() {
+                    let _ = self.load_directory(path);
+                }
             }
-            if dirs.picture_dir().is_some() {
-                let _ = ui.selectable_label(false, "🖼  Pictures");
+            if let Some(path) = dirs.picture_dir() {
+                if ui.selectable_label(false, "🖼  Pictures").clicked() {
+                    let _ = self.load_directory(path);
+                }
             }
-            if dirs.video_dir().is_some() {
-                let _ = ui.selectable_label(false, "🎞  Videos");
+            if let Some(path) = dirs.video_dir() {
+                if ui.selectable_label(false, "🎞  Videos").clicked() {
+                    let _ = self.load_directory(path);
+                }
             }
         }
     }
 
-    fn load_directory(&mut self, path: &str) -> io::Result<()> {
+    fn load_directory(&mut self, path: &Path) -> io::Result<()> {
         let paths = fs::read_dir(path)?;
 
         self.directory_content.clear();
