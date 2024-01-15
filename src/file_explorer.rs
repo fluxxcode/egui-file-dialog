@@ -1,7 +1,10 @@
-use std::{fs, io, path::Path};
+use std::{fs, io};
+use std::path::{Path, PathBuf};
+
 use directories::UserDirs;
 
 pub struct FileExplorer {
+    current_directory: PathBuf,
     directory_content: Vec<fs::DirEntry>,
     user_directories: Option<UserDirs>,
     search_value: String
@@ -16,6 +19,7 @@ impl Default for FileExplorer {
 impl FileExplorer {
     pub fn new() -> Self {
         FileExplorer {
+            current_directory: PathBuf::from("./"),
             directory_content: vec![],
             user_directories: UserDirs::new(),
             search_value: String::new() }
@@ -175,37 +179,38 @@ impl FileExplorer {
         if let Some(dirs) = self.user_directories.clone() {
             ui.label("Places");
 
-            if ui.selectable_label(false, "🏠  Home").clicked() {
+            if ui.selectable_label(self.current_directory == dirs.home_dir(),
+                                   "🏠  Home").clicked() {
                 let _ = self.load_directory(dirs.home_dir());
             }
 
             if let Some(path) = dirs.desktop_dir() {
-                if ui.selectable_label(false, "🖵  Desktop").clicked() {
+                if ui.selectable_label(self.current_directory == path, "🖵  Desktop").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.document_dir() {
-                if ui.selectable_label(false, "🗐  Documents").clicked() {
+                if ui.selectable_label(self.current_directory == path, "🗐  Documents").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.download_dir() {
-                if ui.selectable_label(false, "📥  Downloads").clicked() {
+                if ui.selectable_label(self.current_directory == path, "📥  Downloads").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.audio_dir() {
-                if ui.selectable_label(false, "🎵  Audio").clicked() {
+                if ui.selectable_label(self.current_directory == path, "🎵  Audio").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.picture_dir() {
-                if ui.selectable_label(false, "🖼  Pictures").clicked() {
+                if ui.selectable_label(self.current_directory == path, "🖼  Pictures").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.video_dir() {
-                if ui.selectable_label(false, "🎞  Videos").clicked() {
+                if ui.selectable_label(self.current_directory == path, "🎞  Videos").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
@@ -215,7 +220,9 @@ impl FileExplorer {
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
         let paths = fs::read_dir(path)?;
 
+        self.current_directory = PathBuf::from(path);
         self.directory_content.clear();
+
         for path in paths {
             match path {
                 Ok(entry) => self.directory_content.push(entry),
