@@ -112,31 +112,25 @@ impl FileExplorer {
     }
 
     fn update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        ui.label("Drives:");
-
-        // NOTE: These are currently only hardcoded test values!
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0), egui::Button::new("(C:)"));
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0), egui::Button::new("Toshiba(D:)"));
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::new("Samsung 980..(E:)"));
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0), egui::Button::new("(F:)"));
-
-        ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
-
-        ui.label("User:");
+        ui.label("Places");
 
         // NOTE: These are currently only hardcoded test values!
         // TODO: Align button text to the left!
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::new("🗀  Desktop"));
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::new("🗀  Documents"));
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::new("🗀  Downloads"));
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::new("🗀  Music"));
-        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                     egui::Button::new("🗀  Pictures"));
+        let _ = ui.selectable_label(false, "🏠  Home");
+        let _ = ui.selectable_label(false, "🗐  Documents");
+        let _ = ui.selectable_label(false, "📥  Downloads");
+        let _ = ui.selectable_label(false, "🎵  Music");
+        let _ = ui.selectable_label(false, "🖼  Pictures");
+        let _ = ui.selectable_label(false, "🎞  Videos");
+
+        ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
+
+        ui.label("Devices");
+
+        let _ = ui.selectable_label(false, "🖴  (C:)");
+        let _ = ui.selectable_label(false, "🖴  Toshiba(D:)");
+        let _ = ui.selectable_label(false, "🖴  Samsung 980..(E:)");
+        let _ = ui.selectable_label(false, "🖴  (F:)");
     }
 
     fn update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
