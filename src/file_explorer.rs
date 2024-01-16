@@ -4,9 +4,10 @@ use std::path::{Path, PathBuf};
 use directories::UserDirs;
 
 pub struct FileExplorer {
+    user_directories: Option<UserDirs>,
     current_directory: PathBuf,
     directory_content: Vec<PathBuf>,
-    user_directories: Option<UserDirs>,
+    selected_item: Option<PathBuf>,
     search_value: String
 }
 
@@ -19,9 +20,10 @@ impl Default for FileExplorer {
 impl FileExplorer {
     pub fn new() -> Self {
         FileExplorer {
+            user_directories: UserDirs::new(),
             current_directory: PathBuf::from("./"),
             directory_content: vec![],
-            user_directories: UserDirs::new(),
+            selected_item: None,
             search_value: String::new() }
     }
 
@@ -137,7 +139,17 @@ impl FileExplorer {
         ui.add_space(5.0);
 
         ui.horizontal(|ui|{
-            ui.label("Selected item: Desktop");
+            let mut selected = String::from("Selected item:");
+
+            if let Some(x) = &self.selected_item {
+                if let Some(x) = x.file_name() {
+                    if let Some(x) = x.to_str() {
+                        selected = format!("Selected item: {}", x);
+                    }
+                }
+            }
+
+            ui.label(selected);
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                 let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Open"));
@@ -157,9 +169,9 @@ impl FileExplorer {
             // more than once at a time.
             // Make sure to return the function after updating the directory_content,
             // otherwise the change will be overwritten with the last statement of the function.
-            let mut data = std::mem::take(&mut self.directory_content);
+            let data = std::mem::take(&mut self.directory_content);
 
-            for path in data.iter_mut() {
+            for path in data.iter() {
                 let icon = match path.is_dir() {
                     true => "🗀",
                     _ => "🖹"
@@ -176,10 +188,15 @@ impl FileExplorer {
                     _ => continue
                 };
 
-                let response = ui.selectable_label(false, format!("{} {}", icon, file_name));
+                let mut selected = false;
+                if let Some(x) = &self.selected_item {
+                    selected = x == path;
+                }
+
+                let response = ui.selectable_label(selected, format!("{} {}", icon, file_name));
 
                 if response.clicked() {
-                    // Select directory or file
+                    self.selected_item = Some(path.clone());
                 }
 
                 if response.double_clicked() {
@@ -188,7 +205,8 @@ impl FileExplorer {
                         return;
                     }
 
-                    // Select file and close file explorer
+                    self.selected_item = Some(path.clone());
+                    // TODO: Close file explorer
                 }
             }
 
