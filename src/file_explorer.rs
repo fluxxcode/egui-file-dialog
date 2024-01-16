@@ -5,7 +5,7 @@ use directories::UserDirs;
 
 pub struct FileExplorer {
     current_directory: PathBuf,
-    directory_content: Vec<fs::DirEntry>,
+    directory_content: Vec<PathBuf>,
     user_directories: Option<UserDirs>,
     search_value: String
 }
@@ -151,9 +151,15 @@ impl FileExplorer {
         egui::containers::ScrollArea::vertical()
             .auto_shrink([false, false])
             .show(ui, |ui| {
-            for item in self.directory_content.iter() {
-                let path = item.path();
+            // Temporarily take ownership of the directory contents to be able to
+            // update it in the for loop using load_directory.
+            // Otherwise we would get an error that `*self` cannot be borrowed as mutable
+            // more than once at a time.
+            // Make sure to return the function after updating the directory_content,
+            // otherwise the change will be overwritten with the last statement of the function.
+            let mut data = std::mem::take(&mut self.directory_content);
 
+            for path in data.iter_mut() {
                 let icon = match path.is_dir() {
                     true => "🗀",
                     _ => "🖹"
@@ -170,8 +176,23 @@ impl FileExplorer {
                     _ => continue
                 };
 
-                let _ = ui.selectable_label(false, format!("{} {}", icon, file_name));
+                let response = ui.selectable_label(false, format!("{} {}", icon, file_name));
+
+                if response.clicked() {
+                    // Select directory or file
+                }
+
+                if response.double_clicked() {
+                    if path.is_dir() {
+                        let _ = self.load_directory(&path);
+                        return;
+                    }
+
+                    // Select file and close file explorer
+                }
             }
+
+            self.directory_content = data;
         });
     }
 
@@ -225,10 +246,12 @@ impl FileExplorer {
 
         for path in paths {
             match path {
-                Ok(entry) => self.directory_content.push(entry),
+                Ok(entry) => self.directory_content.push(entry.path()),
                 _ => continue
             };
         }
+
+        // TODO: Sort content to display folders first
 
         Ok(())
     }
