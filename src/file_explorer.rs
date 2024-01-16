@@ -201,7 +201,7 @@ impl FileExplorer {
 
                 if response.double_clicked() {
                     if path.is_dir() {
-                        let _ = self.load_directory(&path);
+                        let _ = self.load_directory(path);
                         return;
                     }
 
