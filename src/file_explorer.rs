@@ -103,7 +103,7 @@ impl FileExplorer {
 
                                     // TODO: Maybe use selectable_label instead of button?
                                     // TODO: Write current directory (last item) in bold text
-                                    if ui.button(segment.to_str().unwrap_or_else(|| "<ERR>"))
+                                    if ui.button(segment.to_str().unwrap_or("<ERR>"))
                                         .clicked() {
                                             let _ = self.load_directory(path.as_path());
                                             return;
