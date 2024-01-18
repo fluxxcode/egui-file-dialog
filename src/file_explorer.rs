@@ -270,6 +270,7 @@ impl FileExplorer {
         }
 
         // TODO: Sort content to display folders first
+        // TODO: Implement "Show hidden files and folders" option
 
         Ok(())
     }
