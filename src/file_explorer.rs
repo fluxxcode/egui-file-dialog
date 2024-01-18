@@ -66,6 +66,7 @@ impl FileExplorer {
 
     fn update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         const NAV_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
+        const SEARCH_INPUT_WIDTH: f32 = 120.0;
 
         ui.horizontal(|ui| {
             // Navigation buttons
@@ -80,29 +81,41 @@ impl FileExplorer {
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
                 .rounding(egui::Rounding::from(5.0))
                 .show(ui, |ui| {
-                    // TODO: Set scroll area width to available width
+                    // TODO: Enable scrolling with mouse wheel
                     egui::ScrollArea::horizontal()
+                        .auto_shrink([false, false])
+                        .stick_to_right(true)
+                        // TODO: Dynamically size scroll area to available width
+                        .max_width(500.0)
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
-                                // NOTE: These are currently only hardcoded test values!
-                                let _ = ui.add_sized(egui::Vec2::new(0.0, ui.available_height()),
-                                                    egui::Button::new("home"));
-                                ui.label(">");
+                                ui.style_mut().spacing.item_spacing.x /= 2.5;
 
-                                let _ = ui.add_sized(egui::Vec2::new(0.0, ui.available_height()),
-                                                    egui::Button::new("user"));
-                                ui.label(">");
+                                let data = std::mem::take(&mut self.current_directory);
+                                let mut path = PathBuf::new();
 
-                                let _ = ui.add_sized(egui::Vec2::new(0.0, ui.available_height()),
-                                                    egui::Button::new("documents"));
-                                ui.label(">");
+                                for (i, segment) in data.iter().enumerate() {
+                                    path.push(segment);
 
-                                let _ = ui.add_sized(egui::Vec2::new(0.0, ui.available_height()),
-                                                    egui::Button::new("projects"));
+                                    if i != 0 {
+                                        ui.label(">");
+                                    }
+
+                                    // TODO: Maybe use selectable_label instead of button?
+                                    // TODO: Write current directory (last item) in bold text
+                                    if ui.button(segment.to_str().unwrap_or_else(|| "<ERR>"))
+                                        .clicked() {
+                                            let _ = self.load_directory(path.as_path());
+                                            return;
+                                    }
+                                }
+
+                                self.current_directory = data;
+                            });
                         });
-                    });
                 });
 
+            // Search bar
             egui::Frame::default()
                 .stroke(egui::Stroke::new(2.0, ctx.style().visuals.window_stroke.color))
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
@@ -111,8 +124,8 @@ impl FileExplorer {
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                         ui.add_space(ctx.style().spacing.item_spacing.y);
                         ui.label("🔍");
-                        ui.add_sized(egui::Vec2::new(120.0, ui.available_height()),
-                                     egui::TextEdit::singleline(&mut self.search_value));
+                        ui.add_sized(egui::Vec2::new(SEARCH_INPUT_WIDTH, 0.0),
+                                    egui::TextEdit::singleline(&mut self.search_value));
                     });
                 });
         });
@@ -259,7 +272,7 @@ impl FileExplorer {
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
         let paths = fs::read_dir(path)?;
 
-        self.current_directory = PathBuf::from(path);
+        self.current_directory = fs::canonicalize(path)?;
         self.directory_content.clear();
 
         for path in paths {
