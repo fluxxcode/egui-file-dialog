@@ -1,3 +1,4 @@
+use std::io::Error;
 use std::{fs, io};
 use std::path::{Path, PathBuf};
 
@@ -5,7 +6,8 @@ use directories::UserDirs;
 
 pub struct FileExplorer {
     user_directories: Option<UserDirs>,
-    current_directory: PathBuf,
+    directory_stack: Vec<PathBuf>,
+    directory_offset: usize,
     directory_content: Vec<PathBuf>,
     selected_item: Option<PathBuf>,
     search_value: String
@@ -21,10 +23,12 @@ impl FileExplorer {
     pub fn new() -> Self {
         FileExplorer {
             user_directories: UserDirs::new(),
-            current_directory: PathBuf::from("./"),
+            directory_stack: vec![],
+            directory_offset: 0,
             directory_content: vec![],
             selected_item: None,
-            search_value: String::new() }
+            search_value: String::new()
+        }
     }
 
     // TODO: Enable option to set initial directory
@@ -71,8 +75,17 @@ impl FileExplorer {
         ui.horizontal(|ui| {
             // Navigation buttons
             let _ = ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("<-"));
-            let _ = ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("<"));
-            let _ = ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new(">"));
+
+            if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("<")).clicked() &&
+               self.directory_offset + 1 < self.directory_stack.len() {
+                let _ = self.load_previous_directory();
+            }
+
+            if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new(">")).clicked() &&
+               self.directory_offset != 0 {
+                let _ = self.load_next_directory();
+            }
+
             let _ = ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("+"));
 
             // Current path display
@@ -91,26 +104,25 @@ impl FileExplorer {
                             ui.horizontal(|ui| {
                                 ui.style_mut().spacing.item_spacing.x /= 2.5;
 
-                                let data = std::mem::take(&mut self.current_directory);
                                 let mut path = PathBuf::new();
+                                
+                                if let Some(data) = self.current_directory() {
+                                    for (i, segment) in data.iter().enumerate() {
+                                        path.push(segment);
 
-                                for (i, segment) in data.iter().enumerate() {
-                                    path.push(segment);
+                                        if i != 0 {
+                                            ui.label(">");
+                                        }
 
-                                    if i != 0 {
-                                        ui.label(">");
-                                    }
-
-                                    // TODO: Maybe use selectable_label instead of button?
-                                    // TODO: Write current directory (last item) in bold text
-                                    if ui.button(segment.to_str().unwrap_or("<ERR>"))
-                                        .clicked() {
-                                            let _ = self.load_directory(path.as_path());
-                                            return;
+                                        // TODO: Maybe use selectable_label instead of button?
+                                        // TODO: Write current directory (last item) in bold text
+                                        if ui.button(segment.to_str().unwrap_or("<ERR>"))
+                                            .clicked() {
+                                                let _ = self.load_directory(path.as_path());
+                                                return;
+                                        }
                                     }
                                 }
-
-                                self.current_directory = data;
                             });
                         });
                 });
@@ -231,48 +243,98 @@ impl FileExplorer {
         if let Some(dirs) = self.user_directories.clone() {
             ui.label("Places");
 
-            if ui.selectable_label(self.current_directory == dirs.home_dir(),
+            if ui.selectable_label(self.current_directory() == Some(dirs.home_dir()),
                                    "🏠  Home").clicked() {
                 let _ = self.load_directory(dirs.home_dir());
             }
 
             if let Some(path) = dirs.desktop_dir() {
-                if ui.selectable_label(self.current_directory == path, "🖵  Desktop").clicked() {
+                if ui.selectable_label(self.current_directory() == Some(path),
+                                       "🖵  Desktop").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.document_dir() {
-                if ui.selectable_label(self.current_directory == path, "🗐  Documents").clicked() {
+                if ui.selectable_label(self.current_directory() == Some(path),
+                                       "🗐  Documents").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.download_dir() {
-                if ui.selectable_label(self.current_directory == path, "📥  Downloads").clicked() {
+                if ui.selectable_label(self.current_directory() == Some(path),
+                                       "📥  Downloads").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.audio_dir() {
-                if ui.selectable_label(self.current_directory == path, "🎵  Audio").clicked() {
+                if ui.selectable_label(self.current_directory() == Some(path),
+                                       "🎵  Audio").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.picture_dir() {
-                if ui.selectable_label(self.current_directory == path, "🖼  Pictures").clicked() {
+                if ui.selectable_label(self.current_directory() == Some(path),
+                                       "🖼  Pictures").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.video_dir() {
-                if ui.selectable_label(self.current_directory == path, "🎞  Videos").clicked() {
+                if ui.selectable_label(self.current_directory() == Some(path),
+                                       "🎞  Videos").clicked() {
                     let _ = self.load_directory(path);
                 }
             }
         }
     }
 
+    fn current_directory(&self) -> Option<&Path> {
+        if let Some(x) = self.directory_stack.iter().nth_back(self.directory_offset) {
+            return Some(x.as_path())
+        }
+
+        None
+    }
+
+    fn load_next_directory(&mut self) -> io::Result<()> {
+        if self.directory_offset == 0 {
+            // There is no next directory that can be loaded
+            return Ok(());
+        }
+
+        self.directory_offset -= 1;
+
+        // Copy path and load directory
+        let path = self.current_directory().unwrap().to_path_buf();
+        self.load_directory_content(path.as_path())
+    }
+
+    fn load_previous_directory(&mut self) -> io::Result<()> {
+        if self.directory_offset + 1 >= self.directory_stack.len() {
+            // There is no previous directory that can be loaded
+            return Ok(())
+        }
+
+        self.directory_offset += 1;
+    
+        // Copy path and load directory
+        let path = self.current_directory().unwrap().to_path_buf();
+        self.load_directory_content(path.as_path())
+    }
+
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
+        if self.directory_offset != 0 && self.directory_stack.len() > self.directory_offset {
+            self.directory_stack.drain(self.directory_stack.len() - self.directory_offset..);
+        }
+
+        self.directory_stack.push(fs::canonicalize(path)?);
+        self.directory_offset = 0;
+
+        self.load_directory_content(path)
+    }
+
+    fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
         let paths = fs::read_dir(path)?;
 
-        self.current_directory = fs::canonicalize(path)?;
         self.directory_content.clear();
 
         for path in paths {
