@@ -352,6 +352,14 @@ impl FileExplorer {
     }
 
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
+        // Do not load the same directory again.
+        // Use reload_directory if the content of the directory should be updated.
+        if let Some(x) = self.current_directory() {
+            if x == path {
+                return Ok(());
+            }
+        }
+
         if self.directory_offset != 0 && self.directory_stack.len() > self.directory_offset {
             self.directory_stack.drain(self.directory_stack.len() - self.directory_offset..);
         }
