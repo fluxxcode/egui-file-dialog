@@ -128,6 +128,11 @@ impl FileExplorer {
                         });
                 });
 
+            // Reload button
+            if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("⟲")).clicked() {
+                let _ = self.reaload_directory();
+            }
+
             // Search bar
             egui::Frame::default()
                 .stroke(egui::Stroke::new(2.0, ctx.style().visuals.window_stroke.color))
@@ -327,6 +332,14 @@ impl FileExplorer {
             if let Some(x) = x.to_path_buf().parent() {
                 return self.load_directory(x);
             }
+        }
+
+        Ok(())
+    }
+
+    fn reaload_directory(&mut self) -> io::Result<()> {
+        if let Some(x) = self.current_directory() {
+            return self.load_directory_content(x.to_path_buf().as_path());
         }
 
         Ok(())
