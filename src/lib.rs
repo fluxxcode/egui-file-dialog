@@ -203,11 +203,6 @@ impl FileExplorer {
             let data = std::mem::take(&mut self.directory_content);
 
             for path in data.iter() {
-                let icon = match path.is_dir() {
-                    true => "🗀",
-                    _ => "🖹"
-                };
-
                 // Is there a way to write this better?
                 let file_name = match path.file_name() {
                     Some(x) => {
@@ -217,6 +212,17 @@ impl FileExplorer {
                         }
                     },
                     _ => continue
+                };
+
+                if !self.search_value.is_empty() {
+                    if !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
+                        continue;
+                    }
+                }
+
+                let icon = match path.is_dir() {
+                    true => "🗀",
+                    _ => "🖹"
                 };
 
                 let mut selected = false;
