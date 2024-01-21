@@ -214,10 +214,9 @@ impl FileExplorer {
                     _ => continue
                 };
 
-                if !self.search_value.is_empty() {
-                    if !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
-                        continue;
-                    }
+                if !self.search_value.is_empty() &&
+                   !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
+                    continue;
                 }
 
                 let icon = match path.is_dir() {
