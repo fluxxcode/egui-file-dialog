@@ -79,18 +79,23 @@ impl FileExplorer {
         const SEARCH_INPUT_WIDTH: f32 = 120.0;
 
         ui.horizontal(|ui| {
+
             // Navigation buttons
-            if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("⏶")).clicked() {
-                let _ = self.load_parent();
+            if let Some(x) = self.current_directory() {
+                if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", x.parent().is_some()) {
+                    let _ = self.load_parent();
+                }
+            }
+            else {
+                let _ = ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", false);
             }
 
-            if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("⏴")).clicked() &&
-               self.directory_offset + 1 < self.directory_stack.len() {
+            if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏴",
+                                          self.directory_offset + 1 < self.directory_stack.len()) {
                 let _ = self.load_previous_directory();
             }
 
-            if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("⏵")).clicked() &&
-               self.directory_offset != 0 {
+            if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏵", self.directory_offset != 0) {
                 let _ = self.load_next_directory();
             }
 
@@ -405,4 +410,16 @@ impl FileExplorer {
 
         Ok(())
     }
+}
+
+fn ui_button_enabled_disabled(ui: &mut egui::Ui, size: egui::Vec2, text: &str,
+                              active: bool) -> bool {
+    if !active {
+        let c = ui.style().visuals.widgets.noninteractive.bg_fill;
+        let bg_color = egui::Color32::from_rgba_premultiplied(c.r(), c.g(), c.b(), 100);
+        let _ = ui.add_sized(size, egui::Button::new(text).fill(bg_color));
+        return false;
+    }
+
+    ui.add_sized(size, egui::Button::new(text)).clicked()
 }
