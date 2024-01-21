@@ -2,12 +2,16 @@ use std::{fs, io};
 use std::path::{Path, PathBuf};
 
 use directories::UserDirs;
+use sysinfo::Disks;
 
 pub struct FileExplorer {
     user_directories: Option<UserDirs>,
+    system_disks: Disks,
+
     directory_stack: Vec<PathBuf>,
     directory_offset: usize,
     directory_content: Vec<PathBuf>,
+
     selected_item: Option<PathBuf>,
     search_value: String
 }
@@ -22,9 +26,12 @@ impl FileExplorer {
     pub fn new() -> Self {
         FileExplorer {
             user_directories: UserDirs::new(),
+            system_disks: Disks::new_with_refreshed_list(),
+
             directory_stack: vec![],
             directory_offset: 0,
             directory_content: vec![],
+
             selected_item: None,
             search_value: String::new()
         }
@@ -158,10 +165,22 @@ impl FileExplorer {
 
         ui.label("Devices");
 
-        let _ = ui.selectable_label(false, "🖴  (C:)");
-        let _ = ui.selectable_label(false, "🖴  Toshiba(D:)");
-        let _ = ui.selectable_label(false, "🖴  Samsung 980..(E:)");
-        let _ = ui.selectable_label(false, "🖴  (F:)");
+        let disks = std::mem::take(&mut self.system_disks);
+
+        for disk in &disks {
+            // TODO: Get display name of the devices.
+            // Currently on linux "/dev/sda1" is returned.
+            let name = match disk.name().to_str() {
+                Some(x) => x,
+                None => continue
+            };
+
+            if ui.selectable_label(false, format!("🖴  {}", name)).clicked() {
+                let _ = self.load_directory(disk.mount_point());
+            }
+        }
+
+        self.system_disks = disks;
     }
 
     fn update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
