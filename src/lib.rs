@@ -130,7 +130,7 @@ impl FileExplorer {
 
             // Reload button
             if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("⟲")).clicked() {
-                let _ = self.reaload_directory();
+                let _ = self.reload_directory();
             }
 
             // Search bar
@@ -343,7 +343,7 @@ impl FileExplorer {
         Ok(())
     }
 
-    fn reaload_directory(&mut self) -> io::Result<()> {
+    fn reload_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
             return self.load_directory_content(x.to_path_buf().as_path());
         }
