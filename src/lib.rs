@@ -194,23 +194,21 @@ impl FileExplorer {
         ui.add_space(5.0);
 
         ui.horizontal(|ui|{
-            let mut selected = String::from("Selected item:");
+            ui.label("Selected item:");
 
             if let Some(x) = &self.selected_item {
                 if let Some(x) = x.file_name() {
                     if let Some(x) = x.to_str() {
-                        selected = format!("Selected item: {}", x);
+                        ui.colored_label(ui.style().visuals.selection.bg_fill, x);
                     }
                 }
             }
+        });
 
-            ui.label(selected);
-
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Open"));
-                ui.add_space(ctx.style().spacing.item_spacing.y);
-                let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Abort"));
-            });
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+            let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Open"));
+            ui.add_space(ctx.style().spacing.item_spacing.y);
+            let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Abort"));
         });
     }
 
