@@ -4,6 +4,13 @@ use std::path::{Path, PathBuf};
 use directories::UserDirs;
 use sysinfo::Disks;
 
+// NOTE: Currently not implemented, just an idea!
+pub enum FileExplorerMode {
+    OpenFile,
+    OpenDirectory,
+    SaveFile
+}
+
 pub struct FileExplorer {
     user_directories: Option<UserDirs>,
     system_disks: Disks,
