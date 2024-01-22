@@ -57,7 +57,7 @@ impl FileExplorer {
                 egui::SidePanel::left("fe_left_panel")
                     .resizable(true)
                     .default_width(150.0)
-                    .width_range(80.0..=300.0)
+                    .width_range(100.0..=400.0)
                     .show_inside(ui, |ui| {
                         self.update_left_panel(ctx, ui);
                     });
