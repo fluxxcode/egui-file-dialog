@@ -19,6 +19,9 @@ pub struct FileExplorer {
     directory_offset: usize,
     directory_content: Vec<PathBuf>,
 
+    create_folder_dialog: bool,
+    create_folder_input: String,
+
     selected_item: Option<PathBuf>,
     search_value: String
 }
@@ -39,8 +42,11 @@ impl FileExplorer {
             directory_offset: 0,
             directory_content: vec![],
 
+            create_folder_dialog: false,
+            create_folder_input: String::new(),
+
             selected_item: None,
-            search_value: String::new()
+            search_value: String::new(),
         }
     }
 
@@ -106,7 +112,10 @@ impl FileExplorer {
                 let _ = self.load_next_directory();
             }
 
-            let _ = ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("+"));
+            if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "+", !self.create_folder_dialog) {
+                self.create_folder_input.clear();
+                self.create_folder_dialog = true;
+            }
 
             // Current path display
             egui::Frame::default()
@@ -276,6 +285,25 @@ impl FileExplorer {
             }
 
             self.directory_content = data;
+
+            if self.create_folder_dialog {
+                self.update_create_folder_dialog(ui);
+            }
+        });
+    }
+
+    fn update_create_folder_dialog(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            // TODO: Add "Create new folder" icon
+            ui.text_edit_singleline(&mut self.create_folder_input).scroll_to_me(None);
+            // TODO: Validate that the filename is unique
+            if ui.button("✔").clicked() {
+                // TODO: Create folder and append it to the end of directory_content
+                self.reset_create_folder_dialog();
+            }
+            if ui.button("✖").clicked() {
+                self.reset_create_folder_dialog();
+            }
         });
     }
 
@@ -325,6 +353,11 @@ impl FileExplorer {
                 }
             }
         }
+    }
+
+    fn reset_create_folder_dialog(&mut self) {
+        self.create_folder_input.clear();
+        self.create_folder_dialog = false;
     }
 
     fn current_directory(&self) -> Option<&Path> {
@@ -400,6 +433,8 @@ impl FileExplorer {
 
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
         let paths = fs::read_dir(path)?;
+
+        self.reset_create_folder_dialog();
 
         self.directory_content.clear();
 
