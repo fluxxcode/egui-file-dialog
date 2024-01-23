@@ -541,7 +541,7 @@ impl CreateDirectoryDialog {
                     return CreateDirectoryResponse::new(dir.as_path());
                 }
                 Err(err) => {
-                    self.error = Some(format!("Error: {}", err.to_string()));
+                    self.error = Some(format!("Error: {}", err));
                     return CreateDirectoryResponse::new_empty();
                 }
             }
