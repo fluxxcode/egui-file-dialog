@@ -93,26 +93,27 @@ impl FileExplorer {
 
             // Navigation buttons
             if let Some(x) = self.current_directory() {
-                if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", x.parent().is_some()) {
+                if ui_button_sized(ui, NAV_BUTTON_SIZE, "⏶", x.parent().is_some()) {
                     let _ = self.load_parent();
                 }
             }
             else {
-                let _ = ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", false);
+                let _ = ui_button_sized(ui, NAV_BUTTON_SIZE, "⏶", false);
             }
 
-            if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏴",
-                                          self.directory_offset + 1 < self.directory_stack.len()) {
+            if ui_button_sized(ui, NAV_BUTTON_SIZE, "⏴",
+                               self.directory_offset + 1 < self.directory_stack.len()) {
                 let _ = self.load_previous_directory();
             }
 
-            if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏵", self.directory_offset != 0) {
+            if ui_button_sized(ui, NAV_BUTTON_SIZE, "⏵", self.directory_offset != 0) {
                 let _ = self.load_next_directory();
             }
 
-            if ui_button_enabled_disabled(ui, NAV_BUTTON_SIZE, "+",
-                                          !self.create_directory_dialog.is_open()) {
-                self.create_directory_dialog.open();
+            if ui_button_sized(ui, NAV_BUTTON_SIZE, "+", !self.create_directory_dialog.is_open()) {
+                if let Some(x) = self.current_directory() {
+                    self.create_directory_dialog.open(x.to_path_buf());
+                }
             }
 
             // Current path display
@@ -284,7 +285,9 @@ impl FileExplorer {
 
             self.directory_content = data;
 
-            self.create_directory_dialog.update(ui);
+            if let Some(dir) = self.create_directory_dialog.update(ui).directory() {
+                self.directory_content.push(dir);
+            }
         });
     }
 
@@ -428,10 +431,35 @@ impl FileExplorer {
     }
 }
 
+struct CreateDirectoryResponse {
+    directory: Option<PathBuf>
+}
+
+impl CreateDirectoryResponse {
+    pub fn new(directory: PathBuf) -> Self {
+        Self {
+            directory: Some(directory)
+        }
+    }
+
+    pub fn new_empty() -> Self {
+        Self {
+            directory: None
+        }
+    }
+
+    pub fn directory(&self) -> Option<PathBuf> {
+        self.directory.clone()
+    }
+}
+
 struct CreateDirectoryDialog {
     open: bool,
     init: bool,
-    input: String
+    directory: Option<PathBuf>,
+
+    input: String,
+    error: Option<String>
 }
 
 impl CreateDirectoryDialog {
@@ -439,23 +467,28 @@ impl CreateDirectoryDialog {
         Self {
             open: false,
             init: false,
-            input: String::new()
+            directory: None,
+
+            input: String::new(),
+            error: None
         }
     }
 
-    pub fn open(&mut self) {
+    pub fn open(&mut self, directory: PathBuf) {
         self.reset();
+
         self.open = true;
         self.init = true;
+        self.directory = Some(directory);
     }
 
     pub fn close(&mut self) {
         self.reset();
     }
 
-    pub fn update(&mut self, ui: &mut egui::Ui) {
+    pub fn update(&mut self, ui: &mut egui::Ui) -> CreateDirectoryResponse {
         if !self.open {
-            return;
+            return CreateDirectoryResponse::new_empty();
         }
 
         ui.horizontal(|ui| {
@@ -467,34 +500,78 @@ impl CreateDirectoryDialog {
                 response.scroll_to_me(None);
                 response.request_focus();
 
+                self.error = self.validate_input();
                 self.init = false;
             }
 
-            // TODO: Validate that the filename is unique
-            if ui.button("✔").clicked() {
-                // TODO: Create folder and append it to the end of directory_content
-                self.reset();
+            if response.changed() {
+                self.error = self.validate_input();
             }
+
+            if ui_button(ui, "✔", self.error.is_none()) {
+                self.close()
+            }
+
             if ui.button("✖").clicked() {
-                self.reset();
+                self.close();
+            }
+
+            if let Some(err) = &self.error {
+                ui.label(err);
             }
         });
+
+        CreateDirectoryResponse::new_empty()
     }
 
     pub fn is_open(&self) -> bool {
         self.open
     }
 
+    fn validate_input(&mut self) -> Option<String> {
+        if self.input.is_empty() {
+            return Some("Name of the folder can not be empty".to_string());
+        }
+
+        let dir = self.directory.clone();
+        if let Some(mut x) = dir {
+            x.push(self.input.as_str());
+
+            if x.is_dir() {
+                return Some("A directory with the name already exists".to_string())
+            }
+        }
+        else {
+            // This error should not occur because the validate_input function is only
+            // called when the dialog is open and the directory is set.
+            // If this error occurs, there is most likely a bug in the code.
+            return Some("No directory given".to_string())
+        }
+
+        None
+    }
+
     fn reset(&mut self) {
         self.open = false;
         self.init = false;
+        self.directory = None;
         self.input.clear();
     }
 }
 
-fn ui_button_enabled_disabled(ui: &mut egui::Ui, size: egui::Vec2, text: &str,
-                              active: bool) -> bool {
-    if !active {
+fn ui_button(ui: &mut egui::Ui, text: &str, enabled: bool) -> bool {
+    if !enabled {
+        let c = ui.style().visuals.widgets.noninteractive.bg_fill;
+        let bg_color = egui::Color32::from_rgba_premultiplied(c.r(), c.g(), c.b(), 100);
+        let _ = ui.add(egui::Button::new(text).fill(bg_color));
+        return false;
+    }
+
+    ui.add(egui::Button::new(text)).clicked()
+}
+
+fn ui_button_sized(ui: &mut egui::Ui, size: egui::Vec2, text: &str, enabled: bool) -> bool {
+    if !enabled {
         let c = ui.style().visuals.widgets.noninteractive.bg_fill;
         let bg_color = egui::Color32::from_rgba_premultiplied(c.r(), c.g(), c.b(), 100);
         let _ = ui.add_sized(size, egui::Button::new(text).fill(bg_color));
