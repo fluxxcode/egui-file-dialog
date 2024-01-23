@@ -533,8 +533,7 @@ impl CreateDirectoryDialog {
             return Some("Name of the folder can not be empty".to_string());
         }
 
-        let dir = self.directory.clone();
-        if let Some(mut x) = dir {
+        if let Some(mut x) = self.directory.clone() {
             x.push(self.input.as_str());
 
             if x.is_dir() {
