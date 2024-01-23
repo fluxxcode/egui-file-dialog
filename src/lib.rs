@@ -436,9 +436,9 @@ struct CreateDirectoryResponse {
 }
 
 impl CreateDirectoryResponse {
-    pub fn new(directory: PathBuf) -> Self {
+    pub fn new(directory: &Path) -> Self {
         Self {
-            directory: Some(directory)
+            directory: Some(directory.to_path_buf())
         }
     }
 
@@ -487,9 +487,12 @@ impl CreateDirectoryDialog {
     }
 
     pub fn update(&mut self, ui: &mut egui::Ui) -> CreateDirectoryResponse {
+
         if !self.open {
             return CreateDirectoryResponse::new_empty();
         }
+
+        let mut result = CreateDirectoryResponse::new_empty();
 
         ui.horizontal(|ui| {
             ui.label("🗀");
@@ -509,7 +512,7 @@ impl CreateDirectoryDialog {
             }
 
             if ui_button(ui, "✔", self.error.is_none()) {
-                self.close()
+                result = self.create_directory();
             }
 
             if ui.button("✖").clicked() {
@@ -521,11 +524,35 @@ impl CreateDirectoryDialog {
             }
         });
 
-        CreateDirectoryResponse::new_empty()
+        result
     }
 
     pub fn is_open(&self) -> bool {
         self.open
+    }
+
+    fn create_directory(&mut self) -> CreateDirectoryResponse {
+        if let Some(mut dir) = self.directory.clone() {
+            dir.push(self.input.as_str());
+
+            match fs::create_dir(&dir) {
+                Ok(()) => {
+                    self.close();
+                    return CreateDirectoryResponse::new(dir.as_path());
+                }
+                Err(err) => {
+                    self.error = Some(format!("Error: {}", err.to_string()));
+                    return CreateDirectoryResponse::new_empty();
+                }
+            }
+        }
+
+        // This error should not occur because the create_directory function is only
+        // called when the dialog is open and the directory is set.
+        // If this error occurs, there is most likely a bug in the code.
+        self.error = Some("No directory given".to_string());
+
+        CreateDirectoryResponse::new_empty()
     }
 
     fn validate_input(&mut self) -> Option<String> {
