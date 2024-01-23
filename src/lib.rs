@@ -430,6 +430,7 @@ impl FileExplorer {
 
 struct CreateDirectoryDialog {
     open: bool,
+    init: bool,
     input: String
 }
 
@@ -437,6 +438,7 @@ impl CreateDirectoryDialog {
     pub fn new() -> Self {
         Self {
             open: false,
+            init: false,
             input: String::new()
         }
     }
@@ -444,6 +446,7 @@ impl CreateDirectoryDialog {
     pub fn open(&mut self) {
         self.reset();
         self.open = true;
+        self.init = true;
     }
 
     pub fn close(&mut self) {
@@ -456,8 +459,17 @@ impl CreateDirectoryDialog {
         }
 
         ui.horizontal(|ui| {
-            // TODO: Add "Create new folder" icon
-            ui.text_edit_singleline(&mut self.input).scroll_to_me(None);
+            ui.label("🗀");
+
+            let response = ui.text_edit_singleline(&mut self.input);
+
+            if self.init {
+                response.scroll_to_me(None);
+                response.request_focus();
+
+                self.init = false;
+            }
+
             // TODO: Validate that the filename is unique
             if ui.button("✔").clicked() {
                 // TODO: Create folder and append it to the end of directory_content
@@ -475,6 +487,7 @@ impl CreateDirectoryDialog {
 
     fn reset(&mut self) {
         self.open = false;
+        self.init = false;
         self.input.clear();
     }
 }
