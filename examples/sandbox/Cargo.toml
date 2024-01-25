@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 eframe = { version = "0.25.0", default-features = false, features = ["glow"] }
-egui-file-explorer = { version = "0.1.0", path = "../../"}
+egui-file-dialog = { version = "0.1.0", path = "../../"}

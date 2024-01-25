@@ -4,7 +4,7 @@ members = [
 ]
 
 [package]
-name = "egui-file-explorer"
+name = "egui-file-dialog"
 version = "0.1.0"
 edition = "2021"
 

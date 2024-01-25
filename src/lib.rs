@@ -5,13 +5,13 @@ use directories::UserDirs;
 use sysinfo::Disks;
 
 // NOTE: Currently not implemented, just an idea!
-pub enum FileExplorerMode {
+pub enum FileDialogMode {
     OpenFile,
     OpenDirectory,
     SaveFile
 }
 
-pub struct FileExplorer {
+pub struct FileDialog {
     user_directories: Option<UserDirs>,
     system_disks: Disks,
 
@@ -26,15 +26,15 @@ pub struct FileExplorer {
     search_value: String
 }
 
-impl Default for FileExplorer {
+impl Default for FileDialog {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl FileExplorer {
+impl FileDialog {
     pub fn new() -> Self {
-        FileExplorer {
+        FileDialog {
             user_directories: UserDirs::new(),
             system_disks: Disks::new_with_refreshed_list(),
 
@@ -58,7 +58,7 @@ impl FileExplorer {
 
     pub fn update(&mut self, ctx: &egui::Context) {
         // TODO: Make window title and options configurable
-        egui::Window::new("File explorer")
+        egui::Window::new("File dialog")
             .default_size([800.0, 500.0])
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top("fe_top_panel")

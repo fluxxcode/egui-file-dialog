@@ -1,14 +1,14 @@
 use eframe::egui;
-use egui_file_explorer::FileExplorer;
+use egui_file_dialog::FileDialog;
 
 struct MyApp {
-    file_explorer: FileExplorer
+    file_explorer: FileDialog
 }
 
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         let mut obj = Self {
-            file_explorer: FileExplorer::new()
+            file_explorer: FileDialog::new()
         };
         obj.file_explorer.open();
         obj
