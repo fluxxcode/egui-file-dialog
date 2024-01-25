@@ -4,14 +4,26 @@ use std::path::{Path, PathBuf};
 use directories::UserDirs;
 use sysinfo::Disks;
 
-// NOTE: Currently not implemented, just an idea!
-pub enum FileDialogMode {
-    OpenFile,
-    OpenDirectory,
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum DialogMode {
+    SelectFile,
+    SelectDirectory,
     SaveFile
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum DialogState {
+    Open,
+    Closed,
+    Selected(PathBuf),
+    Cancelled
+}
+
 pub struct FileDialog {
+    mode: DialogMode,
+    state: DialogState,
+    initial_directory: PathBuf,
+
     user_directories: Option<UserDirs>,
     system_disks: Disks,
 
@@ -22,6 +34,9 @@ pub struct FileDialog {
     create_directory_dialog: CreateDirectoryDialog,
 
     selected_item: Option<PathBuf>,
+    file_name_input: String,  // Only used when mode = DialogMode::SaveFile
+    file_name_input_error: Option<String>,
+
     scroll_to_selection: bool,
     search_value: String
 }
@@ -35,6 +50,10 @@ impl Default for FileDialog {
 impl FileDialog {
     pub fn new() -> Self {
         FileDialog {
+            mode: DialogMode::SelectDirectory,
+            state: DialogState::Closed,
+            initial_directory: std::env::current_dir().unwrap_or_default(),
+
             user_directories: UserDirs::new(),
             system_disks: Disks::new_with_refreshed_list(),
 
@@ -45,21 +64,60 @@ impl FileDialog {
             create_directory_dialog: CreateDirectoryDialog::new(),
 
             selected_item: None,
+            file_name_input: String::new(),
+            file_name_input_error: None,
+
             scroll_to_selection: false,
-            search_value: String::new(),
+            search_value: String::new()
         }
     }
 
-    // TODO: Enable option to set initial directory
-    pub fn open(&mut self) {
-        // TODO: Error handling
-        let _ = self.load_directory(Path::new("./"));
+    pub fn initial_directory(mut self, directory: PathBuf) -> Self {
+        self.initial_directory = directory.clone();
+        self
     }
 
-    pub fn update(&mut self, ctx: &egui::Context) {
-        // TODO: Make window title and options configurable
+    pub fn open(&mut self, mode: DialogMode) {
+        self.reset();
+
+        self.mode = mode;
+        self.state = DialogState::Open;
+
+        // TODO: Error handling
+        let _ = self.load_directory(&self.initial_directory.clone());
+    }
+
+    pub fn select_directory(&mut self) {
+        self.open(DialogMode::SelectDirectory);
+    }
+
+    pub fn select_file(&mut self) {
+        self.open(DialogMode::SelectFile);
+    }
+
+    pub fn save_file(&mut self) {
+        self.open(DialogMode::SaveFile);
+    }
+
+    pub fn mode(&self) -> DialogMode {
+        self.mode
+    }
+
+    pub fn state(&self) -> DialogState {
+        self.state.clone()
+    }
+
+    pub fn update(&mut self, ctx: &egui::Context) -> &Self {
+        if self.state != DialogState::Open {
+            return self;
+        }
+
+        let mut is_open = true;
+
         egui::Window::new("File dialog")
+            .open(&mut is_open)
             .default_size([800.0, 500.0])
+            .collapsible(false)
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top("fe_top_panel")
                     .resizable(false)
@@ -85,6 +143,13 @@ impl FileDialog {
                     self.update_central_panel(ui);
                 });
             });
+
+        // User closed the window without finishing the dialog
+        if !is_open {
+            self.cancel();
+        }
+
+        self
     }
 
     fn update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
@@ -195,22 +260,76 @@ impl FileDialog {
 
         ui.add_space(5.0);
 
-        ui.horizontal(|ui|{
-            ui.label("Selected item:");
+        ui.horizontal(|ui| {
+            match &self.mode {
+                DialogMode::SelectDirectory => ui.label("Selected directory:"),
+                DialogMode::SelectFile => ui.label("Selected file:"),
+                DialogMode::SaveFile => ui.label("File name:")
+            };
 
-            if let Some(x) = &self.selected_item {
-                if let Some(x) = x.file_name() {
-                    if let Some(x) = x.to_str() {
-                        ui.colored_label(ui.style().visuals.selection.bg_fill, x);
+            match &self.mode {
+                DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                    if self.is_selection_valid() {
+                        if let Some(x) = &self.selected_item {
+                            if let Some(name) = self.get_file_name(x) {
+                                ui.colored_label(ui.style().visuals.selection.bg_fill, name);
+                            }
+                        }
+                    }
+                },
+                DialogMode::SaveFile => {
+                    let response = ui.add(egui::TextEdit::singleline(&mut self.file_name_input));
+
+                    if response.changed() {
+                        self.file_name_input_error = self.validate_file_name_input();
+                    }
+
+                    if let Some(x) = &self.file_name_input_error {
+                        // TODO: Use error icon instead
+                        ui.label(x);
                     }
                 }
-            }
+            };
         });
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Open"));
+            let label = match &self.mode {
+                DialogMode::SelectDirectory | DialogMode::SelectFile => "Open",
+                DialogMode::SaveFile => "Save"
+            };
+
+            if ui_button_sized(ui, BUTTON_SIZE, label, self.is_selection_valid()) {
+                match &self.mode {
+                    DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                        // self.selected_item should always contain a value,
+                        // since self.is_selection_valid() validates the selection and
+                        // returns false if the selection is none.
+                        if let Some(selection) = self.selected_item.clone() {
+                            self.finish(selection);
+                        }
+                    },
+                    DialogMode::SaveFile => {
+                        // self.current_directory should always contain a value,
+                        // since self.is_selection_valid() makes sure there is no
+                        // file_name_input_error. The file_name_input_error
+                        // gets validated every time something changes
+                        // by the validate_file_name_input, which sets an error
+                        // if we are currently not in a directory.
+                        if let Some(path) = self.current_directory() {
+                            let mut full_path = path.to_path_buf();
+                            full_path.push(&self.file_name_input);
+
+                            self.finish(full_path);
+                        }
+                    }
+                }
+            }
+
             ui.add_space(ctx.style().spacing.item_spacing.y);
-            let _ = ui.add_sized(BUTTON_SIZE, egui::Button::new("Abort"));
+
+            if ui.add_sized(BUTTON_SIZE, egui::Button::new("Abort")).clicked() {
+                self.cancel();
+            }
         });
     }
 
@@ -228,19 +347,10 @@ impl FileDialog {
                 let data = std::mem::take(&mut self.directory_content);
 
                 for path in data.iter() {
-                    // Is there a way to write this better?
-                    let file_name = match path.file_name() {
-                        Some(x) => {
-                            match x.to_str() {
-                                Some(v) => v,
-                                _ => continue
-                            }
-                        },
-                        _ => continue
-                    };
+                    let Some(file_name) = self.get_file_name(path) else { continue; };
 
                     if !self.search_value.is_empty() &&
-                    !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
+                       !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
                         continue;
                     }
 
@@ -272,7 +382,15 @@ impl FileDialog {
                         }
 
                         self.selected_item = Some(path.clone());
-                        // TODO: Close file explorer
+
+                        if self.is_selection_valid() {
+                            // self.selected_item should always contain a value
+                            // since self.is_selection_valid() validates the selection
+                            // and returns false if the selection is none.
+                            if let Some(selection) = self.selected_item.clone() {
+                                self.finish(selection);
+                            }
+                        }
                     }
                 }
 
@@ -355,9 +473,84 @@ impl FileDialog {
         self.system_disks = disks;
     }
 
+    fn reset(&mut self) {
+        self.state = DialogState::Closed;
+
+        self.user_directories = UserDirs::new();
+        self.system_disks = Disks::new_with_refreshed_list();
+
+        self.directory_stack = vec![];
+        self.directory_offset = 0;
+        self.directory_content = vec![];
+
+        self.create_directory_dialog = CreateDirectoryDialog::new();
+
+        self.selected_item = None;
+        self.file_name_input = String::new();
+        self.scroll_to_selection = false;
+        self.search_value = String::new();
+    }
+
+    fn finish(&mut self, selected_item: PathBuf) {
+        self.state = DialogState::Selected(selected_item);
+    }
+
+    fn cancel(&mut self) {
+        self.state = DialogState::Cancelled;
+    }
+
     fn current_directory(&self) -> Option<&Path> {
         if let Some(x) = self.directory_stack.iter().nth_back(self.directory_offset) {
             return Some(x.as_path())
+        }
+
+        None
+    }
+
+    fn get_file_name(&self, file: &Path) -> Option<String> {
+        if let Some(x) = file.file_name() {
+            if let Some(x) = x.to_str() {
+                return Some(x.to_string());
+            }
+        }
+
+        None
+    }
+
+    fn is_selection_valid(&self) -> bool {
+        if let Some(selection) = &self.selected_item {
+            let file_name = self.get_file_name(selection);
+
+            return match &self.mode {
+                DialogMode::SelectDirectory => selection.is_dir() && file_name.is_some(),
+                DialogMode::SelectFile => selection.is_file() && file_name.is_some(),
+                DialogMode::SaveFile => self.file_name_input_error.is_none()
+            };
+        }
+
+        if self.mode == DialogMode::SaveFile && self.file_name_input_error.is_none() {
+            return true;
+        }
+
+        false
+    }
+
+    fn validate_file_name_input(&self) -> Option<String> {
+        if self.file_name_input.is_empty() {
+            return Some("The file name cannot be empty".to_string());
+        }
+
+        if let Some(x) = self.current_directory() {
+            let mut full_path = x.to_path_buf();
+            full_path.push(self.file_name_input.as_str());
+
+            if full_path.exists() && full_path.is_file() {
+                return Some("A file with this name already exists".to_string());
+            }
+        }
+        else {
+            // There is most likely a bug in the code if we get this error message!
+            return Some("Currently not in a directory".to_string())
         }
 
         None
@@ -442,6 +635,10 @@ impl FileDialog {
 
         // TODO: Sort content to display folders first
         // TODO: Implement "Show hidden files and folders" option
+
+        if self.mode == DialogMode::SaveFile {
+            self.file_name_input_error = self.validate_file_name_input();
+        }
 
         Ok(())
     }
@@ -536,6 +733,7 @@ impl CreateDirectoryDialog {
             }
 
             if let Some(err) = &self.error {
+                // TODO: Use error icon instead
                 ui.label(err);
             }
         });
