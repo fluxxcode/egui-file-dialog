@@ -585,11 +585,20 @@ impl CreateDirectoryDialog {
     }
 }
 
+#[inline]
+fn get_disabled_fill_color(ui: &egui::Ui) -> egui::Color32 {
+    let c = ui.style().visuals.widgets.noninteractive.bg_fill;
+    egui::Color32::from_rgba_premultiplied(c.r(), c.g(), c.b(), 100)
+}
+
 fn ui_button(ui: &mut egui::Ui, text: &str, enabled: bool) -> bool {
     if !enabled {
-        let c = ui.style().visuals.widgets.noninteractive.bg_fill;
-        let bg_color = egui::Color32::from_rgba_premultiplied(c.r(), c.g(), c.b(), 100);
-        let _ = ui.add(egui::Button::new(text).fill(bg_color));
+        let button = egui::Button::new(text)
+            .stroke(egui::Stroke::NONE)
+            .fill(get_disabled_fill_color(ui));
+
+        let _ = ui.add(button);
+
         return false;
     }
 
@@ -598,9 +607,12 @@ fn ui_button(ui: &mut egui::Ui, text: &str, enabled: bool) -> bool {
 
 fn ui_button_sized(ui: &mut egui::Ui, size: egui::Vec2, text: &str, enabled: bool) -> bool {
     if !enabled {
-        let c = ui.style().visuals.widgets.noninteractive.bg_fill;
-        let bg_color = egui::Color32::from_rgba_premultiplied(c.r(), c.g(), c.b(), 100);
-        let _ = ui.add_sized(size, egui::Button::new(text).fill(bg_color));
+        let button = egui::Button::new(text)
+            .stroke(egui::Stroke::NONE)
+            .fill(get_disabled_fill_color(ui));
+
+        let _ = ui.add_sized(size, button);
+
         return false;
     }
 
