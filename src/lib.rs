@@ -286,7 +286,8 @@ impl FileExplorer {
             self.directory_content = data;
 
             if let Some(dir) = self.create_directory_dialog.update(ui).directory() {
-                self.directory_content.push(dir);
+                self.directory_content.push(dir.clone());
+                self.selected_item = Some(dir);
             }
         });
     }
