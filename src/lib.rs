@@ -22,6 +22,7 @@ pub struct FileExplorer {
     create_directory_dialog: CreateDirectoryDialog,
 
     selected_item: Option<PathBuf>,
+    scroll_to_selection: bool,
     search_value: String
 }
 
@@ -44,6 +45,7 @@ impl FileExplorer {
             create_directory_dialog: CreateDirectoryDialog::new(),
 
             selected_item: None,
+            scroll_to_selection: false,
             search_value: String::new(),
         }
     }
@@ -271,6 +273,11 @@ impl FileExplorer {
 
                     let response = ui.selectable_label(selected, format!("{} {}", icon, file_name));
 
+                    if selected && self.scroll_to_selection {
+                        response.scroll_to_me(None);
+                        self.scroll_to_selection = false;
+                    }
+
                     if response.clicked() {
                         self.selected_item = Some(path.clone());
                     }
@@ -419,8 +426,8 @@ impl FileExplorer {
         let paths = fs::read_dir(path)?;
 
         self.create_directory_dialog.close();
-
         self.directory_content.clear();
+        self.scroll_to_selection = true;
 
         for path in paths {
             match path {
