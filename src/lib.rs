@@ -372,7 +372,7 @@ impl FileDialog {
                     }
 
                     if response.clicked() {
-                        self.selected_item = Some(path.clone());
+                        self.select_item(path.as_path());
                     }
 
                     if response.double_clicked() {
@@ -381,7 +381,7 @@ impl FileDialog {
                             return;
                         }
 
-                        self.selected_item = Some(path.clone());
+                        self.select_item(path.as_path());
 
                         if self.is_selection_valid() {
                             // self.selected_item should always contain a value
@@ -398,7 +398,7 @@ impl FileDialog {
 
                 if let Some(dir) = self.create_directory_dialog.update(ui).directory() {
                     self.directory_content.push(dir.clone());
-                    self.selected_item = Some(dir);
+                    self.select_item(dir.as_path());
                 }
             });
         });
@@ -561,6 +561,17 @@ impl FileDialog {
         }
 
         None
+    }
+
+    fn select_item(&mut self, path: &Path) {
+        self.selected_item = Some(path.to_path_buf());
+
+        if self.mode == DialogMode::SaveFile && path.is_file() {
+            if let Some(file_name) = self.get_file_name(path) {
+                self.file_name_input = file_name;
+                self.file_name_input_error = self.validate_file_name_input();
+            }
+        }
     }
 
     fn load_next_directory(&mut self) -> io::Result<()> {
