@@ -224,7 +224,7 @@ impl FileDialog {
 
             // Reload button
             if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("⟲")).clicked() {
-                let _ = self.reload_directory();
+                self.refresh();
             }
 
             // Search bar
@@ -489,6 +489,13 @@ impl FileDialog {
         self.file_name_input = String::new();
         self.scroll_to_selection = false;
         self.search_value = String::new();
+    }
+
+    fn refresh(&mut self) {
+        self.user_directories = UserDirs::new();
+        self.system_disks = Disks::new_with_refreshed_list();
+
+        let _ = self.reload_directory();
     }
 
     fn finish(&mut self, selected_item: PathBuf) {
