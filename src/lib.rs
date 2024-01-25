@@ -122,7 +122,7 @@ impl FileDialog {
                 egui::TopBottomPanel::top("fe_top_panel")
                     .resizable(false)
                     .show_inside(ui, |ui| {
-                        self.update_top_panel(ctx, ui);
+                        self.ui_update_top_panel(ctx, ui);
                     });
 
                 egui::SidePanel::left("fe_left_panel")
@@ -140,7 +140,7 @@ impl FileDialog {
                     });
 
                 egui::CentralPanel::default().show_inside(ui, |ui| {
-                    self.update_central_panel(ui);
+                    self.ui_update_central_panel(ui);
                 });
             });
 
@@ -152,7 +152,7 @@ impl FileDialog {
         self
     }
 
-    fn update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn ui_update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         const NAV_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
         const SEARCH_INPUT_WIDTH: f32 = 120.0;
 
@@ -247,11 +247,11 @@ impl FileDialog {
 
     fn update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            self.update_user_directories(ui);
+            self.ui_update_user_directories(ui);
 
             ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
 
-            self.update_devices(ui);
+            self.ui_update_devices(ui);
         });
     }
 
@@ -333,7 +333,7 @@ impl FileDialog {
         });
     }
 
-    fn update_central_panel(&mut self, ui: &mut egui::Ui) {
+    fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -404,7 +404,7 @@ impl FileDialog {
         });
     }
 
-    fn update_user_directories(&mut self, ui: &mut egui::Ui) {
+    fn ui_update_user_directories(&mut self, ui: &mut egui::Ui) {
         if let Some(dirs) = self.user_directories.clone() {
             ui.label("Places");
 
@@ -452,7 +452,7 @@ impl FileDialog {
         }
     }
 
-    fn update_devices(&mut self, ui: &mut egui::Ui) {
+    fn ui_update_devices(&mut self, ui: &mut egui::Ui) {
         ui.label("Devices");
 
         let disks = std::mem::take(&mut self.system_disks);
