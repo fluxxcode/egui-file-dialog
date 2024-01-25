@@ -186,24 +186,7 @@ impl FileDialog {
 
             ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
 
-            ui.label("Devices");
-
-            let disks = std::mem::take(&mut self.system_disks);
-
-            for disk in &disks {
-                // TODO: Get display name of the devices.
-                // Currently on linux "/dev/sda1" is returned.
-                let name = match disk.name().to_str() {
-                    Some(x) => x,
-                    None => continue
-                };
-
-                if ui.selectable_label(false, format!("🖴  {}", name)).clicked() {
-                    let _ = self.load_directory(disk.mount_point());
-                }
-            }
-
-            self.system_disks = disks;
+            self.update_devices(ui);
         });
     }
 
@@ -349,6 +332,27 @@ impl FileDialog {
                 }
             }
         }
+    }
+
+    fn update_devices(&mut self, ui: &mut egui::Ui) {
+        ui.label("Devices");
+
+        let disks = std::mem::take(&mut self.system_disks);
+
+        for disk in &disks {
+            // TODO: Get display name of the devices.
+            // Currently on linux "/dev/sda1" is returned.
+            let name = match disk.name().to_str() {
+                Some(x) => x,
+                None => continue
+            };
+
+            if ui.selectable_label(false, format!("🖴  {}", name)).clicked() {
+                let _ = self.load_directory(disk.mount_point());
+            }
+        }
+
+        self.system_disks = disks;
     }
 
     fn current_directory(&self) -> Option<&Path> {
