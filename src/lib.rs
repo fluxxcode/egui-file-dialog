@@ -179,28 +179,30 @@ impl FileExplorer {
     }
 
     fn update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        self.update_user_directories(ui);
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            self.update_user_directories(ui);
 
-        ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
+            ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
 
-        ui.label("Devices");
+            ui.label("Devices");
 
-        let disks = std::mem::take(&mut self.system_disks);
+            let disks = std::mem::take(&mut self.system_disks);
 
-        for disk in &disks {
-            // TODO: Get display name of the devices.
-            // Currently on linux "/dev/sda1" is returned.
-            let name = match disk.name().to_str() {
-                Some(x) => x,
-                None => continue
-            };
+            for disk in &disks {
+                // TODO: Get display name of the devices.
+                // Currently on linux "/dev/sda1" is returned.
+                let name = match disk.name().to_str() {
+                    Some(x) => x,
+                    None => continue
+                };
 
-            if ui.selectable_label(false, format!("🖴  {}", name)).clicked() {
-                let _ = self.load_directory(disk.mount_point());
+                if ui.selectable_label(false, format!("🖴  {}", name)).clicked() {
+                    let _ = self.load_directory(disk.mount_point());
+                }
             }
-        }
 
-        self.system_disks = disks;
+            self.system_disks = disks;
+        });
     }
 
     fn update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
@@ -228,67 +230,69 @@ impl FileExplorer {
     }
 
     fn update_central_panel(&mut self, ui: &mut egui::Ui) {
-        egui::containers::ScrollArea::vertical()
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-            // Temporarily take ownership of the directory contents to be able to
-            // update it in the for loop using load_directory.
-            // Otherwise we would get an error that `*self` cannot be borrowed as mutable
-            // more than once at a time.
-            // Make sure to return the function after updating the directory_content,
-            // otherwise the change will be overwritten with the last statement of the function.
-            let data = std::mem::take(&mut self.directory_content);
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            egui::containers::ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                // Temporarily take ownership of the directory contents to be able to
+                // update it in the for loop using load_directory.
+                // Otherwise we would get an error that `*self` cannot be borrowed as mutable
+                // more than once at a time.
+                // Make sure to return the function after updating the directory_content,
+                // otherwise the change will be overwritten with the last statement of the function.
+                let data = std::mem::take(&mut self.directory_content);
 
-            for path in data.iter() {
-                // Is there a way to write this better?
-                let file_name = match path.file_name() {
-                    Some(x) => {
-                        match x.to_str() {
-                            Some(v) => v,
-                            _ => continue
-                        }
-                    },
-                    _ => continue
-                };
+                for path in data.iter() {
+                    // Is there a way to write this better?
+                    let file_name = match path.file_name() {
+                        Some(x) => {
+                            match x.to_str() {
+                                Some(v) => v,
+                                _ => continue
+                            }
+                        },
+                        _ => continue
+                    };
 
-                if !self.search_value.is_empty() &&
-                   !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
-                    continue;
-                }
-
-                let icon = match path.is_dir() {
-                    true => "🗀",
-                    _ => "🖹"
-                };
-
-                let mut selected = false;
-                if let Some(x) = &self.selected_item {
-                    selected = x == path;
-                }
-
-                let response = ui.selectable_label(selected, format!("{} {}", icon, file_name));
-
-                if response.clicked() {
-                    self.selected_item = Some(path.clone());
-                }
-
-                if response.double_clicked() {
-                    if path.is_dir() {
-                        let _ = self.load_directory(path);
-                        return;
+                    if !self.search_value.is_empty() &&
+                    !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
+                        continue;
                     }
 
-                    self.selected_item = Some(path.clone());
-                    // TODO: Close file explorer
+                    let icon = match path.is_dir() {
+                        true => "🗀",
+                        _ => "🖹"
+                    };
+
+                    let mut selected = false;
+                    if let Some(x) = &self.selected_item {
+                        selected = x == path;
+                    }
+
+                    let response = ui.selectable_label(selected, format!("{} {}", icon, file_name));
+
+                    if response.clicked() {
+                        self.selected_item = Some(path.clone());
+                    }
+
+                    if response.double_clicked() {
+                        if path.is_dir() {
+                            let _ = self.load_directory(path);
+                            return;
+                        }
+
+                        self.selected_item = Some(path.clone());
+                        // TODO: Close file explorer
+                    }
                 }
-            }
 
-            self.directory_content = data;
+                self.directory_content = data;
 
-            if let Some(dir) = self.create_directory_dialog.update(ui).directory() {
-                self.directory_content.push(dir.clone());
-                self.selected_item = Some(dir);
-            }
+                if let Some(dir) = self.create_directory_dialog.update(ui).directory() {
+                    self.directory_content.push(dir.clone());
+                    self.selected_item = Some(dir);
+                }
+            });
         });
     }
 
