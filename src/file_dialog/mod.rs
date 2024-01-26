@@ -36,6 +36,8 @@ pub struct FileDialog {
     directory_offset: usize,
     directory_content: Vec<PathBuf>,
 
+    window_title: String,
+
     create_directory_dialog: CreateDirectoryDialog,
 
     selected_item: Option<PathBuf>,
@@ -66,6 +68,8 @@ impl FileDialog {
             directory_offset: 0,
             directory_content: vec![],
 
+            window_title: String::from("Select directory"),
+
             create_directory_dialog: CreateDirectoryDialog::new(),
 
             selected_item: None,
@@ -87,6 +91,12 @@ impl FileDialog {
 
         self.mode = mode;
         self.state = DialogState::Open;
+
+        self.window_title = match mode {
+            DialogMode::SelectDirectory => "📁 Select Folder".to_string(),
+            DialogMode::SelectFile => "📂 Open File".to_string(),
+            DialogMode::SaveFile => "📥 Save File".to_string()
+        };
 
         // TODO: Error handling
         let _ = self.load_directory(&self.initial_directory.clone());
@@ -119,7 +129,7 @@ impl FileDialog {
 
         let mut is_open = true;
 
-        egui::Window::new("File dialog")
+        egui::Window::new(&self.window_title)
             .open(&mut is_open)
             .default_size([800.0, 500.0])
             .collapsible(false)
