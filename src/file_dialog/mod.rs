@@ -135,13 +135,13 @@ impl FileDialog {
                     .default_width(150.0)
                     .width_range(100.0..=400.0)
                     .show_inside(ui, |ui| {
-                        self.update_left_panel(ctx, ui);
+                        self.ui_update_left_panel(ctx, ui);
                     });
 
                 egui::TopBottomPanel::bottom("fe_bottom_panel")
                     .resizable(false)
                     .show_inside(ui, |ui| {
-                        self.update_bottom_panel(ctx, ui);
+                        self.ui_update_bottom_panel(ctx, ui);
                     });
 
                 egui::CentralPanel::default().show_inside(ui, |ui| {
@@ -250,7 +250,7 @@ impl FileDialog {
         ui.add_space(ctx.style().spacing.item_spacing.y);
     }
 
-    fn update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn ui_update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             self.ui_update_user_directories(ui);
 
@@ -260,7 +260,7 @@ impl FileDialog {
         });
     }
 
-    fn update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn ui_update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
 
         ui.add_space(5.0);
