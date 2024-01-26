@@ -132,6 +132,7 @@ impl FileDialog {
         egui::Window::new(&self.window_title)
             .open(&mut is_open)
             .default_size([800.0, 500.0])
+            .min_width(335.0)
             .collapsible(false)
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top("fe_top_panel")
@@ -169,7 +170,6 @@ impl FileDialog {
 
     fn ui_update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         const NAV_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
-        const SEARCH_INPUT_WIDTH: f32 = 120.0;
 
         ui.horizontal(|ui| {
 
@@ -198,6 +198,9 @@ impl FileDialog {
                 }
             }
 
+            // Leave area for the reload button and search window
+            let path_display_width = ui.available_width() - 180.0;
+
             // Current path display
             egui::Frame::default()
                 .stroke(egui::Stroke::new(2.0, ctx.style().visuals.window_stroke.color))
@@ -209,7 +212,7 @@ impl FileDialog {
                         .auto_shrink([false, false])
                         .stick_to_right(true)
                         // TODO: Dynamically size scroll area to available width
-                        .max_width(500.0)
+                        .max_width(path_display_width)
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.style_mut().spacing.item_spacing.x /= 2.5;
@@ -251,7 +254,7 @@ impl FileDialog {
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                         ui.add_space(ctx.style().spacing.item_spacing.y);
                         ui.label("🔍");
-                        ui.add_sized(egui::Vec2::new(SEARCH_INPUT_WIDTH, 0.0),
+                        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
                                     egui::TextEdit::singleline(&mut self.search_value));
                     });
                 });
