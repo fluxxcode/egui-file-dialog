@@ -7,6 +7,7 @@ use sysinfo::Disks;
 mod create_directory_dialog;
 use create_directory_dialog::CreateDirectoryDialog;
 
+use crate::data::{DirectoryContent, DirectoryEntry};
 use crate::ui::ui_button_sized;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -34,13 +35,13 @@ pub struct FileDialog {
 
     directory_stack: Vec<PathBuf>,
     directory_offset: usize,
-    directory_content: Vec<PathBuf>,
+    directory_content: DirectoryContent,
 
     window_title: String,
 
     create_directory_dialog: CreateDirectoryDialog,
 
-    selected_item: Option<PathBuf>,
+    selected_item: Option<DirectoryEntry>,
     file_name_input: String,  // Only used when mode = DialogMode::SaveFile
     file_name_input_error: Option<String>,
 
@@ -66,7 +67,7 @@ impl FileDialog {
 
             directory_stack: vec![],
             directory_offset: 0,
-            directory_content: vec![],
+            directory_content: DirectoryContent::new(),
 
             window_title: String::from("Select directory"),
 
@@ -294,9 +295,7 @@ impl FileDialog {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
                     if self.is_selection_valid() {
                         if let Some(x) = &self.selected_item {
-                            if let Some(name) = self.get_file_name(x) {
-                                ui.colored_label(ui.style().visuals.selection.bg_fill, name);
-                            }
+                            ui.colored_label(ui.style().visuals.selection.bg_fill, x.file_name());
                         }
                     }
                 },
@@ -328,7 +327,7 @@ impl FileDialog {
                         // since self.is_selection_valid() validates the selection and
                         // returns false if the selection is none.
                         if let Some(selection) = self.selected_item.clone() {
-                            self.finish(selection);
+                            self.finish(selection.to_path_buf());
                         }
                     },
                     DialogMode::SaveFile => {
@@ -370,7 +369,7 @@ impl FileDialog {
                 let data = std::mem::take(&mut self.directory_content);
 
                 for path in data.iter() {
-                    let Some(file_name) = self.get_file_name(path) else { continue; };
+                    let file_name = path.file_name();
 
                     if !self.search_value.is_empty() &&
                        !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
@@ -395,23 +394,23 @@ impl FileDialog {
                     }
 
                     if response.clicked() {
-                        self.select_item(path.as_path());
+                        self.select_item(&path);
                     }
 
                     if response.double_clicked() {
                         if path.is_dir() {
-                            let _ = self.load_directory(path);
+                            let _ = self.load_directory(&path.to_path_buf());
                             return;
                         }
 
-                        self.select_item(path.as_path());
+                        self.select_item(&path);
 
                         if self.is_selection_valid() {
                             // self.selected_item should always contain a value
                             // since self.is_selection_valid() validates the selection
                             // and returns false if the selection is none.
                             if let Some(selection) = self.selected_item.clone() {
-                                self.finish(selection);
+                                self.finish(selection.to_path_buf());
                             }
                         }
                     }
@@ -419,9 +418,11 @@ impl FileDialog {
 
                 self.directory_content = data;
 
-                if let Some(dir) = self.create_directory_dialog.update(ui).directory() {
-                    self.directory_content.push(dir.clone());
-                    self.select_item(dir.as_path());
+                if let Some(path) = self.create_directory_dialog.update(ui).directory() {
+                    let entry = DirectoryEntry::from_path(&path);
+
+                    self.directory_content.push(entry.clone());
+                    self.select_item(&entry);
                 }
             });
         });
@@ -504,7 +505,7 @@ impl FileDialog {
 
         self.directory_stack = vec![];
         self.directory_offset = 0;
-        self.directory_content = vec![];
+        self.directory_content = DirectoryContent::new();
 
         self.create_directory_dialog = CreateDirectoryDialog::new();
 
@@ -537,23 +538,11 @@ impl FileDialog {
         None
     }
 
-    fn get_file_name(&self, file: &Path) -> Option<String> {
-        if let Some(x) = file.file_name() {
-            if let Some(x) = x.to_str() {
-                return Some(x.to_string());
-            }
-        }
-
-        None
-    }
-
     fn is_selection_valid(&self) -> bool {
         if let Some(selection) = &self.selected_item {
-            let file_name = self.get_file_name(selection);
-
             return match &self.mode {
-                DialogMode::SelectDirectory => selection.is_dir() && file_name.is_some(),
-                DialogMode::SelectFile => selection.is_file() && file_name.is_some(),
+                DialogMode::SelectDirectory => selection.is_dir(),
+                DialogMode::SelectFile => selection.is_file(),
                 DialogMode::SaveFile => self.file_name_input_error.is_none()
             };
         }
@@ -586,14 +575,12 @@ impl FileDialog {
         None
     }
 
-    fn select_item(&mut self, path: &Path) {
-        self.selected_item = Some(path.to_path_buf());
+    fn select_item(&mut self, dir_entry: &DirectoryEntry) {
+        self.selected_item = Some(dir_entry.clone());
 
-        if self.mode == DialogMode::SaveFile && path.is_file() {
-            if let Some(file_name) = self.get_file_name(path) {
-                self.file_name_input = file_name;
-                self.file_name_input_error = self.validate_file_name_input();
-            }
+        if self.mode == DialogMode::SaveFile && dir_entry.is_file() {
+            self.file_name_input = dir_entry.file_name().to_string();
+            self.file_name_input_error = self.validate_file_name_input();
         }
     }
 
@@ -661,21 +648,10 @@ impl FileDialog {
     }
 
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
-        let paths = fs::read_dir(path)?;
+        self.directory_content = DirectoryContent::from_path(path)?;
 
         self.create_directory_dialog.close();
-        self.directory_content.clear();
         self.scroll_to_selection = true;
-
-        for path in paths {
-            match path {
-                Ok(entry) => self.directory_content.push(entry.path()),
-                _ => continue
-            };
-        }
-
-        // TODO: Sort content to display folders first
-        // TODO: Implement "Show hidden files and folders" option
 
         if self.mode == DialogMode::SaveFile {
             self.file_name_input_error = self.validate_file_name_input();
