@@ -136,8 +136,8 @@ impl CreateDirectoryDialog {
         if let Some(mut x) = self.directory.clone() {
             x.push(self.input.as_str());
 
-            if x.is_dir() {
-                return Some("A directory with the name already exists".to_string())
+            if x.exists() {
+                return Some("A directory or file with the name already exists".to_string())
             }
         }
         else {
