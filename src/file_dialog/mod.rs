@@ -133,6 +133,7 @@ impl FileDialog {
             .open(&mut is_open)
             .default_size([800.0, 500.0])
             .min_width(335.0)
+            .min_height(200.0)
             .collapsible(false)
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top("fe_top_panel")
@@ -144,7 +145,7 @@ impl FileDialog {
                 egui::SidePanel::left("fe_left_panel")
                     .resizable(true)
                     .default_width(150.0)
-                    .width_range(100.0..=400.0)
+                    .width_range(90.0..=250.0)
                     .show_inside(ui, |ui| {
                         self.ui_update_left_panel(ctx, ui);
                     });
@@ -265,11 +266,15 @@ impl FileDialog {
 
     fn ui_update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            self.ui_update_user_directories(ui);
+            egui::containers::ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    self.ui_update_user_directories(ui);
 
-            ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
+                    ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
 
-            self.ui_update_devices(ui);
+                    self.ui_update_devices(ui);
+                });
         });
     }
 
