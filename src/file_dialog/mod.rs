@@ -563,8 +563,8 @@ impl FileDialog {
             let mut full_path = x.to_path_buf();
             full_path.push(self.file_name_input.as_str());
 
-            if full_path.exists() && full_path.is_file() {
-                return Some("A file with this name already exists".to_string());
+            if full_path.exists() {
+                return Some("A file or directory with this name already exists".to_string());
             }
         }
         else {
