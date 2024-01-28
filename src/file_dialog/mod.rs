@@ -425,7 +425,7 @@ impl FileDialog {
                         }
 
                         if response.clicked() {
-                            self.select_item(&path);
+                            self.select_item(path);
                         }
 
                         if response.double_clicked() {
@@ -434,7 +434,7 @@ impl FileDialog {
                                 return;
                             }
 
-                            self.select_item(&path);
+                            self.select_item(path);
 
                             if self.is_selection_valid() {
                                 // self.selected_item should always contain a value

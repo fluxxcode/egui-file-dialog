@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use sysinfo;
 
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct Disk {
