@@ -2,12 +2,11 @@ use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use directories::UserDirs;
-use sysinfo::Disks;
 
 mod create_directory_dialog;
 use create_directory_dialog::CreateDirectoryDialog;
 
-use crate::data::{DirectoryContent, DirectoryEntry};
+use crate::data::{DirectoryContent, DirectoryEntry, Disks};
 use crate::ui;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -530,15 +529,11 @@ impl FileDialog {
 
         let disks = std::mem::take(&mut self.system_disks);
 
-        for disk in &disks {
-            // TODO: Get display name of the devices.
-            // Currently on linux "/dev/sda1" is returned.
-            let name = match disk.name().to_str() {
-                Some(x) => x,
-                None => continue,
-            };
-
-            if ui.selectable_label(false, format!("🖴  {}", name)).clicked() {
+        for disk in disks.iter() {
+            if ui
+                .selectable_label(false, format!("🖴  {}", disk.display_name()))
+                .clicked()
+            {
                 let _ = self.load_directory(disk.mount_point());
             }
         }
