@@ -8,7 +8,7 @@ mod create_directory_dialog;
 use create_directory_dialog::CreateDirectoryDialog;
 
 use crate::data::{DirectoryContent, DirectoryEntry};
-use crate::ui::ui_button_sized;
+use crate::ui;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DialogMode {
@@ -177,24 +177,27 @@ impl FileDialog {
 
             // Navigation buttons
             if let Some(x) = self.current_directory() {
-                if ui_button_sized(ui, NAV_BUTTON_SIZE, "⏶", x.parent().is_some()) {
+                if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶",
+                                                     x.parent().is_some()) {
                     let _ = self.load_parent();
                 }
             }
             else {
-                let _ = ui_button_sized(ui, NAV_BUTTON_SIZE, "⏶", false);
+                let _ = ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", false);
             }
 
-            if ui_button_sized(ui, NAV_BUTTON_SIZE, "⏴",
-                               self.directory_offset + 1 < self.directory_stack.len()) {
+            if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏴",
+                    self.directory_offset + 1 < self.directory_stack.len()) {
                 let _ = self.load_previous_directory();
             }
 
-            if ui_button_sized(ui, NAV_BUTTON_SIZE, "⏵", self.directory_offset != 0) {
+            if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏵",
+                                                 self.directory_offset != 0) {
                 let _ = self.load_next_directory();
             }
 
-            if ui_button_sized(ui, NAV_BUTTON_SIZE, "+", !self.create_directory_dialog.is_open()) {
+            if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "+",
+                                                 !self.create_directory_dialog.is_open()) {
                 if let Some(x) = self.current_directory() {
                     self.create_directory_dialog.open(x.to_path_buf());
                 }
@@ -320,7 +323,8 @@ impl FileDialog {
                 DialogMode::SaveFile => "Save"
             };
 
-            if ui_button_sized(ui, BUTTON_SIZE, label, self.is_selection_valid()) {
+            if ui::button_sized_enabled_disabled(ui, BUTTON_SIZE, label,
+                                                 self.is_selection_valid()) {
                 match &self.mode {
                     DialogMode::SelectDirectory | DialogMode::SelectFile => {
                         // self.selected_item should always contain a value,

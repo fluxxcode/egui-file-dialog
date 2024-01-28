@@ -1,7 +1,7 @@
 use std::path::{PathBuf, Path};
 use std::fs;
 
-use crate::ui::ui_button;
+use crate::ui;
 
 pub struct CreateDirectoryResponse {
     directory: Option<PathBuf>
@@ -83,7 +83,7 @@ impl CreateDirectoryDialog {
                 self.error = self.validate_input();
             }
 
-            if ui_button(ui, "✔", self.error.is_none()) {
+            if ui::button_enabled_disabled(ui, "✔", self.error.is_none()) {
                 result = self.create_directory();
             }
 
