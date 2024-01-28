@@ -90,12 +90,12 @@ impl CreateDirectoryDialog {
             if ui.button("✖").clicked() {
                 self.close();
             }
-
-            if let Some(err) = &self.error {
-                // TODO: Use error icon instead
-                ui.label(err);
-            }
         });
+
+        if let Some(err) = &self.error {
+            ui.add_space(5.0);
+            ui.label(err);
+        }
 
         result
     }
@@ -136,15 +136,18 @@ impl CreateDirectoryDialog {
         if let Some(mut x) = self.directory.clone() {
             x.push(self.input.as_str());
 
-            if x.exists() {
-                return Some("A directory or file with the name already exists".to_string())
+            if x.is_dir() {
+                return Some("A directory with the name already exists".to_string());
+            }
+            if x.is_file() {
+                return Some("A file with the name already exists".to_string());
             }
         }
         else {
             // This error should not occur because the validate_input function is only
             // called when the dialog is open and the directory is set.
             // If this error occurs, there is most likely a bug in the code.
-            return Some("No directory given".to_string())
+            return Some("No directory given".to_string());
         }
 
         None
