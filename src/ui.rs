@@ -1,4 +1,3 @@
-
 pub fn button_enabled_disabled(ui: &mut egui::Ui, text: &str, enabled: bool) -> bool {
     if !enabled {
         let button = egui::Button::new(text)
@@ -13,8 +12,12 @@ pub fn button_enabled_disabled(ui: &mut egui::Ui, text: &str, enabled: bool) -> 
     ui.add(egui::Button::new(text)).clicked()
 }
 
-pub fn button_sized_enabled_disabled(ui: &mut egui::Ui, size: egui::Vec2, text: &str,
-                                     enabled: bool) -> bool {
+pub fn button_sized_enabled_disabled(
+    ui: &mut egui::Ui,
+    size: egui::Vec2,
+    text: &str,
+    enabled: bool,
+) -> bool {
     if !enabled {
         let button = egui::Button::new(text)
             .stroke(egui::Stroke::NONE)

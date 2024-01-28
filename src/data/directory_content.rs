@@ -1,18 +1,17 @@
 use std::path::{Path, PathBuf};
-use std::io;
-use std::fs;
+use std::{fs, io};
 
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct DirectoryEntry {
     path: PathBuf,
-    is_directory: bool
+    is_directory: bool,
 }
 
 impl DirectoryEntry {
     pub fn from_path(path: &Path) -> Self {
         Self {
             path: path.to_path_buf(),
-            is_directory: path.is_dir()
+            is_directory: path.is_dir(),
         }
     }
 
@@ -29,25 +28,26 @@ impl DirectoryEntry {
     }
 
     pub fn file_name(&self) -> &str {
-        self.path.file_name().and_then(|name| name.to_str()).unwrap_or_default()
+        self.path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default()
     }
 }
 
 #[derive(Default)]
 pub struct DirectoryContent {
-    content: Vec<DirectoryEntry>
+    content: Vec<DirectoryEntry>,
 }
 
 impl DirectoryContent {
     pub fn new() -> Self {
-        Self {
-            content: vec![]
-        }
+        Self { content: vec![] }
     }
 
     pub fn from_path(path: &Path) -> io::Result<Self> {
         Ok(Self {
-            content: load_directory(path)?
+            content: load_directory(path)?,
         })
     }
 
@@ -66,10 +66,8 @@ fn load_directory(path: &Path) -> io::Result<Vec<DirectoryEntry>> {
     let mut result: Vec<DirectoryEntry> = Vec::new();
     for path in paths {
         match path {
-            Ok(entry) => {
-                result.push(DirectoryEntry::from_path(entry.path().as_path()))
-            },
-            Err(_) => continue 
+            Ok(entry) => result.push(DirectoryEntry::from_path(entry.path().as_path())),
+            Err(_) => continue,
         };
     }
 

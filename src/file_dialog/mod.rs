@@ -1,5 +1,5 @@
-use std::{fs, io};
 use std::path::{Path, PathBuf};
+use std::{fs, io};
 
 use directories::UserDirs;
 use sysinfo::Disks;
@@ -14,7 +14,7 @@ use crate::ui;
 pub enum DialogMode {
     SelectFile,
     SelectDirectory,
-    SaveFile
+    SaveFile,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -22,7 +22,7 @@ pub enum DialogState {
     Open,
     Closed,
     Selected(PathBuf),
-    Cancelled
+    Cancelled,
 }
 
 pub struct FileDialog {
@@ -42,11 +42,11 @@ pub struct FileDialog {
     create_directory_dialog: CreateDirectoryDialog,
 
     selected_item: Option<DirectoryEntry>,
-    file_name_input: String,  // Only used when mode = DialogMode::SaveFile
+    file_name_input: String, // Only used when mode = DialogMode::SaveFile
     file_name_input_error: Option<String>,
 
     scroll_to_selection: bool,
-    search_value: String
+    search_value: String,
 }
 
 impl Default for FileDialog {
@@ -78,7 +78,7 @@ impl FileDialog {
             file_name_input_error: None,
 
             scroll_to_selection: false,
-            search_value: String::new()
+            search_value: String::new(),
         }
     }
 
@@ -96,7 +96,7 @@ impl FileDialog {
         self.window_title = match mode {
             DialogMode::SelectDirectory => "📁 Select Folder".to_string(),
             DialogMode::SelectFile => "📂 Open File".to_string(),
-            DialogMode::SaveFile => "📥 Save File".to_string()
+            DialogMode::SaveFile => "📥 Save File".to_string(),
         };
 
         // TODO: Error handling
@@ -174,30 +174,40 @@ impl FileDialog {
         const NAV_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
 
         ui.horizontal(|ui| {
-
             // Navigation buttons
             if let Some(x) = self.current_directory() {
-                if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶",
-                                                     x.parent().is_some()) {
+                if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", x.parent().is_some())
+                {
                     let _ = self.load_parent();
                 }
-            }
-            else {
+            } else {
                 let _ = ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", false);
             }
 
-            if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏴",
-                    self.directory_offset + 1 < self.directory_stack.len()) {
+            if ui::button_sized_enabled_disabled(
+                ui,
+                NAV_BUTTON_SIZE,
+                "⏴",
+                self.directory_offset + 1 < self.directory_stack.len(),
+            ) {
                 let _ = self.load_previous_directory();
             }
 
-            if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏵",
-                                                 self.directory_offset != 0) {
+            if ui::button_sized_enabled_disabled(
+                ui,
+                NAV_BUTTON_SIZE,
+                "⏵",
+                self.directory_offset != 0,
+            ) {
                 let _ = self.load_next_directory();
             }
 
-            if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "+",
-                                                 !self.create_directory_dialog.is_open()) {
+            if ui::button_sized_enabled_disabled(
+                ui,
+                NAV_BUTTON_SIZE,
+                "+",
+                !self.create_directory_dialog.is_open(),
+            ) {
                 if let Some(x) = self.current_directory() {
                     self.create_directory_dialog.open(x.to_path_buf());
                 }
@@ -208,7 +218,10 @@ impl FileDialog {
 
             // Current path display
             egui::Frame::default()
-                .stroke(egui::Stroke::new(1.0, ctx.style().visuals.window_stroke.color))
+                .stroke(egui::Stroke::new(
+                    1.0,
+                    ctx.style().visuals.window_stroke.color,
+                ))
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
                 .rounding(egui::Rounding::from(4.0))
                 .show(ui, |ui| {
@@ -222,7 +235,7 @@ impl FileDialog {
                                 ui.style_mut().spacing.item_spacing.x /= 2.5;
 
                                 let mut path = PathBuf::new();
-                                
+
                                 if let Some(data) = self.current_directory() {
                                     for (i, segment) in data.iter().enumerate() {
                                         path.push(segment);
@@ -233,10 +246,10 @@ impl FileDialog {
 
                                         // TODO: Maybe use selectable_label instead of button?
                                         // TODO: Write current directory (last item) in bold text
-                                        if ui.button(segment.to_str().unwrap_or("<ERR>"))
-                                            .clicked() {
-                                                let _ = self.load_directory(path.as_path());
-                                                return;
+                                        if ui.button(segment.to_str().unwrap_or("<ERR>")).clicked()
+                                        {
+                                            let _ = self.load_directory(path.as_path());
+                                            return;
                                         }
                                     }
                                 }
@@ -245,21 +258,29 @@ impl FileDialog {
                 });
 
             // Reload button
-            if ui.add_sized(NAV_BUTTON_SIZE, egui::Button::new("⟲")).clicked() {
+            if ui
+                .add_sized(NAV_BUTTON_SIZE, egui::Button::new("⟲"))
+                .clicked()
+            {
                 self.refresh();
             }
 
             // Search bar
             egui::Frame::default()
-                .stroke(egui::Stroke::new(1.0, ctx.style().visuals.window_stroke.color))
+                .stroke(egui::Stroke::new(
+                    1.0,
+                    ctx.style().visuals.window_stroke.color,
+                ))
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
                 .rounding(egui::Rounding::from(4.0))
                 .show(ui, |ui| {
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                         ui.add_space(ctx.style().spacing.item_spacing.y);
                         ui.label("🔍");
-                        ui.add_sized(egui::Vec2::new(ui.available_width(), 0.0),
-                                    egui::TextEdit::singleline(&mut self.search_value));
+                        ui.add_sized(
+                            egui::Vec2::new(ui.available_width(), 0.0),
+                            egui::TextEdit::singleline(&mut self.search_value),
+                        );
                     });
                 });
         });
@@ -290,7 +311,7 @@ impl FileDialog {
             match &self.mode {
                 DialogMode::SelectDirectory => ui.label("Selected directory:"),
                 DialogMode::SelectFile => ui.label("Selected file:"),
-                DialogMode::SaveFile => ui.label("File name:")
+                DialogMode::SaveFile => ui.label("File name:"),
             };
 
             match &self.mode {
@@ -300,7 +321,7 @@ impl FileDialog {
                             ui.colored_label(ui.style().visuals.selection.bg_fill, x.file_name());
                         }
                     }
-                },
+                }
                 DialogMode::SaveFile => {
                     let response = ui.add(egui::TextEdit::singleline(&mut self.file_name_input));
 
@@ -319,11 +340,11 @@ impl FileDialog {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => "Open",
-                DialogMode::SaveFile => "Save"
+                DialogMode::SaveFile => "Save",
             };
 
-            if ui::button_sized_enabled_disabled(ui, BUTTON_SIZE, label,
-                                                 self.is_selection_valid()) {
+            if ui::button_sized_enabled_disabled(ui, BUTTON_SIZE, label, self.is_selection_valid())
+            {
                 match &self.mode {
                     DialogMode::SelectDirectory | DialogMode::SelectFile => {
                         // self.selected_item should always contain a value,
@@ -332,7 +353,7 @@ impl FileDialog {
                         if let Some(selection) = self.selected_item.clone() {
                             self.finish(selection.to_path_buf());
                         }
-                    },
+                    }
                     DialogMode::SaveFile => {
                         // self.current_directory should always contain a value,
                         // since self.is_selection_valid() makes sure there is no
@@ -352,7 +373,10 @@ impl FileDialog {
 
             ui.add_space(ctx.style().spacing.item_spacing.y);
 
-            if ui.add_sized(BUTTON_SIZE, egui::Button::new("Abort")).clicked() {
+            if ui
+                .add_sized(BUTTON_SIZE, egui::Button::new("Abort"))
+                .clicked()
+            {
                 self.cancel();
             }
         });
@@ -363,71 +387,76 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                // Temporarily take ownership of the directory contents to be able to
-                // update it in the for loop using load_directory.
-                // Otherwise we would get an error that `*self` cannot be borrowed as mutable
-                // more than once at a time.
-                // Make sure to return the function after updating the directory_content,
-                // otherwise the change will be overwritten with the last statement of the function.
-                let data = std::mem::take(&mut self.directory_content);
+                    // Temporarily take ownership of the directory contents to be able to
+                    // update it in the for loop using load_directory.
+                    // Otherwise we would get an error that `*self` cannot be borrowed as mutable
+                    // more than once at a time.
+                    // Make sure to return the function after updating the directory_content,
+                    // otherwise the change will be overwritten with the last statement
+                    // of the function.
+                    let data = std::mem::take(&mut self.directory_content);
 
-                for path in data.iter() {
-                    let file_name = path.file_name();
+                    for path in data.iter() {
+                        let file_name = path.file_name();
 
-                    if !self.search_value.is_empty() &&
-                       !file_name.to_lowercase().contains(&self.search_value.to_lowercase()) {
-                        continue;
-                    }
-
-                    let icon = match path.is_dir() {
-                        true => "🗀",
-                        _ => "🖹"
-                    };
-
-                    let mut selected = false;
-                    if let Some(x) = &self.selected_item {
-                        selected = x == path;
-                    }
-
-                    let response = ui.selectable_label(selected, format!("{} {}", icon, file_name));
-
-                    if selected && self.scroll_to_selection {
-                        response.scroll_to_me(None);
-                        self.scroll_to_selection = false;
-                    }
-
-                    if response.clicked() {
-                        self.select_item(&path);
-                    }
-
-                    if response.double_clicked() {
-                        if path.is_dir() {
-                            let _ = self.load_directory(&path.to_path_buf());
-                            return;
+                        if !self.search_value.is_empty()
+                            && !file_name
+                                .to_lowercase()
+                                .contains(&self.search_value.to_lowercase())
+                        {
+                            continue;
                         }
 
-                        self.select_item(&path);
+                        let icon = match path.is_dir() {
+                            true => "🗀",
+                            _ => "🖹",
+                        };
 
-                        if self.is_selection_valid() {
-                            // self.selected_item should always contain a value
-                            // since self.is_selection_valid() validates the selection
-                            // and returns false if the selection is none.
-                            if let Some(selection) = self.selected_item.clone() {
-                                self.finish(selection.to_path_buf());
+                        let mut selected = false;
+                        if let Some(x) = &self.selected_item {
+                            selected = x == path;
+                        }
+
+                        let response =
+                            ui.selectable_label(selected, format!("{} {}", icon, file_name));
+
+                        if selected && self.scroll_to_selection {
+                            response.scroll_to_me(None);
+                            self.scroll_to_selection = false;
+                        }
+
+                        if response.clicked() {
+                            self.select_item(&path);
+                        }
+
+                        if response.double_clicked() {
+                            if path.is_dir() {
+                                let _ = self.load_directory(&path.to_path_buf());
+                                return;
+                            }
+
+                            self.select_item(&path);
+
+                            if self.is_selection_valid() {
+                                // self.selected_item should always contain a value
+                                // since self.is_selection_valid() validates the selection
+                                // and returns false if the selection is none.
+                                if let Some(selection) = self.selected_item.clone() {
+                                    self.finish(selection.to_path_buf());
+                                }
                             }
                         }
                     }
-                }
 
-                self.directory_content = data;
+                    self.directory_content = data;
 
-                if let Some(path) = self.create_directory_dialog.update(ui).directory() {
-                    let entry = DirectoryEntry::from_path(&path);
+                    if let Some(path) = self.create_directory_dialog.update(ui).directory() {
+                        let entry = DirectoryEntry::from_path(&path);
 
-                    self.directory_content.push(entry.clone());
-                    self.select_item(&entry);
-                }
-            });
+                        self.directory_content.push(entry.clone());
+                        self.select_item(&entry);
+                    }
+                });
         });
     }
 
@@ -435,44 +464,61 @@ impl FileDialog {
         if let Some(dirs) = self.user_directories.clone() {
             ui.label("Places");
 
-            if ui.selectable_label(self.current_directory() == Some(dirs.home_dir()),
-                                   "🏠  Home").clicked() {
+            if ui
+                .selectable_label(
+                    self.current_directory() == Some(dirs.home_dir()),
+                    "🏠  Home",
+                )
+                .clicked()
+            {
                 let _ = self.load_directory(dirs.home_dir());
             }
 
             if let Some(path) = dirs.desktop_dir() {
-                if ui.selectable_label(self.current_directory() == Some(path),
-                                       "🖵  Desktop").clicked() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🖵  Desktop")
+                    .clicked()
+                {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.document_dir() {
-                if ui.selectable_label(self.current_directory() == Some(path),
-                                       "🗐  Documents").clicked() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🗐  Documents")
+                    .clicked()
+                {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.download_dir() {
-                if ui.selectable_label(self.current_directory() == Some(path),
-                                       "📥  Downloads").clicked() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "📥  Downloads")
+                    .clicked()
+                {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.audio_dir() {
-                if ui.selectable_label(self.current_directory() == Some(path),
-                                       "🎵  Audio").clicked() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🎵  Audio")
+                    .clicked()
+                {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.picture_dir() {
-                if ui.selectable_label(self.current_directory() == Some(path),
-                                       "🖼  Pictures").clicked() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🖼  Pictures")
+                    .clicked()
+                {
                     let _ = self.load_directory(path);
                 }
             }
             if let Some(path) = dirs.video_dir() {
-                if ui.selectable_label(self.current_directory() == Some(path),
-                                       "🎞  Videos").clicked() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🎞  Videos")
+                    .clicked()
+                {
                     let _ = self.load_directory(path);
                 }
             }
@@ -489,7 +535,7 @@ impl FileDialog {
             // Currently on linux "/dev/sda1" is returned.
             let name = match disk.name().to_str() {
                 Some(x) => x,
-                None => continue
+                None => continue,
             };
 
             if ui.selectable_label(false, format!("🖴  {}", name)).clicked() {
@@ -535,7 +581,7 @@ impl FileDialog {
 
     fn current_directory(&self) -> Option<&Path> {
         if let Some(x) = self.directory_stack.iter().nth_back(self.directory_offset) {
-            return Some(x.as_path())
+            return Some(x.as_path());
         }
 
         None
@@ -546,7 +592,7 @@ impl FileDialog {
             return match &self.mode {
                 DialogMode::SelectDirectory => selection.is_dir(),
                 DialogMode::SelectFile => selection.is_file(),
-                DialogMode::SaveFile => self.file_name_input_error.is_none()
+                DialogMode::SaveFile => self.file_name_input_error.is_none(),
             };
         }
 
@@ -572,10 +618,9 @@ impl FileDialog {
             if full_path.is_file() {
                 return Some("A file with the name already exists".to_string());
             }
-        }
-        else {
+        } else {
             // There is most likely a bug in the code if we get this error message!
-            return Some("Currently not in a directory".to_string())
+            return Some("Currently not in a directory".to_string());
         }
 
         None
@@ -606,11 +651,11 @@ impl FileDialog {
     fn load_previous_directory(&mut self) -> io::Result<()> {
         if self.directory_offset + 1 >= self.directory_stack.len() {
             // There is no previous directory that can be loaded
-            return Ok(())
+            return Ok(());
         }
 
         self.directory_offset += 1;
-    
+
         // Copy path and load directory
         let path = self.current_directory().unwrap().to_path_buf();
         self.load_directory_content(path.as_path())
@@ -644,7 +689,8 @@ impl FileDialog {
         }
 
         if self.directory_offset != 0 && self.directory_stack.len() > self.directory_offset {
-            self.directory_stack.drain(self.directory_stack.len() - self.directory_offset..);
+            self.directory_stack
+                .drain(self.directory_stack.len() - self.directory_offset..);
         }
 
         self.directory_stack.push(fs::canonicalize(path)?);

@@ -1,15 +1,14 @@
-
 use std::path::PathBuf;
 
 use eframe::egui;
-use egui_file_dialog::{FileDialog, DialogState, DialogMode};
+use egui_file_dialog::{DialogMode, DialogState, FileDialog};
 
 struct MyApp {
     file_explorer: FileDialog,
 
     selected_directory: Option<PathBuf>,
     selected_file: Option<PathBuf>,
-    saved_file: Option<PathBuf>
+    saved_file: Option<PathBuf>,
 }
 
 impl MyApp {
@@ -19,7 +18,7 @@ impl MyApp {
 
             selected_directory: None,
             selected_file: None,
-            saved_file: None
+            saved_file: None,
         }
     }
 }
@@ -52,13 +51,11 @@ impl eframe::App for MyApp {
             ui.label(format!("File to save: {:?}", self.saved_file));
 
             match self.file_explorer.update(ctx).state() {
-                DialogState::Selected(path) => {
-                    match self.file_explorer.mode() {
-                        DialogMode::SelectDirectory => self.selected_directory = Some(path),
-                        DialogMode::SelectFile => self.selected_file = Some(path),
-                        DialogMode::SaveFile => self.saved_file = Some(path)
-                    }
-                }
+                DialogState::Selected(path) => match self.file_explorer.mode() {
+                    DialogMode::SelectDirectory => self.selected_directory = Some(path),
+                    DialogMode::SelectFile => self.selected_file = Some(path),
+                    DialogMode::SaveFile => self.saved_file = Some(path),
+                },
                 _ => {}
             };
         });
@@ -67,13 +64,13 @@ impl eframe::App for MyApp {
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default() .with_inner_size([1080.0, 720.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([1080.0, 720.0]),
         ..Default::default()
     };
 
     eframe::run_native(
         "My egui application",
         options,
-        Box::new(|ctx| Box::new(MyApp::new(ctx)))
+        Box::new(|ctx| Box::new(MyApp::new(ctx))),
     )
 }

@@ -1,23 +1,21 @@
-use std::path::{PathBuf, Path};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::ui;
 
 pub struct CreateDirectoryResponse {
-    directory: Option<PathBuf>
+    directory: Option<PathBuf>,
 }
 
 impl CreateDirectoryResponse {
     pub fn new(directory: &Path) -> Self {
         Self {
-            directory: Some(directory.to_path_buf())
+            directory: Some(directory.to_path_buf()),
         }
     }
 
     pub fn new_empty() -> Self {
-        Self {
-            directory: None
-        }
+        Self { directory: None }
     }
 
     pub fn directory(&self) -> Option<PathBuf> {
@@ -31,7 +29,7 @@ pub struct CreateDirectoryDialog {
     directory: Option<PathBuf>,
 
     input: String,
-    error: Option<String>
+    error: Option<String>,
 }
 
 impl CreateDirectoryDialog {
@@ -42,7 +40,7 @@ impl CreateDirectoryDialog {
             directory: None,
 
             input: String::new(),
-            error: None
+            error: None,
         }
     }
 
@@ -59,7 +57,6 @@ impl CreateDirectoryDialog {
     }
 
     pub fn update(&mut self, ui: &mut egui::Ui) -> CreateDirectoryResponse {
-
         if !self.open {
             return CreateDirectoryResponse::new_empty();
         }
@@ -142,8 +139,7 @@ impl CreateDirectoryDialog {
             if x.is_file() {
                 return Some("A file with the name already exists".to_string());
             }
-        }
-        else {
+        } else {
             // This error should not occur because the validate_input function is only
             // called when the dialog is open and the directory is set.
             // If this error occurs, there is most likely a bug in the code.

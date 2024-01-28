@@ -1,6 +1,5 @@
-
 mod file_dialog;
-pub use file_dialog::{FileDialog, DialogMode, DialogState};
+pub use file_dialog::{DialogMode, DialogState, FileDialog};
 
-mod ui;
 mod data;
+mod ui;
