@@ -208,15 +208,14 @@ impl FileDialog {
 
             // Current path display
             egui::Frame::default()
-                .stroke(egui::Stroke::new(2.0, ctx.style().visuals.window_stroke.color))
+                .stroke(egui::Stroke::new(1.0, ctx.style().visuals.window_stroke.color))
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
-                .rounding(egui::Rounding::from(5.0))
+                .rounding(egui::Rounding::from(4.0))
                 .show(ui, |ui| {
                     // TODO: Enable scrolling with mouse wheel
                     egui::ScrollArea::horizontal()
                         .auto_shrink([false, false])
                         .stick_to_right(true)
-                        // TODO: Dynamically size scroll area to available width
                         .max_width(path_display_width)
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
@@ -252,9 +251,9 @@ impl FileDialog {
 
             // Search bar
             egui::Frame::default()
-                .stroke(egui::Stroke::new(2.0, ctx.style().visuals.window_stroke.color))
+                .stroke(egui::Stroke::new(1.0, ctx.style().visuals.window_stroke.color))
                 .inner_margin(egui::Margin::symmetric(4.0, 4.0))
-                .rounding(egui::Rounding::from(5.0))
+                .rounding(egui::Rounding::from(4.0))
                 .show(ui, |ui| {
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                         ui.add_space(ctx.style().spacing.item_spacing.y);
