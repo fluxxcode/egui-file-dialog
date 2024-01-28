@@ -34,6 +34,7 @@ pub struct FileDialog {
     directory_stack: Vec<PathBuf>,
     directory_offset: usize,
     directory_content: DirectoryContent,
+    directory_error: Option<String>,
 
     window_title: String,
 
@@ -66,6 +67,7 @@ impl FileDialog {
             directory_stack: vec![],
             directory_offset: 0,
             directory_content: DirectoryContent::new(),
+            directory_error: None,
 
             window_title: String::from("Select directory"),
 
@@ -85,7 +87,7 @@ impl FileDialog {
         self
     }
 
-    pub fn open(&mut self, mode: DialogMode) {
+    pub fn open(&mut self, mode: DialogMode) -> io::Result<()> {
         self.reset();
 
         self.mode = mode;
@@ -97,20 +99,19 @@ impl FileDialog {
             DialogMode::SaveFile => "📥 Save File".to_string(),
         };
 
-        // TODO: Error handling
-        let _ = self.load_directory(&self.initial_directory.clone());
+        self.load_directory(&self.initial_directory.clone())
     }
 
     pub fn select_directory(&mut self) {
-        self.open(DialogMode::SelectDirectory);
+        let _ = self.open(DialogMode::SelectDirectory);
     }
 
     pub fn select_file(&mut self) {
-        self.open(DialogMode::SelectFile);
+        let _ = self.open(DialogMode::SelectFile);
     }
 
     pub fn save_file(&mut self) {
-        self.open(DialogMode::SaveFile);
+        let _ = self.open(DialogMode::SaveFile);
     }
 
     pub fn mode(&self) -> DialogMode {
@@ -176,7 +177,7 @@ impl FileDialog {
             if let Some(x) = self.current_directory() {
                 if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", x.parent().is_some())
                 {
-                    let _ = self.load_parent();
+                    let _ = self.load_parent_directory();
                 }
             } else {
                 let _ = ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", false);
@@ -381,6 +382,13 @@ impl FileDialog {
     }
 
     fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
+        if let Some(err) = &self.directory_error {
+            ui.centered_and_justified(|ui| {
+                ui.colored_label(egui::Color32::RED, format!("⚠ {}", err));
+            });
+            return;
+        }
+
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -655,7 +663,7 @@ impl FileDialog {
         self.load_directory_content(path.as_path())
     }
 
-    fn load_parent(&mut self) -> io::Result<()> {
+    fn load_parent_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
             if let Some(x) = x.to_path_buf().parent() {
                 return self.load_directory(x);
@@ -687,14 +695,30 @@ impl FileDialog {
                 .drain(self.directory_stack.len() - self.directory_offset..);
         }
 
-        self.directory_stack.push(fs::canonicalize(path)?);
+        let full_path = match fs::canonicalize(path) {
+            Ok(path) => path,
+            Err(err) => {
+                self.directory_error = Some(err.to_string());
+                return Err(err);
+            }
+        };
+
+        self.directory_stack.push(full_path);
         self.directory_offset = 0;
 
         self.load_directory_content(path)
     }
 
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
-        self.directory_content = DirectoryContent::from_path(path)?;
+        self.directory_error = None;
+
+        self.directory_content = match DirectoryContent::from_path(path) {
+            Ok(content) => content,
+            Err(err) => {
+                self.directory_error = Some(err.to_string());
+                return Err(err);
+            }
+        };
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;
