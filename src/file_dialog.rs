@@ -3,8 +3,7 @@ use std::{fs, io};
 
 use directories::UserDirs;
 
-mod create_directory_dialog;
-use create_directory_dialog::CreateDirectoryDialog;
+use crate::create_directory_dialog::CreateDirectoryDialog;
 
 use crate::data::{DirectoryContent, DirectoryEntry, Disks};
 use crate::ui;
