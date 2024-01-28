@@ -69,7 +69,7 @@ impl CreateDirectoryDialog {
             let response = ui.text_edit_singleline(&mut self.input);
 
             if self.init {
-                response.scroll_to_me(None);
+                response.scroll_to_me(Some(egui::Align::Center));
                 response.request_focus();
 
                 self.error = self.validate_input();

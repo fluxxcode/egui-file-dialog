@@ -427,7 +427,7 @@ impl FileDialog {
                             ui.selectable_label(selected, format!("{} {}", icon, file_name));
 
                         if selected && self.scroll_to_selection {
-                            response.scroll_to_me(None);
+                            response.scroll_to_me(Some(egui::Align::Center));
                             self.scroll_to_selection = false;
                         }
 
