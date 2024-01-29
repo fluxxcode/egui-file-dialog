@@ -89,7 +89,14 @@ fn load_directory(path: &Path, include_files: bool) -> io::Result<Vec<DirectoryE
         };
     }
 
-    // TODO: Sort content to display folders first
+    result.sort_by(|a, b| match a.is_dir() == b.is_dir() {
+        true => a.file_name().cmp(b.file_name()),
+        false => match a.is_dir() {
+            true => std::cmp::Ordering::Less,
+            false => std::cmp::Ordering::Greater
+        }
+    });
+
     // TODO: Implement "Show hidden files and folders" option
 
     Ok(result)
