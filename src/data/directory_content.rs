@@ -5,6 +5,7 @@ use std::{fs, io};
 pub struct DirectoryEntry {
     path: PathBuf,
     is_directory: bool,
+    is_system_file: bool
 }
 
 impl DirectoryEntry {
@@ -12,6 +13,7 @@ impl DirectoryEntry {
         Self {
             path: path.to_path_buf(),
             is_directory: path.is_dir(),
+            is_system_file: !path.is_dir() && !path.is_file()
         }
     }
 
@@ -23,8 +25,16 @@ impl DirectoryEntry {
         !self.is_directory
     }
 
+    pub fn is_system_file(&self) -> bool {
+        self.is_system_file
+    }
+
     pub fn to_path_buf(&self) -> PathBuf {
         self.path.clone()
+    }
+
+    pub fn as_path(&self) -> &Path {
+        &self.path
     }
 
     pub fn file_name(&self) -> &str {
@@ -67,10 +77,17 @@ fn load_directory(path: &Path, include_files: bool) -> io::Result<Vec<DirectoryE
     for path in paths {
         match path {
             Ok(entry) => {
-                if !include_files && entry.path().is_file() {
+                let entry = DirectoryEntry::from_path(entry.path().as_path());
+
+                if entry.is_system_file() {
                     continue;
                 }
-                result.push(DirectoryEntry::from_path(entry.path().as_path()))
+
+                if !include_files && entry.is_file() {
+                    continue;
+                }
+
+                result.push(entry);
             }
             Err(_) => continue,
         };
