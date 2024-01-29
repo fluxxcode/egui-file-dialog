@@ -431,7 +431,6 @@ impl FileDialog {
 
                         if selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
-                            self.scroll_to_selection = false;
                         }
 
                         if response.clicked() {
@@ -457,6 +456,7 @@ impl FileDialog {
                         }
                     }
 
+                    self.scroll_to_selection = false;
                     self.directory_content = data;
 
                     if let Some(path) = self.create_directory_dialog.update(ui).directory() {
