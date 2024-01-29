@@ -27,6 +27,7 @@ pub struct FileDialog {
     mode: DialogMode,
     state: DialogState,
     initial_directory: PathBuf,
+    show_files: bool,
 
     user_directories: Option<UserDirs>,
     system_disks: Disks,
@@ -60,6 +61,7 @@ impl FileDialog {
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
             initial_directory: std::env::current_dir().unwrap_or_default(),
+            show_files: true,
 
             user_directories: UserDirs::new(),
             system_disks: Disks::new_with_refreshed_list(),
@@ -87,11 +89,12 @@ impl FileDialog {
         self
     }
 
-    pub fn open(&mut self, mode: DialogMode) -> io::Result<()> {
+    pub fn open(&mut self, mode: DialogMode, show_files: bool) -> io::Result<()> {
         self.reset();
 
         self.mode = mode;
         self.state = DialogState::Open;
+        self.show_files = show_files;
 
         self.window_title = match mode {
             DialogMode::SelectDirectory => "📁 Select Folder".to_string(),
@@ -103,15 +106,15 @@ impl FileDialog {
     }
 
     pub fn select_directory(&mut self) {
-        let _ = self.open(DialogMode::SelectDirectory);
+        let _ = self.open(DialogMode::SelectDirectory, false);
     }
 
     pub fn select_file(&mut self) {
-        let _ = self.open(DialogMode::SelectFile);
+        let _ = self.open(DialogMode::SelectFile, true);
     }
 
     pub fn save_file(&mut self) {
-        let _ = self.open(DialogMode::SaveFile);
+        let _ = self.open(DialogMode::SaveFile, true);
     }
 
     pub fn mode(&self) -> DialogMode {
@@ -550,8 +553,8 @@ impl FileDialog {
 
     fn reset(&mut self) {
         self.state = DialogState::Closed;
+        self.show_files = true;
 
-        self.user_directories = UserDirs::new();
         self.system_disks = Disks::new_with_refreshed_list();
 
         self.directory_stack = vec![];
@@ -712,7 +715,7 @@ impl FileDialog {
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
         self.directory_error = None;
 
-        self.directory_content = match DirectoryContent::from_path(path) {
+        self.directory_content = match DirectoryContent::from_path(path, self.show_files) {
             Ok(content) => content,
             Err(err) => {
                 self.directory_error = Some(err.to_string());

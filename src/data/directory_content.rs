@@ -45,9 +45,9 @@ impl DirectoryContent {
         Self { content: vec![] }
     }
 
-    pub fn from_path(path: &Path) -> io::Result<Self> {
+    pub fn from_path(path: &Path, include_files: bool) -> io::Result<Self> {
         Ok(Self {
-            content: load_directory(path)?,
+            content: load_directory(path, include_files)?,
         })
     }
 
@@ -60,13 +60,18 @@ impl DirectoryContent {
     }
 }
 
-fn load_directory(path: &Path) -> io::Result<Vec<DirectoryEntry>> {
+fn load_directory(path: &Path, include_files: bool) -> io::Result<Vec<DirectoryEntry>> {
     let paths = fs::read_dir(path)?;
 
     let mut result: Vec<DirectoryEntry> = Vec::new();
     for path in paths {
         match path {
-            Ok(entry) => result.push(DirectoryEntry::from_path(entry.path().as_path())),
+            Ok(entry) => {
+                if !include_files && entry.path().is_file() {
+                    continue;
+                }
+                result.push(DirectoryEntry::from_path(entry.path().as_path()))
+            }
             Err(_) => continue,
         };
     }
