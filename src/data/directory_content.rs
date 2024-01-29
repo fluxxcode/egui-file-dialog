@@ -33,10 +33,6 @@ impl DirectoryEntry {
         self.path.clone()
     }
 
-    pub fn as_path(&self) -> &Path {
-        &self.path
-    }
-
     pub fn file_name(&self) -> &str {
         self.path
             .file_name()
