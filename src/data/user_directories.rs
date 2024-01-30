@@ -25,7 +25,6 @@ impl UserDirectories {
                 download_dir: Self::canonicalize(dirs.download_dir()),
                 picture_dir: Self::canonicalize(dirs.picture_dir()),
                 video_dir: Self::canonicalize(dirs.video_dir()),
-
             });
         }
 
@@ -64,7 +63,7 @@ impl UserDirectories {
         if let Some(path) = path {
             return match fs::canonicalize(path) {
                 Ok(p) => Some(p),
-                Err(_) => None
+                Err(_) => None,
             };
         }
 

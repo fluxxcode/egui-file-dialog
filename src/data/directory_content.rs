@@ -5,7 +5,7 @@ use std::{fs, io};
 pub struct DirectoryEntry {
     path: PathBuf,
     is_directory: bool,
-    is_system_file: bool
+    is_system_file: bool,
 }
 
 impl DirectoryEntry {
@@ -13,7 +13,7 @@ impl DirectoryEntry {
         Self {
             path: path.to_path_buf(),
             is_directory: path.is_dir(),
-            is_system_file: !path.is_dir() && !path.is_file()
+            is_system_file: !path.is_dir() && !path.is_file(),
         }
     }
 
@@ -93,8 +93,8 @@ fn load_directory(path: &Path, include_files: bool) -> io::Result<Vec<DirectoryE
         true => a.file_name().cmp(b.file_name()),
         false => match a.is_dir() {
             true => std::cmp::Ordering::Less,
-            false => std::cmp::Ordering::Greater
-        }
+            false => std::cmp::Ordering::Greater,
+        },
     });
 
     // TODO: Implement "Show hidden files and folders" option
