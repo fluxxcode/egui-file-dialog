@@ -1,8 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use directories::UserDirs;
-
 use crate::create_directory_dialog::CreateDirectoryDialog;
 
 use crate::data::{DirectoryContent, DirectoryEntry, Disks, UserDirectories};
