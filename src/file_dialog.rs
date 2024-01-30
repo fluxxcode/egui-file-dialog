@@ -5,7 +5,7 @@ use directories::UserDirs;
 
 use crate::create_directory_dialog::CreateDirectoryDialog;
 
-use crate::data::{DirectoryContent, DirectoryEntry, Disks};
+use crate::data::{DirectoryContent, DirectoryEntry, Disks, UserDirectories};
 use crate::ui;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -29,7 +29,7 @@ pub struct FileDialog {
     initial_directory: PathBuf,
     show_files: bool,
 
-    user_directories: Option<UserDirs>,
+    user_directories: Option<UserDirectories>,
     system_disks: Disks,
 
     directory_stack: Vec<PathBuf>,
@@ -63,7 +63,7 @@ impl FileDialog {
             initial_directory: std::env::current_dir().unwrap_or_default(),
             show_files: true,
 
-            user_directories: UserDirs::new(),
+            user_directories: UserDirectories::new(),
             system_disks: Disks::new_with_refreshed_list(),
 
             directory_stack: vec![],
@@ -473,14 +473,13 @@ impl FileDialog {
         if let Some(dirs) = self.user_directories.clone() {
             ui.label("Places");
 
-            if ui
-                .selectable_label(
-                    self.current_directory() == Some(dirs.home_dir()),
-                    "🏠  Home",
-                )
-                .clicked()
-            {
-                let _ = self.load_directory(dirs.home_dir());
+            if let Some(path) = dirs.home_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🏠  Home")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
             }
 
             if let Some(path) = dirs.desktop_dir() {
@@ -570,7 +569,7 @@ impl FileDialog {
     }
 
     fn refresh(&mut self) {
-        self.user_directories = UserDirs::new();
+        self.user_directories = UserDirectories::new();
         self.system_disks = Disks::new_with_refreshed_list();
 
         let _ = self.reload_directory();
