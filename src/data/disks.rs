@@ -10,10 +10,7 @@ impl Disk {
     pub fn from_sysinfo_disk(disk: &sysinfo::Disk) -> Self {
         Self {
             mount_point: disk.mount_point().to_path_buf(),
-            // TODO: Get display name of the devices.
-            // Currently on Linux it returns "/dev/sda1" and on Windows it returns an
-            // empty string for the C:\\ drive.
-            display_name: disk.name().to_str().unwrap_or_default().to_string(),
+            display_name: Self::gen_display_name(disk),
         }
     }
 
@@ -23,6 +20,21 @@ impl Disk {
 
     pub fn display_name(&self) -> &str {
         &self.display_name
+    }
+
+    fn gen_display_name(disk: &sysinfo::Disk) -> String {
+        // TODO: Get display name of the devices.
+        // Currently on Linux it returns "/dev/sda1" and on Windows it returns an
+        // empty string for the C:\\ drive.
+        let name = disk.name().to_str().unwrap_or_default().to_string();
+
+        // Try using the mount point as the display name if the specified name
+        // from sysinfo::Disk is empty or contains invalid characters
+        if name.is_empty() {
+            return disk.mount_point().to_str().unwrap_or_default().to_string();
+        }
+
+        name
     }
 }
 
