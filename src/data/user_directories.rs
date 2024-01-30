@@ -32,31 +32,31 @@ impl UserDirectories {
     }
 
     pub fn home_dir(&self) -> Option<&Path> {
-        self.home_dir.as_ref().map(|p| p.as_path())
+        self.home_dir.as_deref()
     }
 
     pub fn audio_dir(&self) -> Option<&Path> {
-        self.audio_dir.as_ref().map(|p| p.as_path())
+        self.audio_dir.as_deref()
     }
 
     pub fn desktop_dir(&self) -> Option<&Path> {
-        self.desktop_dir.as_ref().map(|p| p.as_path())
+        self.desktop_dir.as_deref()
     }
 
     pub fn document_dir(&self) -> Option<&Path> {
-        self.document_dir.as_ref().map(|p| p.as_path())
+        self.document_dir.as_deref()
     }
 
     pub fn download_dir(&self) -> Option<&Path> {
-        self.download_dir.as_ref().map(|p| p.as_path())
+        self.download_dir.as_deref()
     }
 
     pub fn picture_dir(&self) -> Option<&Path> {
-        self.picture_dir.as_ref().map(|p| p.as_path())
+        self.picture_dir.as_deref()
     }
 
     pub fn video_dir(&self) -> Option<&Path> {
-        self.video_dir.as_ref().map(|p| p.as_path())
+        self.video_dir.as_deref()
     }
 
     fn canonicalize(path: Option<&Path>) -> Option<PathBuf> {
