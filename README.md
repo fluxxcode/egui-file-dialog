@@ -1,11 +1,12 @@
 # egui-file-dialog
 This repository provides an easy-to-use file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui). This makes it possible to use a file dialog directly in the egui application without having to rely on the file explorer of the operating system.
 
-The goal for the future is that parts of the dialog can be dynamically adapted so that it can be used in different situations. One goal, for example, is that the labels can be dynamically adjusted to support different languages.
-
 <img src="doc/img/demo.png">
 
-The project is currently in a very early version. Some planned features are still missing and some improvements still need to be made. \
+The goal for the future is that parts of the dialog can be dynamically adapted so that it can be used in different situations. One goal, for example, is that the labels can be dynamically adjusted to support different languages.
+
+The project is currently in a very early version. Some planned features are still missing and some improvements still need to be made.
+
 **NOTE**: As long as version 1.0.0 has not yet been reached, even minor version increases may contain breaking changes.
 
 **Currently only tested on Linux and Windows!**
