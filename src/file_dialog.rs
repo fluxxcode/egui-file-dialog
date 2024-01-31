@@ -137,6 +137,13 @@ impl FileDialog {
         self.state.clone()
     }
 
+    pub fn selected(&self) -> Option<&Path> {
+        match &self.state {
+            DialogState::Selected(path) => Some(path),
+            _ => None
+        }
+    }
+
     pub fn update(&mut self, ctx: &egui::Context) -> &Self {
         if self.state != DialogState::Open {
             return self;
@@ -146,7 +153,7 @@ impl FileDialog {
 
         egui::Window::new(&self.window_title)
             .open(&mut is_open)
-            .default_size([800.0, 500.0])
+            .default_size([650.0, 370.0])
             .min_width(335.0)
             .min_height(200.0)
             .collapsible(false)
