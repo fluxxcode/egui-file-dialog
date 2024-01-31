@@ -90,6 +90,16 @@ impl FileDialog {
     pub fn open(&mut self, mode: DialogMode, mut show_files: bool) -> io::Result<()> {
         self.reset();
 
+        // Try to use the parent directory if the initial directory is a file.
+        // If the path then has no parent directory, the user will see an error that the path
+        // does not exist. However, using the user directories or disks, the user is still able
+        // to select an item or save a file.
+        if self.initial_directory.is_file() {
+            if let Some(parent) = self.initial_directory.parent() {
+                self.initial_directory = parent.to_path_buf();
+            }
+        }
+
         if mode == DialogMode::SelectFile {
             show_files = true;
         }
