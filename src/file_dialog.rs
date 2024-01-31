@@ -87,8 +87,12 @@ impl FileDialog {
         self
     }
 
-    pub fn open(&mut self, mode: DialogMode, show_files: bool) -> io::Result<()> {
+    pub fn open(&mut self, mode: DialogMode, mut show_files: bool) -> io::Result<()> {
         self.reset();
+
+        if mode == DialogMode::SelectFile {
+            show_files = true;
+        }
 
         self.mode = mode;
         self.state = DialogState::Open;
@@ -108,7 +112,7 @@ impl FileDialog {
     }
 
     pub fn select_file(&mut self) {
-        let _ = self.open(DialogMode::SelectFile, true);
+        let _ = self.open(DialogMode::SelectFile, false);
     }
 
     pub fn save_file(&mut self) {
