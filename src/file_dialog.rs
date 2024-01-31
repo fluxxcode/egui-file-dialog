@@ -140,7 +140,7 @@ impl FileDialog {
     pub fn selected(&self) -> Option<&Path> {
         match &self.state {
             DialogState::Selected(path) => Some(path),
-            _ => None
+            _ => None,
         }
     }
 
