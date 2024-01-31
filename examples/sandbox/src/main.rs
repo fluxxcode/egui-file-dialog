@@ -4,7 +4,7 @@ use eframe::egui;
 use egui_file_dialog::{DialogMode, DialogState, FileDialog};
 
 struct MyApp {
-    file_explorer: FileDialog,
+    file_dialog: FileDialog,
 
     selected_directory: Option<PathBuf>,
     selected_file: Option<PathBuf>,
@@ -14,7 +14,7 @@ struct MyApp {
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
-            file_explorer: FileDialog::new(),
+            file_dialog: FileDialog::new(),
 
             selected_directory: None,
             selected_file: None,
@@ -32,26 +32,26 @@ impl eframe::App for MyApp {
             ui.add_space(5.0);
 
             if ui.button("Select directory").clicked() {
-                self.file_explorer.select_directory();
+                self.file_dialog.select_directory();
             }
             ui.label(format!("Selected directory: {:?}", self.selected_directory));
 
             ui.add_space(5.0);
 
             if ui.button("Select file").clicked() {
-                self.file_explorer.select_file();
+                self.file_dialog.select_file();
             }
             ui.label(format!("Selected file: {:?}", self.selected_file));
 
             ui.add_space(5.0);
 
             if ui.button("Save file").clicked() {
-                self.file_explorer.save_file();
+                self.file_dialog.save_file();
             }
             ui.label(format!("File to save: {:?}", self.saved_file));
 
-            match self.file_explorer.update(ctx).state() {
-                DialogState::Selected(path) => match self.file_explorer.mode() {
+            match self.file_dialog.update(ctx).state() {
+                DialogState::Selected(path) => match self.file_dialog.mode() {
                     DialogMode::SelectDirectory => self.selected_directory = Some(path),
                     DialogMode::SelectFile => self.selected_file = Some(path),
                     DialogMode::SaveFile => self.saved_file = Some(path),
