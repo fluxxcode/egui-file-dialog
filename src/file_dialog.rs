@@ -340,6 +340,8 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
+                    ui.add_space(ctx.style().spacing.item_spacing.y * 2.0);
+
                     self.ui_update_user_directories(ui);
 
                     ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
