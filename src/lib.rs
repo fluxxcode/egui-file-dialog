@@ -22,10 +22,7 @@
 //! The following example shows of how you can use the file dialog to let the user select a file. \
 //! See the full example at: <https://github.com/fluxxcode/egui-file-dialog/tree/master/examples/select_file>
 //!
-//! ```rust
-//! use std::path::PathBuf;
-//!
-//! use eframe::egui;
+//! ```
 //! use egui_file_dialog::FileDialog;
 //!
 //! struct MyApp {
@@ -33,7 +30,7 @@
 //! }
 //!
 //! impl MyApp {
-//!     pub fn new(_cc: &eframe::CreationContext) -> Self {
+//!     pub fn new() -> Self {
 //!         Self {
 //!             // Create a new FileDialog instance
 //!             file_dialog: FileDialog::new(),
@@ -41,8 +38,8 @@
 //!     }
 //! }
 //!
-//! impl eframe::App for MyApp {
-//!     fn update(&mut self, ctx: &egui::Context) {
+//! impl MyApp {
+//!     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
 //!         if ui.button("Select file").clicked() {
 //!             // Open the file dialog to select a file
 //!             self.file_dialog.select_file();

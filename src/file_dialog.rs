@@ -42,18 +42,23 @@ pub enum DialogState {
 /// The `FileDialog` instance can be used multiple times and for different actions.
 ///
 /// # Examples
-/// ```rust
+///
+/// ```
+/// use egui_file_dialog::FileDialog;
+///
 /// struct MyApp {
 ///     file_dialog: FileDialog,
 /// }
 ///
-/// fn update(&mut self ctx: &egui::Context, ui: &mut egui::Ui) {
-///     if ui.button("Select a file").clicked {
-///         self.file_dialog.select_file();
-///     }
-///     
-///     if let Some(path) = self.file_dialog.update(ctx).selected() {
-///         println!("Selected file: {:?}", path);
+/// impl MyApp {
+///     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+///         if ui.button("Select a file").clicked() {
+///             self.file_dialog.select_file();
+///         }
+///         
+///         if let Some(path) = self.file_dialog.update(ctx).selected() {
+///             println!("Selected file: {:?}", path);
+///         }
 ///     }
 /// }
 /// ```
