@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Wrapper above directories::UserDirs.
+/// Currently only used to canonicalize the paths.
 #[derive(Default, Clone)]
 pub struct UserDirectories {
     home_dir: Option<PathBuf>,
@@ -14,6 +16,8 @@ pub struct UserDirectories {
 }
 
 impl UserDirectories {
+    /// Creates a new UserDirectories object.
+    /// Returns None if no valid home directory path could be retrieved from the operating system.
     pub fn new() -> Option<Self> {
         if let Some(dirs) = directories::UserDirs::new() {
             return Some(Self {
@@ -59,6 +63,7 @@ impl UserDirectories {
         self.video_dir.as_deref()
     }
 
+    /// Canonicalizes the given paths. Returns None if an error occurred.
     fn canonicalize(path: Option<&Path>) -> Option<PathBuf> {
         if let Some(path) = path {
             return match fs::canonicalize(path) {
