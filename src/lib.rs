@@ -40,7 +40,7 @@
 //!         }
 //!     }
 //! }
-//! 
+//!
 //! impl eframe::App for MyApp {
 //!     fn update(&mut self, ctx: &egui::Context) {
 //!         if ui.button("Select file").clicked() {
