@@ -4,35 +4,48 @@ use std::path::{Path, PathBuf};
 use crate::ui;
 
 pub struct CreateDirectoryResponse {
+    /// Contains the path to the directory that was created.
     directory: Option<PathBuf>,
 }
 
 impl CreateDirectoryResponse {
+    /// Creates a new response object with the given directory.
     pub fn new(directory: &Path) -> Self {
         Self {
             directory: Some(directory.to_path_buf()),
         }
     }
 
+    /// Creates a new response with no directory set.
     pub fn new_empty() -> Self {
         Self { directory: None }
     }
 
+    /// Returns the directory that was created.
+    /// None is returned if no directory has been created yet.
     pub fn directory(&self) -> Option<PathBuf> {
         self.directory.clone()
     }
 }
 
+/// A dialog to create new folder.
 pub struct CreateDirectoryDialog {
+    /// If the dialog is currently open
     open: bool,
+    /// If the update method is called for the first time.
+    /// Used to initialize some stuff and scroll to the dialog.
     init: bool,
+    /// The directory that is currently open and where the folder is created.
     directory: Option<PathBuf>,
 
+    /// Buffer to hold the data of the folder name input
     input: String,
+    /// This contains the error message if the folder name is invalid
     error: Option<String>,
 }
 
 impl CreateDirectoryDialog {
+    /// Creates a new dialog with default values
     pub fn new() -> Self {
         Self {
             open: false,
@@ -44,6 +57,7 @@ impl CreateDirectoryDialog {
         }
     }
 
+    /// Resets the dialog and opens it.
     pub fn open(&mut self, directory: PathBuf) {
         self.reset();
 
@@ -52,10 +66,13 @@ impl CreateDirectoryDialog {
         self.directory = Some(directory);
     }
 
+    /// Closes and resets the dialog.
     pub fn close(&mut self) {
         self.reset();
     }
 
+    /// Main update function of the dialog. Should be called in every frame
+    /// in which the dialog is to be displayed.
     pub fn update(&mut self, ui: &mut egui::Ui) -> CreateDirectoryResponse {
         if !self.open {
             return CreateDirectoryResponse::new_empty();
@@ -97,10 +114,14 @@ impl CreateDirectoryDialog {
         result
     }
 
+    /// Returns if the dialog is currently open
     pub fn is_open(&self) -> bool {
         self.open
     }
 
+    /// Creates a new folder in the current directory.
+    /// The variable `input` is used as the folder name.
+    /// Might change the `error` variable when an error occurred creating the new folder.
     fn create_directory(&mut self) -> CreateDirectoryResponse {
         if let Some(mut dir) = self.directory.clone() {
             dir.push(self.input.as_str());
@@ -125,6 +146,8 @@ impl CreateDirectoryDialog {
         CreateDirectoryResponse::new_empty()
     }
 
+    /// Validates the folder name input.
+    /// Returns None if the name is valid. Otherwise returns the error message.
     fn validate_input(&mut self) -> Option<String> {
         if self.input.is_empty() {
             return Some("Name of the folder can not be empty".to_string());
@@ -149,6 +172,8 @@ impl CreateDirectoryDialog {
         None
     }
 
+    /// Resets the dialog.
+    /// Configuration variables are not changed.
     fn reset(&mut self) {
         self.open = false;
         self.init = false;
