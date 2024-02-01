@@ -16,7 +16,7 @@
 //! - Search for items in a directory
 //! - Shortcut for user directories (Home, Documents, ...) and system disks
 //! - Resizable window
-//! 
+//!
 //! ### A simple example
 //!
 //! The following example shows of how you can use the file dialog to let the user select a file. \
@@ -29,11 +29,20 @@
 //! use egui_file_dialog::FileDialog;
 //!
 //! struct MyApp {
-//!     file_dialog: FileDialog::new(),
+//!     file_dialog: FileDialog,
 //! }
 //!
+//! impl MyApp {
+//!     pub fn new(_cc: &eframe::CreationContext) -> Self {
+//!         Self {
+//!             // Create a new FileDialog instance
+//!             file_dialog: FileDialog::new(),
+//!         }
+//!     }
+//! }
+//! 
 //! impl eframe::App for MyApp {
-//!     fn update(ctx: &egui::Context) {
+//!     fn update(&mut self, ctx: &egui::Context) {
 //!         if ui.button("Select file").clicked() {
 //!             // Open the file dialog to select a file
 //!             self.file_dialog.select_file();
