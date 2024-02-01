@@ -1,3 +1,5 @@
+#![warn(missing_docs)] // Let's keep the public API well documented!
+
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
@@ -6,54 +8,118 @@ use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disks, UserDirectories};
 use crate::ui;
 
+/// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DialogMode {
+    /// When the dialog is currently used to select a file
     SelectFile,
+
+    /// When the dialog is currently used to select a directory
     SelectDirectory,
+
+    /// When the dialog is currently used to save a file
     SaveFile,
 }
 
+/// Represents the state the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DialogState {
+    /// The dialog is currently open and the user can perform the desired actions.
     Open,
+
+    /// The dialog is currently closed and not visible.
     Closed,
+
+    /// The user has selected a folder or file or specified a destination path for saving a file.
     Selected(PathBuf),
+
+    /// The user cancelled the dialog and didn't select anything.
     Cancelled,
 }
 
+/// Represents a file dialog instance.
+///
+/// The `FileDialog` instance can be used multiple times and for different actions.
+///
+/// # Examples
+/// ```rust
+/// struct MyApp {
+///     file_dialog: FileDialog,
+/// }
+///
+/// fn update(&mut self ctx: &egui::Context, ui: &mut egui::Ui) {
+///     if ui.button("Select a file").clicked {
+///         self.file_dialog.select_file();
+///     }
+///     
+///     if let Some(path) = self.file_dialog.update(ctx).selected() {
+///         println!("Selected file: {:?}", path);
+///     }
+/// }
+/// ```
 pub struct FileDialog {
+    /// The mode the dialog is currently in
     mode: DialogMode,
+    /// The state the dialog is currently in
     state: DialogState,
+    /// The first directory that will be opened when the dialog opens
     initial_directory: PathBuf,
+    /// If files are displayed in addition to directories.
+    /// This option will be ignored when mode == DialogMode::SelectFile.
     show_files: bool,
 
+    /// The user directories like Home or Documents.
+    /// These are loaded once when the dialog is created or when the refresh() method is called.
     user_directories: Option<UserDirectories>,
+    /// The currently mounted system disks.
+    /// These are loaded once when the dialog is created or when the refresh() method is called.
     system_disks: Disks,
 
+    /// Contains the directories that the user opened. Every newly opened directory
+    /// is pushed to the vector.
+    /// Used for the navigation buttons to load the previous or next directory.
     directory_stack: Vec<PathBuf>,
+    /// An offset from the back of directory_stack telling which directory is currently open.
+    /// If 0, the user is currently in the latest open directory.
+    /// If not 0, the user has used the "Previous directory" button and has
+    /// opened previously opened directories.
     directory_offset: usize,
+    /// The content of the currently open directory
     directory_content: DirectoryContent,
+    /// This variable contains the error message if an error occurred while loading the directory.
     directory_error: Option<String>,
 
+    /// The currently used window title.
+    /// This changes depending on the mode the dialog is in.
     window_title: String,
 
+    /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
 
+    /// The item that the user currently selected.
+    /// Can be a directory or a folder.
     selected_item: Option<DirectoryEntry>,
-    file_name_input: String, // Only used when mode = DialogMode::SaveFile
+    /// Buffer for the input of the file name when the dialog is in "SaveFile" mode.
+    file_name_input: String,
+    /// This variables contains the error message if the file_name_input is invalid.
+    /// This can be the case, for example, if a file or folder with the name already exists.
     file_name_input_error: Option<String>,
 
+    /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
+    /// Buffer containing the value of the search input.
     search_value: String,
 }
 
 impl Default for FileDialog {
+    /// Creates a new `FileDialog` instance with default values.
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl FileDialog {
+    /// Creates a new `FileDialog` instance with default values.
     pub fn new() -> Self {
         FileDialog {
             mode: DialogMode::SelectDirectory,
@@ -82,11 +148,22 @@ impl FileDialog {
         }
     }
 
+    /// Sets the first loaded directory when the dialog opens.
+    /// If the path is a file, the file's parent directory is used. If the path then has no
+    /// parent directory or cannot be loaded, the user will receive an error that the
+    /// directory cannot be loaded.
     pub fn initial_directory(mut self, directory: PathBuf) -> Self {
         self.initial_directory = directory.clone();
         self
     }
 
+    /// Opens the file dialog in the given mode with the given options.
+    /// This function resets the file dialog and takes care for the variables that need to be
+    /// set when opening the file dialog.
+    ///
+    /// Returns the result of the operation to load the initial_directory.
+    ///
+    /// The show_files parameter will be ignored when mode == DialogMode::SelectFile.
     pub fn open(&mut self, mode: DialogMode, mut show_files: bool) -> io::Result<()> {
         self.reset();
 
@@ -117,26 +194,43 @@ impl FileDialog {
         self.load_directory(&self.initial_directory.clone())
     }
 
+    /// Shortcut function to open the file dialog to prompt the user to select a directory.
+    /// If used, no files in the directories will be shown to the user.
+    /// Use the `open()` method instead, if you still want to display files to the user.
+    ///
+    /// The function ignores the result of the initial directory loading operation.
     pub fn select_directory(&mut self) {
         let _ = self.open(DialogMode::SelectDirectory, false);
     }
 
+    /// Shortcut function to open the file dialog to prompt the user to select a file.
+    ///
+    /// The function ignores the result of the initial directory loading operation.
     pub fn select_file(&mut self) {
         let _ = self.open(DialogMode::SelectFile, false);
     }
 
+    /// Shortcut function to open the file dialog to prompt the user to save a file.
+    ///
+    /// The function ignores the result of the initial directory loading operation.
     pub fn save_file(&mut self) {
         let _ = self.open(DialogMode::SaveFile, true);
     }
 
+    /// Returns the mode the dialog is currently in.
     pub fn mode(&self) -> DialogMode {
         self.mode
     }
 
+    /// Returns the state the dialog is currently in.
     pub fn state(&self) -> DialogState {
         self.state.clone()
     }
 
+    /// Returns the directory or file that the user selected, or the target file
+    /// if the dialog mode is DialogMode::SaveFile.
+    ///
+    /// None is returned when the user has not yet selected an item.
     pub fn selected(&self) -> Option<&Path> {
         match &self.state {
             DialogState::Selected(path) => Some(path),
@@ -144,6 +238,9 @@ impl FileDialog {
         }
     }
 
+    /// The main update method that should be called every frame if the dialog is to be visible.
+    ///
+    /// This function has no effect if the dialog state is currently not `DialogState::Open`.
     pub fn update(&mut self, ctx: &egui::Context) -> &Self {
         if self.state != DialogState::Open {
             return self;
@@ -191,6 +288,8 @@ impl FileDialog {
         self
     }
 
+    /// Updates the top panel of the dialog. Including the navigation buttons,
+    /// the current path display, the reload button and the search field.
     fn ui_update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         const NAV_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
 
@@ -335,6 +434,8 @@ impl FileDialog {
         ui.add_space(ctx.style().spacing.item_spacing.y);
     }
 
+    /// Updates the left panel of the dialog. Including the list of the user directories (Places)
+    /// and system disks.
     fn ui_update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             egui::containers::ScrollArea::vertical()
@@ -351,6 +452,7 @@ impl FileDialog {
         });
     }
 
+    /// Updates the bottom panel showing the selected item and main action buttons.
     fn ui_update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
 
@@ -431,6 +533,7 @@ impl FileDialog {
         });
     }
 
+    /// Updates the central panel, including the list of items in the currently open directory.
     fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
         if let Some(err) = &self.directory_error {
             ui.centered_and_justified(|ui| {
@@ -516,6 +619,7 @@ impl FileDialog {
         });
     }
 
+    /// Updates the list of the user directories (Places).
     fn ui_update_user_directories(&mut self, ui: &mut egui::Ui) {
         if let Some(dirs) = self.user_directories.clone() {
             ui.label("Places");
@@ -580,6 +684,7 @@ impl FileDialog {
         }
     }
 
+    /// Updates the list of the system disks (Disks).
     fn ui_update_devices(&mut self, ui: &mut egui::Ui) {
         ui.label("Devices");
 
@@ -597,6 +702,8 @@ impl FileDialog {
         self.system_disks = disks;
     }
 
+    /// Resets the dialog to use default values.
+    /// Configuration variables such as `initial_directory` are retained.
     fn reset(&mut self) {
         self.state = DialogState::Closed;
         self.show_files = true;
@@ -615,6 +722,8 @@ impl FileDialog {
         self.search_value = String::new();
     }
 
+    /// Refreshes the dialog.
+    /// Including the user directories, system disks and currently open directory.
     fn refresh(&mut self) {
         self.user_directories = UserDirectories::new();
         self.system_disks = Disks::new_with_refreshed_list();
@@ -622,14 +731,18 @@ impl FileDialog {
         let _ = self.reload_directory();
     }
 
+    /// Finishes the dialog.
+    /// `selected_item`` is the item that was selected by the user.
     fn finish(&mut self, selected_item: PathBuf) {
         self.state = DialogState::Selected(selected_item);
     }
 
+    /// Cancels the dialog.
     fn cancel(&mut self) {
         self.state = DialogState::Cancelled;
     }
 
+    /// Gets the currently open directory.
     fn current_directory(&self) -> Option<&Path> {
         if let Some(x) = self.directory_stack.iter().nth_back(self.directory_offset) {
             return Some(x.as_path());
@@ -638,6 +751,8 @@ impl FileDialog {
         None
     }
 
+    /// Checks whether the selection or the file name entered is valid.
+    /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
         if let Some(selection) = &self.selected_item {
             return match &self.mode {
@@ -654,6 +769,9 @@ impl FileDialog {
         false
     }
 
+    /// Validates the file name entered by the user.
+    ///
+    /// Returns None if the file name is valid. Otherwise returns an error message.
     fn validate_file_name_input(&self) -> Option<String> {
         if self.file_name_input.is_empty() {
             return Some("The file name cannot be empty".to_string());
@@ -677,6 +795,8 @@ impl FileDialog {
         None
     }
 
+    /// Marks the given item as the selected directory item.
+    /// Also updates the file_name_input to the name of the selected item.
     fn select_item(&mut self, dir_entry: &DirectoryEntry) {
         self.selected_item = Some(dir_entry.clone());
 
@@ -686,6 +806,10 @@ impl FileDialog {
         }
     }
 
+    /// Loads the next directory in the directory_stack.
+    /// If directory_offset is 0 and there is no other directory to load, Ok() is returned and
+    /// nothing changes.
+    /// Otherwise, the result of the directory loading operation is returned.
     fn load_next_directory(&mut self) -> io::Result<()> {
         if self.directory_offset == 0 {
             // There is no next directory that can be loaded
@@ -699,6 +823,9 @@ impl FileDialog {
         self.load_directory_content(path.as_path())
     }
 
+    /// Loads the previous directory the user opened.
+    /// If there is no previous directory left, Ok() is returned and nothing changes.
+    /// Otherwise, the result of the directory loading operation is returned.
     fn load_previous_directory(&mut self) -> io::Result<()> {
         if self.directory_offset + 1 >= self.directory_stack.len() {
             // There is no previous directory that can be loaded
@@ -712,6 +839,9 @@ impl FileDialog {
         self.load_directory_content(path.as_path())
     }
 
+    /// Loads the parent directory of the currently open directory.
+    /// If the directory doesn't have a parent, Ok() is returned and nothing changes.
+    /// Otherwise, the result of the directory loading operation is returned.
     fn load_parent_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
             if let Some(x) = x.to_path_buf().parent() {
@@ -722,6 +852,9 @@ impl FileDialog {
         Ok(())
     }
 
+    /// Reloads the currently open directory.
+    /// If no directory is currently open, Ok() will be returned.
+    /// Otherwise, the result of the directory loading operation is returned.
     fn reload_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
             return self.load_directory_content(x.to_path_buf().as_path());
@@ -730,6 +863,9 @@ impl FileDialog {
         Ok(())
     }
 
+    /// Loads the given directory and updates the `directory_stack`.
+    /// The function deletes all directories from the `directory_stack` that are currently
+    /// stored in the vector before the `directory_offset`.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
@@ -758,6 +894,7 @@ impl FileDialog {
         self.load_directory_content(path)
     }
 
+    /// Loads the directory content of the given path.
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
         self.directory_error = None;
 
