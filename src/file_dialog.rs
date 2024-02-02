@@ -824,8 +824,11 @@ impl FileDialog {
         self.directory_offset -= 1;
 
         // Copy path and load directory
-        let path = self.current_directory().unwrap().to_path_buf();
-        self.load_directory_content(path.as_path())
+        if let Some(path) = self.current_directory() {
+            return self.load_directory_content(path.to_path_buf().as_path());
+        }
+
+        Ok(())
     }
 
     /// Loads the previous directory the user opened.
@@ -840,8 +843,11 @@ impl FileDialog {
         self.directory_offset += 1;
 
         // Copy path and load directory
-        let path = self.current_directory().unwrap().to_path_buf();
-        self.load_directory_content(path.as_path())
+        if let Some(path) = self.current_directory() {
+            return self.load_directory_content(path.to_path_buf().as_path());
+        }
+
+        Ok(())
     }
 
     /// Loads the parent directory of the currently open directory.
