@@ -1,4 +1,9 @@
 # egui-file-dialog
+[![Latest version](https://img.shields.io/crates/v/egui-file-dialog.svg)](https://crates.io/crates/egui-file-dialog)
+[![Documentation](https://docs.rs/egui-file-dialog/badge.svg)](https://docs.rs/egui-file-dialog)
+[![CI](https://github.com/fluxxcode/egui-file-dialog/actions/workflows/rust.yml/badge.svg)](https://github.com/fluxxcode/egui-file-dialog/actions/workflows/rust.yml)
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fluxxcode/egui-file-dialog/blob/master/LICENSE)
+
 This repository provides an easy-to-use file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui). This makes it possible to use a file dialog directly in the egui application without having to rely on the file explorer of the operating system.
 
 <img src="doc/img/demo.png">
