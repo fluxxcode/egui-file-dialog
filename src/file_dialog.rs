@@ -97,6 +97,8 @@ pub struct FileDialog {
     /// The currently used window title.
     /// This changes depending on the mode the dialog is in.
     window_title: String,
+    /// The default size of the window.
+    default_window_size: egui::Vec2,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -104,6 +106,8 @@ pub struct FileDialog {
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
     selected_item: Option<DirectoryEntry>,
+    /// The default filename when opening the dialog in DialogMode::SaveFile mode.
+    default_file_name: String,
     /// Buffer for the input of the file name when the dialog is in "SaveFile" mode.
     file_name_input: String,
     /// This variables contains the error message if the file_name_input is invalid.
@@ -141,10 +145,12 @@ impl FileDialog {
             directory_error: None,
 
             window_title: String::from("Select directory"),
+            default_window_size: egui::Vec2::new(650.0, 370.0),
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
             selected_item: None,
+            default_file_name: String::new(),
             file_name_input: String::new(),
             file_name_input_error: None,
 
@@ -159,6 +165,18 @@ impl FileDialog {
     /// directory cannot be loaded.
     pub fn initial_directory(mut self, directory: PathBuf) -> Self {
         self.initial_directory = directory.clone();
+        self
+    }
+
+    /// Sets the default size of the window.
+    pub fn default_window_size(mut self, size: egui::Vec2) -> Self {
+        self.default_window_size = size;
+        self
+    }
+
+    /// Sets the default file name when opening the dialog in DialogMode::SaveFile mode.
+    pub fn default_file_name(mut self, name: &str) -> Self {
+        self.default_file_name = name.to_string();
         self
     }
 
@@ -184,6 +202,10 @@ impl FileDialog {
 
         if mode == DialogMode::SelectFile {
             show_files = true;
+        }
+
+        if mode == DialogMode::SaveFile {
+            self.file_name_input = self.default_file_name.clone();
         }
 
         self.mode = mode;
@@ -255,7 +277,7 @@ impl FileDialog {
 
         egui::Window::new(&self.window_title)
             .open(&mut is_open)
-            .default_size([650.0, 370.0])
+            .default_size(self.default_window_size)
             .min_width(335.0)
             .min_height(200.0)
             .collapsible(false)
