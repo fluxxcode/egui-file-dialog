@@ -121,14 +121,14 @@ pub struct FileDialog {
 }
 
 impl Default for FileDialog {
-    /// Creates a new `FileDialog` instance with default values.
+    /// Creates a new file dialog instance with default values.
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl FileDialog {
-    /// Creates a new `FileDialog` instance with default values.
+    /// Creates a new file dialog instance with default values.
     pub fn new() -> Self {
         FileDialog {
             mode: DialogMode::SelectDirectory,
@@ -161,8 +161,11 @@ impl FileDialog {
 
     /// Sets the first loaded directory when the dialog opens.
     /// If the path is a file, the file's parent directory is used. If the path then has no
-    /// parent directory or cannot be loaded, the user will receive an error that the
-    /// directory cannot be loaded.
+    /// parent directory or cannot be loaded, the user will receive an error.
+    /// However, the user directories and system disk allow the user to still select a file in
+    /// the event of an error.
+    ///
+    /// Relative and absolute paths are allowed, but absolute paths are recommended.
     pub fn initial_directory(mut self, directory: PathBuf) -> Self {
         self.initial_directory = directory.clone();
         self
@@ -174,7 +177,7 @@ impl FileDialog {
         self
     }
 
-    /// Sets the default file name when opening the dialog in DialogMode::SaveFile mode.
+    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
         self.default_file_name = name.to_string();
         self
@@ -184,9 +187,9 @@ impl FileDialog {
     /// This function resets the file dialog and takes care for the variables that need to be
     /// set when opening the file dialog.
     ///
-    /// Returns the result of the operation to load the initial_directory.
+    /// Returns the result of the operation to load the initial directory.
     ///
-    /// The show_files parameter will be ignored when mode == DialogMode::SelectFile.
+    /// The `show_files` parameter will be ignored when the mode equals `DialogMode::SelectFile`.
     pub fn open(&mut self, mode: DialogMode, mut show_files: bool) -> io::Result<()> {
         self.reset();
 
@@ -224,6 +227,8 @@ impl FileDialog {
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
     /// If used, no files in the directories will be shown to the user.
     /// Use the `open()` method instead, if you still want to display files to the user.
+    /// This function resets the file dialog. Configuration variables such as
+    /// `initial_directory` are retained.
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn select_directory(&mut self) {
@@ -231,6 +236,8 @@ impl FileDialog {
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a file.
+    /// This function resets the file dialog. Configuration variables such as
+    /// `initial_directory` are retained.
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn select_file(&mut self) {
@@ -238,6 +245,8 @@ impl FileDialog {
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
+    /// This function resets the file dialog. Configuration variables such as
+    /// `initial_directory` are retained.
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn save_file(&mut self) {
@@ -255,7 +264,7 @@ impl FileDialog {
     }
 
     /// Returns the directory or file that the user selected, or the target file
-    /// if the dialog mode is DialogMode::SaveFile.
+    /// if the dialog is in `DialogMode::SaveFile` mode.
     ///
     /// None is returned when the user has not yet selected an item.
     pub fn selected(&self) -> Option<&Path> {
