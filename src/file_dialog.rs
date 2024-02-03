@@ -378,7 +378,12 @@ impl FileDialog {
                     1.0,
                     ctx.style().visuals.window_stroke.color,
                 ))
-                .inner_margin(egui::Margin{ left: 4.0, right: 8.0, top: 4.0, bottom: 4.0 })
+                .inner_margin(egui::Margin {
+                    left: 4.0,
+                    right: 8.0,
+                    top: 4.0,
+                    bottom: 4.0,
+                })
                 .rounding(egui::Rounding::from(4.0))
                 .show(ui, |ui| {
                     ui.style_mut().always_scroll_the_only_direction = true;
