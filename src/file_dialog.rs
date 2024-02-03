@@ -526,8 +526,8 @@ impl FileDialog {
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile => "Open",
-                DialogMode::SaveFile => "Save",
+                DialogMode::SelectDirectory | DialogMode::SelectFile => "🗀  Open",
+                DialogMode::SaveFile => "📥  Save",
             };
 
             if ui::button_sized_enabled_disabled(ui, BUTTON_SIZE, label, self.is_selection_valid())
@@ -561,7 +561,7 @@ impl FileDialog {
             ui.add_space(ctx.style().spacing.item_spacing.y);
 
             if ui
-                .add_sized(BUTTON_SIZE, egui::Button::new("Abort"))
+                .add_sized(BUTTON_SIZE, egui::Button::new("🚫 Cancel"))
                 .clicked()
             {
                 self.cancel();
