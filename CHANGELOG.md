@@ -1,7 +1,8 @@
 # egui-file-dialog changelog
 
 ## Unreleased
-/
+### 🔧 Changes
+- Removed the version of `egui-file-dialog` in the examples [#8](https://github.com/fluxxcode/egui-file-dialog/pull/8)
 
 ## 2024-02-03 - v0.1.0
 
