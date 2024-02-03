@@ -35,7 +35,7 @@ egui-file-dialog = "0.1.0"
 ```
 
 main.rs:
-```rs
+```rust
 use std::path::PathBuf;
 
 use eframe::egui;
