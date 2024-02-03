@@ -378,10 +378,12 @@ impl FileDialog {
                     1.0,
                     ctx.style().visuals.window_stroke.color,
                 ))
-                .inner_margin(egui::Margin::symmetric(4.0, 4.0))
+                .inner_margin(egui::Margin{ left: 4.0, right: 8.0, top: 4.0, bottom: 4.0 })
                 .rounding(egui::Rounding::from(4.0))
                 .show(ui, |ui| {
-                    // TODO: Enable scrolling with mouse wheel
+                    ui.style_mut().always_scroll_the_only_direction = true;
+                    ui.style_mut().spacing.scroll.bar_width = 8.0;
+
                     egui::ScrollArea::horizontal()
                         .auto_shrink([false, false])
                         .stick_to_right(true)
@@ -427,8 +429,6 @@ impl FileDialog {
                                             ui.label(">");
                                         }
 
-                                        // TODO: Maybe use selectable_label instead of button?
-                                        // TODO: Write current directory (last item) in bold text
                                         if ui.button(file_name).clicked() {
                                             let _ = self.load_directory(path.as_path());
                                             return;
