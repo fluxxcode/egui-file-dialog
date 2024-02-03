@@ -434,7 +434,9 @@ impl FileDialog {
                                             ui.label(">");
                                         }
 
-                                        if ui.button(file_name).clicked() {
+                                        let is_last = data.components().count() - 1 == i;
+
+                                        if ui.selectable_label(is_last, file_name).clicked() {
                                             let _ = self.load_directory(path.as_path());
                                             return;
                                         }
