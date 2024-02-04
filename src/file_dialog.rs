@@ -99,6 +99,8 @@ pub struct FileDialog {
     window_title: String,
     /// The default size of the window.
     default_window_size: egui::Vec2,
+    /// The anchor of the window.
+    window_anchor: Option<(egui::Align2, egui::Vec2)>,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -146,6 +148,7 @@ impl FileDialog {
 
             window_title: String::from("Select directory"),
             default_window_size: egui::Vec2::new(650.0, 370.0),
+            window_anchor: None,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -174,6 +177,12 @@ impl FileDialog {
     /// Sets the default size of the window.
     pub fn default_window_size(mut self, size: egui::Vec2) -> Self {
         self.default_window_size = size;
+        self
+    }
+
+    /// Sets the anchor of the window.
+    pub fn anchor(mut self, align: egui::Align2, offset: egui::Vec2) -> Self {
+        self.window_anchor = Some((align, offset));
         self
     }
 
@@ -284,37 +293,31 @@ impl FileDialog {
 
         let mut is_open = true;
 
-        egui::Window::new(&self.window_title)
-            .open(&mut is_open)
-            .default_size(self.default_window_size)
-            .min_width(335.0)
-            .min_height(200.0)
-            .collapsible(false)
-            .show(ctx, |ui| {
-                egui::TopBottomPanel::top("fe_top_panel")
-                    .resizable(false)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_top_panel(ctx, ui);
-                    });
-
-                egui::SidePanel::left("fe_left_panel")
-                    .resizable(true)
-                    .default_width(150.0)
-                    .width_range(90.0..=250.0)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_left_panel(ctx, ui);
-                    });
-
-                egui::TopBottomPanel::bottom("fe_bottom_panel")
-                    .resizable(false)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_bottom_panel(ctx, ui);
-                    });
-
-                egui::CentralPanel::default().show_inside(ui, |ui| {
-                    self.ui_update_central_panel(ui);
+        self.create_window(&mut is_open).show(ctx, |ui| {
+            egui::TopBottomPanel::top("fe_top_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_top_panel(ctx, ui);
                 });
+
+            egui::SidePanel::left("fe_left_panel")
+                .resizable(true)
+                .default_width(150.0)
+                .width_range(90.0..=250.0)
+                .show_inside(ui, |ui| {
+                    self.ui_update_left_panel(ctx, ui);
+                });
+
+            egui::TopBottomPanel::bottom("fe_bottom_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_bottom_panel(ctx, ui);
+                });
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                self.ui_update_central_panel(ui);
             });
+        });
 
         // User closed the window without finishing the dialog
         if !is_open {
@@ -322,6 +325,22 @@ impl FileDialog {
         }
 
         self
+    }
+
+    /// Creates a new egui window with the configured options.
+    fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
+        let mut window = egui::Window::new(&self.window_title)
+            .open(is_open)
+            .default_size(self.default_window_size)
+            .min_width(355.0)
+            .min_height(200.0)
+            .collapsible(false);
+
+        if let Some((anchor, offset)) = self.window_anchor {
+            window = window.anchor(anchor, offset);
+        }
+
+        window
     }
 
     /// Updates the top panel of the dialog. Including the navigation buttons,

@@ -14,7 +14,8 @@ struct MyApp {
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
-            file_dialog: FileDialog::new(),
+            file_dialog: FileDialog::new()
+                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::new(0.0, 0.0)),
 
             selected_directory: None,
             selected_file: None,

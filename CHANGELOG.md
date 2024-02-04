@@ -1,6 +1,9 @@
 # egui-file-dialog changelog
 
 ## Unreleased
+### ✨ Features
+- Added `FileDialog::anchor` to overwrite the window anchor [#11](https://github.com/fluxxcode/egui-file-dialog/pull/11)
+
 ### 🔧 Changes
 - Removed the version of `egui-file-dialog` in the examples [#8](https://github.com/fluxxcode/egui-file-dialog/pull/8)
 
