@@ -97,6 +97,9 @@ pub struct FileDialog {
     /// The currently used window title.
     /// This changes depending on the mode the dialog is in.
     window_title: String,
+    /// If set, the window title will be overwritten and set to the fixed value instead
+    /// of being set dynamically.
+    overwrite_window_title: Option<String>,
     /// The default size of the window.
     default_window_size: egui::Vec2,
     /// The anchor of the window.
@@ -147,6 +150,7 @@ impl FileDialog {
             directory_error: None,
 
             window_title: String::from("Select directory"),
+            overwrite_window_title: None,
             default_window_size: egui::Vec2::new(650.0, 370.0),
             window_anchor: None,
 
@@ -171,6 +175,15 @@ impl FileDialog {
     /// Relative and absolute paths are allowed, but absolute paths are recommended.
     pub fn initial_directory(mut self, directory: PathBuf) -> Self {
         self.initial_directory = directory.clone();
+        self
+    }
+
+    /// Overwrites the window title.
+    ///
+    /// By default, the title is set dynamically, based on the `DialogMode`
+    /// the dialog is currently in.
+    pub fn title(mut self, title: &str) -> Self {
+        self.overwrite_window_title = Some(title.to_string());
         self
     }
 
@@ -224,11 +237,15 @@ impl FileDialog {
         self.state = DialogState::Open;
         self.show_files = show_files;
 
-        self.window_title = match mode {
-            DialogMode::SelectDirectory => "📁 Select Folder".to_string(),
-            DialogMode::SelectFile => "📂 Open File".to_string(),
-            DialogMode::SaveFile => "📥 Save File".to_string(),
-        };
+        if let Some(title) = &self.overwrite_window_title {
+            self.window_title = title.clone();
+        } else {
+            self.window_title = match mode {
+                DialogMode::SelectDirectory => "📁 Select Folder".to_string(),
+                DialogMode::SelectFile => "📂 Open File".to_string(),
+                DialogMode::SaveFile => "📥 Save File".to_string(),
+            };
+        }
 
         self.load_directory(&self.initial_directory.clone())
     }
