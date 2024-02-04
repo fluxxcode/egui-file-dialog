@@ -104,6 +104,8 @@ pub struct FileDialog {
     window_default_size: egui::Vec2,
     /// The anchor of the window.
     window_anchor: Option<(egui::Align2, egui::Vec2)>,
+    /// If the window is resizable
+    window_resizable: bool,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -153,6 +155,7 @@ impl FileDialog {
             window_overwrite_title: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
             window_anchor: None,
+            window_resizable: true,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -196,6 +199,12 @@ impl FileDialog {
     /// Sets the anchor of the window.
     pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
         self.window_anchor = Some((align, offset.into()));
+        self
+    }
+
+    /// Sets if the window is resizable.
+    pub fn resizable(mut self, resizable: bool) -> Self {
+        self.window_resizable = resizable;
         self
     }
 
@@ -351,6 +360,7 @@ impl FileDialog {
             .default_size(self.window_default_size)
             .min_width(355.0)
             .min_height(200.0)
+            .resizable(self.window_resizable)
             .collapsible(false);
 
         if let Some((anchor, offset)) = self.window_anchor {
