@@ -6,6 +6,7 @@
 
 ### 📚 Documentation
 - Fix syntax highlighting on crates.io [#9](https://github.com/fluxxcode/egui-file-dialog/pull/9)
+- Added dependency badge to `README.md` [#10](https://github.com/fluxxcode/egui-file-dialog/pull/10)
 
 ## 2024-02-03 - v0.1.0
 
