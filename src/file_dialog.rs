@@ -99,9 +99,9 @@ pub struct FileDialog {
     window_title: String,
     /// If set, the window title will be overwritten and set to the fixed value instead
     /// of being set dynamically.
-    overwrite_window_title: Option<String>,
+    window_overwrite_title: Option<String>,
     /// The default size of the window.
-    default_window_size: egui::Vec2,
+    window_default_size: egui::Vec2,
     /// The anchor of the window.
     window_anchor: Option<(egui::Align2, egui::Vec2)>,
 
@@ -150,8 +150,8 @@ impl FileDialog {
             directory_error: None,
 
             window_title: String::from("Select directory"),
-            overwrite_window_title: None,
-            default_window_size: egui::Vec2::new(650.0, 370.0),
+            window_overwrite_title: None,
+            window_default_size: egui::Vec2::new(650.0, 370.0),
             window_anchor: None,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
@@ -183,13 +183,13 @@ impl FileDialog {
     /// By default, the title is set dynamically, based on the `DialogMode`
     /// the dialog is currently in.
     pub fn title(mut self, title: &str) -> Self {
-        self.overwrite_window_title = Some(title.to_string());
+        self.window_overwrite_title = Some(title.to_string());
         self
     }
 
     /// Sets the default size of the window.
-    pub fn default_window_size(mut self, size: impl Into<egui::Vec2>) -> Self {
-        self.default_window_size = size.into();
+    pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
+        self.window_default_size = size.into();
         self
     }
 
@@ -237,7 +237,7 @@ impl FileDialog {
         self.state = DialogState::Open;
         self.show_files = show_files;
 
-        if let Some(title) = &self.overwrite_window_title {
+        if let Some(title) = &self.window_overwrite_title {
             self.window_title = title.clone();
         } else {
             self.window_title = match mode {
@@ -348,7 +348,7 @@ impl FileDialog {
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
         let mut window = egui::Window::new(&self.window_title)
             .open(is_open)
-            .default_size(self.default_window_size)
+            .default_size(self.window_default_size)
             .min_width(355.0)
             .min_height(200.0)
             .collapsible(false);
