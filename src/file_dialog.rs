@@ -100,6 +100,8 @@ pub struct FileDialog {
     /// If set, the window title will be overwritten and set to the fixed value instead
     /// of being set dynamically.
     window_overwrite_title: Option<String>,
+    /// The ID of the window.
+    window_id: Option<egui::Id>,
     /// The default size of the window.
     window_default_size: egui::Vec2,
     /// The anchor of the window.
@@ -155,6 +157,7 @@ impl FileDialog {
 
             window_title: String::from("Select directory"),
             window_overwrite_title: None,
+            window_id: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
             window_anchor: None,
             window_resizable: true,
@@ -190,6 +193,12 @@ impl FileDialog {
     /// the dialog is currently in.
     pub fn title(mut self, title: &str) -> Self {
         self.window_overwrite_title = Some(title.to_string());
+        self
+    }
+
+    /// Sets the ID of the window.
+    pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
+        self.window_id = Some(id.into());
         self
     }
 
@@ -374,6 +383,10 @@ impl FileDialog {
             .resizable(self.window_resizable)
             .movable(self.window_movable)
             .collapsible(false);
+
+        if let Some(id) = self.window_id {
+            window = window.id(id);
+        }
 
         if let Some((anchor, offset)) = self.window_anchor {
             window = window.anchor(anchor, offset);
