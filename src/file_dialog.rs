@@ -188,14 +188,14 @@ impl FileDialog {
     }
 
     /// Sets the default size of the window.
-    pub fn default_window_size(mut self, size: egui::Vec2) -> Self {
-        self.default_window_size = size;
+    pub fn default_window_size(mut self, size: impl Into<egui::Vec2>) -> Self {
+        self.default_window_size = size.into();
         self
     }
 
     /// Sets the anchor of the window.
-    pub fn anchor(mut self, align: egui::Align2, offset: egui::Vec2) -> Self {
-        self.window_anchor = Some((align, offset));
+    pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
+        self.window_anchor = Some((align, offset.into()));
         self
     }
 
