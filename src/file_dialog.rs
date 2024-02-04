@@ -102,6 +102,10 @@ pub struct FileDialog {
     window_overwrite_title: Option<String>,
     /// The ID of the window.
     window_id: Option<egui::Id>,
+    /// The default position of the window.
+    window_default_pos: Option<egui::Pos2>,
+    /// Sets the window position and prevents it from being dragged around.
+    window_fixed_pos: Option<egui::Pos2>,
     /// The default size of the window.
     window_default_size: egui::Vec2,
     /// The anchor of the window.
@@ -158,6 +162,8 @@ impl FileDialog {
             window_title: String::from("Select directory"),
             window_overwrite_title: None,
             window_id: None,
+            window_default_pos: None,
+            window_fixed_pos: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
             window_anchor: None,
             window_resizable: true,
@@ -199,6 +205,18 @@ impl FileDialog {
     /// Sets the ID of the window.
     pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
         self.window_id = Some(id.into());
+        self
+    }
+
+    /// Sets the default position of the window.
+    pub fn default_pos(mut self, default_pos: impl Into<egui::Pos2>) -> Self {
+        self.window_default_pos = Some(default_pos.into());
+        self
+    }
+
+    /// Sets the window position and prevents it from being dragged around.
+    pub fn fixed_pos(mut self, pos: impl Into<egui::Pos2>) -> Self {
+        self.window_fixed_pos = Some(pos.into());
         self
     }
 
@@ -386,6 +404,14 @@ impl FileDialog {
 
         if let Some(id) = self.window_id {
             window = window.id(id);
+        }
+
+        if let Some(pos) = self.window_default_pos {
+            window = window.default_pos(pos);
+        }
+
+        if let Some(pos) = self.window_fixed_pos {
+            window = window.fixed_pos(pos);
         }
 
         if let Some((anchor, offset)) = self.window_anchor {
