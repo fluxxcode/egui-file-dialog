@@ -1,6 +1,9 @@
 # egui-file-dialog changelog
 
 ## Unreleased
+### 🚨 Breaking Changes
+- Rename `FileDialog::default_window_size` to `FileDialog::default_size` [#14](https://github.com/fluxxcode/egui-file-dialog/pull/14)
+
 ### ✨ Features
 - Added `FileDialog::anchor` to overwrite the window anchor [#11](https://github.com/fluxxcode/egui-file-dialog/pull/11)
 - Added `FileDialog::title` to overwrite the window title [#12](https://github.com/fluxxcode/egui-file-dialog/pull/12)
