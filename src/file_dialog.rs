@@ -6,7 +6,6 @@ use std::{fs, io};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 
 use crate::data::{DirectoryContent, DirectoryEntry, Disks, UserDirectories};
-use crate::ui;
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -452,37 +451,31 @@ impl FileDialog {
         ui.horizontal(|ui| {
             // Navigation buttons
             if let Some(x) = self.current_directory() {
-                if ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", x.parent().is_some())
-                {
+                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶") {
                     let _ = self.load_parent_directory();
                 }
             } else {
-                let _ = ui::button_sized_enabled_disabled(ui, NAV_BUTTON_SIZE, "⏶", false);
+                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶");
             }
 
-            if ui::button_sized_enabled_disabled(
+            if self.ui_button_sized(
                 ui,
+                self.directory_offset + 1 < self.directory_stack.len(),
                 NAV_BUTTON_SIZE,
                 "⏴",
-                self.directory_offset + 1 < self.directory_stack.len(),
             ) {
                 let _ = self.load_previous_directory();
             }
 
-            if ui::button_sized_enabled_disabled(
-                ui,
-                NAV_BUTTON_SIZE,
-                "⏵",
-                self.directory_offset != 0,
-            ) {
+            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵") {
                 let _ = self.load_next_directory();
             }
 
-            if ui::button_sized_enabled_disabled(
+            if self.ui_button_sized(
                 ui,
+                !self.create_directory_dialog.is_open(),
                 NAV_BUTTON_SIZE,
                 "+",
-                !self.create_directory_dialog.is_open(),
             ) {
                 if let Some(x) = self.current_directory() {
                     self.create_directory_dialog.open(x.to_path_buf());
@@ -655,8 +648,7 @@ impl FileDialog {
                 DialogMode::SaveFile => "📥  Save",
             };
 
-            if ui::button_sized_enabled_disabled(ui, BUTTON_SIZE, label, self.is_selection_valid())
-            {
+            if self.ui_button_sized(ui, self.is_selection_valid(), BUTTON_SIZE, label) {
                 match &self.mode {
                     DialogMode::SelectDirectory | DialogMode::SelectFile => {
                         // self.selected_item should always contain a value,
@@ -861,6 +853,23 @@ impl FileDialog {
         }
 
         self.system_disks = disks;
+    }
+
+    /// Helper function to add a sized button that can be enabled or disabled
+    fn ui_button_sized(
+        &self,
+        ui: &mut egui::Ui,
+        enabled: bool,
+        size: egui::Vec2,
+        label: &str,
+    ) -> bool {
+        let mut clicked = false;
+
+        ui.add_enabled_ui(enabled, |ui| {
+            clicked = ui.add_sized(size, egui::Button::new(label)).clicked();
+        });
+
+        clicked
     }
 
     /// Resets the dialog to use default values.

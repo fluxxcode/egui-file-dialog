@@ -1,8 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::ui;
-
 pub struct CreateDirectoryResponse {
     /// Contains the path to the directory that was created.
     directory: Option<PathBuf>,
@@ -100,7 +98,10 @@ impl CreateDirectoryDialog {
                 self.error = self.validate_input();
             }
 
-            if ui::button_enabled_disabled(ui, "✔", self.error.is_none()) {
+            if ui
+                .add_enabled(self.error.is_none(), egui::Button::new("✔"))
+                .clicked()
+            {
                 result = self.create_directory();
             }
 
