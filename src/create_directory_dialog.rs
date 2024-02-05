@@ -183,7 +183,7 @@ impl CreateDirectoryDialog {
     /// Creates the specified error and sets to scroll to the error in the next frame.
     fn create_error(&mut self, error: &str) -> Option<String> {
         self.scroll_to_error = true;
-        return Some(error.to_string());
+        Some(error.to_string())
     }
 
     /// Resets the dialog.
