@@ -108,6 +108,10 @@ pub struct FileDialog {
     window_fixed_pos: Option<egui::Pos2>,
     /// The default size of the window.
     window_default_size: egui::Vec2,
+    /// The maximum size of the window.
+    window_max_size: Option<egui::Vec2>,
+    /// The minimum size of the window.
+    window_min_size: egui::Vec2,
     /// The anchor of the window.
     window_anchor: Option<(egui::Align2, egui::Vec2)>,
     /// If the window is resizable
@@ -165,6 +169,8 @@ impl FileDialog {
             window_default_pos: None,
             window_fixed_pos: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
+            window_max_size: None,
+            window_min_size: egui::Vec2::new(355.0, 200.0),
             window_anchor: None,
             window_resizable: true,
             window_movable: true,
@@ -223,6 +229,20 @@ impl FileDialog {
     /// Sets the default size of the window.
     pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
         self.window_default_size = size.into();
+        self
+    }
+
+    /// Sets the maximum size of the window.
+    pub fn max_size(mut self, max_size: impl Into<egui::Vec2>) -> Self {
+        self.window_max_size = Some(max_size.into());
+        self
+    }
+
+    /// Sets the minimum size of the window.
+    ///
+    /// Specifying a smaller minimum size than the default can lead to unexpected behavior.
+    pub fn min_size(mut self, min_size: impl Into<egui::Vec2>) -> Self {
+        self.window_min_size = min_size.into();
         self
     }
 
@@ -396,8 +416,7 @@ impl FileDialog {
         let mut window = egui::Window::new(&self.window_title)
             .open(is_open)
             .default_size(self.window_default_size)
-            .min_width(355.0)
-            .min_height(200.0)
+            .min_size(self.window_min_size)
             .resizable(self.window_resizable)
             .movable(self.window_movable)
             .collapsible(false);
@@ -416,6 +435,10 @@ impl FileDialog {
 
         if let Some((anchor, offset)) = self.window_anchor {
             window = window.anchor(anchor, offset);
+        }
+
+        if let Some(size) = self.window_max_size {
+            window = window.max_size(size);
         }
 
         window
