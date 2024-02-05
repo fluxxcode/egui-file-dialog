@@ -117,6 +117,8 @@ pub struct FileDialog {
     window_resizable: bool,
     /// If the window is movable
     window_movable: bool,
+    /// If the title bar of the window is shown
+    window_title_bar: bool,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -173,6 +175,7 @@ impl FileDialog {
             window_anchor: None,
             window_resizable: true,
             window_movable: true,
+            window_title_bar: true,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -262,6 +265,12 @@ impl FileDialog {
     /// Has no effect if an anchor is set.
     pub fn movable(mut self, movable: bool) -> Self {
         self.window_movable = movable;
+        self
+    }
+
+    /// Sets if the title bar of the window is shown.
+    pub fn title_bar(mut self, title_bar: bool) -> Self {
+        self.window_title_bar = title_bar;
         self
     }
 
@@ -418,6 +427,7 @@ impl FileDialog {
             .min_size(self.window_min_size)
             .resizable(self.window_resizable)
             .movable(self.window_movable)
+            .title_bar(self.window_title_bar)
             .collapsible(false);
 
         if let Some(id) = self.window_id {
