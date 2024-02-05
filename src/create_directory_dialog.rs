@@ -42,6 +42,8 @@ pub struct CreateDirectoryDialog {
     input: String,
     /// This contains the error message if the folder name is invalid
     error: Option<String>,
+    /// If we should scroll to the error in the next frame
+    scroll_to_error: bool,
 }
 
 impl CreateDirectoryDialog {
@@ -54,6 +56,7 @@ impl CreateDirectoryDialog {
 
             input: String::new(),
             error: None,
+            scroll_to_error: false,
         }
     }
 
@@ -108,7 +111,12 @@ impl CreateDirectoryDialog {
 
         if let Some(err) = &self.error {
             ui.add_space(5.0);
-            ui.label(err);
+            let response = ui.label(err);
+
+            if self.scroll_to_error {
+                response.scroll_to_me(Some(egui::Align::Center));
+                self.scroll_to_error = false;
+            }
         }
 
         result
@@ -132,7 +140,7 @@ impl CreateDirectoryDialog {
                     return CreateDirectoryResponse::new(dir.as_path());
                 }
                 Err(err) => {
-                    self.error = Some(format!("Error: {}", err));
+                    self.error = self.create_error(format!("Error: {}", err).as_str());
                     return CreateDirectoryResponse::new_empty();
                 }
             }
@@ -141,7 +149,7 @@ impl CreateDirectoryDialog {
         // This error should not occur because the create_directory function is only
         // called when the dialog is open and the directory is set.
         // If this error occurs, there is most likely a bug in the code.
-        self.error = Some("No directory given".to_string());
+        self.error = self.create_error("No directory given");
 
         CreateDirectoryResponse::new_empty()
     }
@@ -150,26 +158,32 @@ impl CreateDirectoryDialog {
     /// Returns None if the name is valid. Otherwise returns the error message.
     fn validate_input(&mut self) -> Option<String> {
         if self.input.is_empty() {
-            return Some("Name of the folder can not be empty".to_string());
+            return self.create_error("Name of the folder can not be empty");
         }
 
         if let Some(mut x) = self.directory.clone() {
             x.push(self.input.as_str());
 
             if x.is_dir() {
-                return Some("A directory with the name already exists".to_string());
+                return self.create_error("A directory with the name already exists");
             }
             if x.is_file() {
-                return Some("A file with the name already exists".to_string());
+                return self.create_error("A file with the name already exists");
             }
         } else {
             // This error should not occur because the validate_input function is only
             // called when the dialog is open and the directory is set.
             // If this error occurs, there is most likely a bug in the code.
-            return Some("No directory given".to_string());
+            return self.create_error("No directory given");
         }
 
         None
+    }
+
+    /// Creates the specified error and sets to scroll to the error in the next frame.
+    fn create_error(&mut self, error: &str) -> Option<String> {
+        self.scroll_to_error = true;
+        Some(error.to_string())
     }
 
     /// Resets the dialog.
@@ -179,5 +193,7 @@ impl CreateDirectoryDialog {
         self.init = false;
         self.directory = None;
         self.input.clear();
+        self.error = None;
+        self.scroll_to_error = false;
     }
 }
