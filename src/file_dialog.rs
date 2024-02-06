@@ -71,6 +71,12 @@ pub struct FileDialog {
     /// If files are displayed in addition to directories.
     /// This option will be ignored when mode == DialogMode::SelectFile.
     show_files: bool,
+    /// This is an optional ID that can be set when opening the dialog to determine which
+    /// operation the dialog is used for. This is useful if the dialog is used multiple times
+    /// for different actions in the same view. The ID then makes it possible to distinguish
+    /// for which action the user has selected an item.
+    /// This ID is not used internally.
+    operation_id: Option<String>,
 
     /// The user directories like Home or Documents.
     /// These are loaded once when the dialog is created or when the refresh() method is called.
@@ -155,6 +161,7 @@ impl FileDialog {
             state: DialogState::Closed,
             initial_directory: std::env::current_dir().unwrap_or_default(),
             show_files: true,
+            operation_id: None,
 
             user_directories: UserDirectories::new(),
             system_disks: Disks::new_with_refreshed_list(),
@@ -286,8 +293,64 @@ impl FileDialog {
     ///
     /// Returns the result of the operation to load the initial directory.
     ///
-    /// The `show_files` parameter will be ignored when the mode equals `DialogMode::SelectFile`.
-    pub fn open(&mut self, mode: DialogMode, mut show_files: bool) -> io::Result<()> {
+    /// If you don't need to set the individual parameters, you can also use the shortcut
+    /// methods `select_directory`, `select_file` and `save_file`.
+    ///
+    /// # Arguments
+    ///
+    /// * `mode` - The mode in which the dialog should be opened
+    /// * `show_files` - If files should also be displayed to the user in addition to directories.
+    ///    This is ignored if the mode is `DialogMode::SelectFile`.
+    /// * `operation_id` - Sets an ID for which operation the dialog was opened.
+    ///    This is useful when the dialog can be used for various operations in a single view.
+    ///    The ID can then be used to check which action the user selected an item for.
+    ///
+    /// # Examples
+    ///
+    /// The following example shows how the dialog can be used for multiple
+    /// actions using the `operation_id``.
+    ///
+    /// ```
+    /// use std::path::PathBuf;
+    ///
+    /// use egui_file_dialog::{DialogMode, FileDialog};
+    ///
+    /// struct MyApp {
+    ///     file_dialog: FileDialog,
+    ///
+    ///     selected_file_a: Option<PathBuf>,
+    ///     selected_file_b: Option<PathBuf>,
+    /// }
+    ///
+    /// impl MyApp {
+    ///     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    ///         if ui.button("Select file a").clicked() {
+    ///             let _ = self.file_dialog.open(DialogMode::SelectFile, true, Some("select_a"));
+    ///         }
+    ///
+    ///         if ui.button("Select file b").clicked() {
+    ///             let _ = self.file_dialog.open(DialogMode::SelectFile, true, Some("select_b"));
+    ///         }
+    ///
+    ///         self.file_dialog.update(ctx);
+    ///
+    ///         if let Some(path) = self.file_dialog.selected() {
+    ///             if self.file_dialog.operation_id() == Some("select_a") {
+    ///                 self.selected_file_a = Some(path.to_path_buf());
+    ///             }
+    ///             if self.file_dialog.operation_id() == Some("select_b") {
+    ///                 self.selected_file_b = Some(path.to_path_buf());
+    ///             }
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    pub fn open(
+        &mut self,
+        mode: DialogMode,
+        mut show_files: bool,
+        operation_id: Option<&str>,
+    ) -> io::Result<()> {
         self.reset();
 
         // Try to use the parent directory if the initial directory is a file.
@@ -311,6 +374,7 @@ impl FileDialog {
         self.mode = mode;
         self.state = DialogState::Open;
         self.show_files = show_files;
+        self.operation_id = operation_id.map(String::from);
 
         if let Some(title) = &self.window_overwrite_title {
             self.window_title = title.clone();
@@ -333,7 +397,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn select_directory(&mut self) {
-        let _ = self.open(DialogMode::SelectDirectory, false);
+        let _ = self.open(DialogMode::SelectDirectory, false, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a file.
@@ -342,7 +406,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn select_file(&mut self) {
-        let _ = self.open(DialogMode::SelectFile, false);
+        let _ = self.open(DialogMode::SelectFile, false, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -351,7 +415,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn save_file(&mut self) {
-        let _ = self.open(DialogMode::SaveFile, true);
+        let _ = self.open(DialogMode::SaveFile, true, None);
     }
 
     /// Returns the mode the dialog is currently in.
@@ -373,6 +437,13 @@ impl FileDialog {
             DialogState::Selected(path) => Some(path),
             _ => None,
         }
+    }
+
+    /// Returns the ID of the operation for which the dialog is currently being used.
+    ///
+    /// See `FileDialog::open` more information.
+    pub fn operation_id(&self) -> Option<&str> {
+        self.operation_id.as_deref()
     }
 
     /// The main update method that should be called every frame if the dialog is to be visible.
@@ -887,6 +958,7 @@ impl FileDialog {
     fn reset(&mut self) {
         self.state = DialogState::Closed;
         self.show_files = true;
+        self.operation_id = None;
 
         self.system_disks = Disks::new_with_refreshed_list();
 
