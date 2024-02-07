@@ -1,6 +1,7 @@
 # egui-file-dialog
 [![Latest version](https://img.shields.io/crates/v/egui-file-dialog.svg)](https://crates.io/crates/egui-file-dialog)
-[![Documentation](https://docs.rs/egui-file-dialog/badge.svg)](https://docs.rs/egui-file-dialog)
+[![Documentation](https://img.shields.io/docsrs/egui-file-dialog)](https://docs.rs/egui-file-dialog)
+[![Dependency status](https://deps.rs/repo/github/fluxxcode/egui-file-dialog/status.svg)](https://deps.rs/repo/github/fluxxcode/egui-file-dialog)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fluxxcode/egui-file-dialog/blob/master/LICENSE)
 
 This repository provides an easy-to-use file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui). This makes it possible to use a file dialog directly in the egui application without having to rely on the file explorer of the operating system.
@@ -31,11 +32,11 @@ Cargo.toml:
 ```toml
 [dependencies]
 eframe = "0.25.0"
-egui-file-dialog = "0.1.0"
+egui-file-dialog = "0.2.0"
 ```
 
 main.rs:
-```rs
+```rust
 use std::path::PathBuf;
 
 use eframe::egui;

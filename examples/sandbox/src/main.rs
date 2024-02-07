@@ -14,7 +14,7 @@ struct MyApp {
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
-            file_dialog: FileDialog::new(),
+            file_dialog: FileDialog::new().id("egui_file_dialog"),
 
             selected_directory: None,
             selected_file: None,
