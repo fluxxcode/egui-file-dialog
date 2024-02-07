@@ -1125,10 +1125,18 @@ impl FileDialog {
     /// The function deletes all directories from the `directory_stack` that are currently
     /// stored in the vector before the `directory_offset`.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
+        let full_path = match fs::canonicalize(path) {
+            Ok(path) => path,
+            Err(err) => {
+                self.directory_error = Some(err.to_string());
+                return Err(err);
+            }
+        };
+
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
         if let Some(x) = self.current_directory() {
-            if x == path {
+            if x == full_path {
                 return Ok(());
             }
         }
@@ -1137,14 +1145,6 @@ impl FileDialog {
             self.directory_stack
                 .drain(self.directory_stack.len() - self.directory_offset..);
         }
-
-        let full_path = match fs::canonicalize(path) {
-            Ok(path) => path,
-            Err(err) => {
-                self.directory_error = Some(err.to_string());
-                return Err(err);
-            }
-        };
 
         self.directory_stack.push(full_path);
         self.directory_offset = 0;
