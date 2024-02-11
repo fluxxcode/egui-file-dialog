@@ -3,6 +3,7 @@
 ## Unreleased
 ### 📚 Documentation
 - Fix typos in the documentation [#29](https://github.com/fluxxcode/egui-file-dialog/pull/29)
+- Fix eframe version in the example in README.md [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
 
 ## 2024-02-07 - v0.2.0 - API improvements
 ### 🚨 Breaking Changes
