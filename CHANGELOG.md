@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## Unreleased
+### 📚 Documentation
+- Fix typos in the documentation [#29](https://github.com/fluxxcode/egui-file-dialog/pull/29)
+
 ## 2024-02-07 - v0.2.0 - API improvements
 ### 🚨 Breaking Changes
 - Rename `FileDialog::default_window_size` to `FileDialog::default_size` [#14](https://github.com/fluxxcode/egui-file-dialog/pull/14)
