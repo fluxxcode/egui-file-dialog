@@ -4,6 +4,7 @@
 ### 📚 Documentation
 - Fix typos in the documentation [#29](https://github.com/fluxxcode/egui-file-dialog/pull/29)
 - Fix eframe version in the example in README.md [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
+- Added “Currently missing features” section to README.md and minor improvements [#31](https://github.com/fluxxcode/egui-file-dialog/pull/31)
 
 ## 2024-02-07 - v0.2.0 - API improvements
 ### 🚨 Breaking Changes
