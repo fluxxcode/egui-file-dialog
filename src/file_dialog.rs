@@ -308,7 +308,7 @@ impl FileDialog {
     /// # Examples
     ///
     /// The following example shows how the dialog can be used for multiple
-    /// actions using the `operation_id``.
+    /// actions using the `operation_id`.
     ///
     /// ```
     /// use std::path::PathBuf;
@@ -441,7 +441,7 @@ impl FileDialog {
 
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
-    /// See `FileDialog::open` more information.
+    /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
     }
