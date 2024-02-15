@@ -178,7 +178,7 @@ impl FileDialog {
             window_fixed_pos: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
             window_max_size: None,
-            window_min_size: egui::Vec2::new(355.0, 200.0),
+            window_min_size: egui::Vec2::new(340.0, 200.0),
             window_anchor: None,
             window_resizable: true,
             window_movable: true,
@@ -704,7 +704,18 @@ impl FileDialog {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
                     if self.is_selection_valid() {
                         if let Some(x) = &self.selected_item {
-                            ui.colored_label(ui.style().visuals.selection.bg_fill, x.file_name());
+                            use egui::containers::scroll_area::ScrollBarVisibility;
+
+                            egui::containers::ScrollArea::horizontal()
+                                .auto_shrink([false, false])
+                                .stick_to_right(true)
+                                .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
+                                .show(ui, |ui| {
+                                    ui.colored_label(
+                                        ui.style().visuals.selection.bg_fill,
+                                        x.file_name(),
+                                    );
+                                });
                         }
                     }
                 }
