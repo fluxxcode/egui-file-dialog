@@ -693,11 +693,36 @@ impl FileDialog {
 
         ui.add_space(5.0);
 
+        // ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
         ui.horizontal(|ui| {
             match &self.mode {
                 DialogMode::SelectDirectory => ui.label("Selected directory:"),
                 DialogMode::SelectFile => ui.label("Selected file:"),
-                DialogMode::SaveFile => ui.label("File name:"),
+                DialogMode::SaveFile => {
+                    let response = ui.label("File name:");
+
+                    if let Some(err) = &self.file_name_input_error {
+                        // TODO: Draw tooltip above the input in the center, not below
+                        // To calc the width:
+                        // let width = ui.fonts(|f|f.glyph_width(&TextStyle::Body.resolve(ui.style()), ' '));
+                        // ui.spacing_mut().item_spacing.x = width;
+                        egui::containers::show_tooltip_for(
+                            ui.ctx(),
+                            response.id.with("__tooltip"),
+                            &response.rect.expand2(egui::Vec2::new(-15.0, 5.0)),
+                            |ui| {
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 0.0;
+
+                                    ui.colored_label(ctx.style().visuals.error_fg_color, "⚠ ");
+                                    ui.label(err);
+                                })
+                            },
+                        );
+                    }
+
+                    response
+                }
             };
 
             match &self.mode {
@@ -720,19 +745,21 @@ impl FileDialog {
                     }
                 }
                 DialogMode::SaveFile => {
-                    let response = ui.add(egui::TextEdit::singleline(&mut self.file_name_input));
+                    let response = ui.add(
+                        egui::TextEdit::singleline(&mut self.file_name_input)
+                            .desired_width(f32::INFINITY),
+                    );
 
                     if response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
                     }
-
-                    if let Some(x) = &self.file_name_input_error {
-                        // TODO: Use error icon instead
-                        ui.label(x);
-                    }
                 }
             };
         });
+
+        if self.mode == DialogMode::SaveFile {
+            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
+        }
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
