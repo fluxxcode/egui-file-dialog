@@ -698,31 +698,7 @@ impl FileDialog {
             match &self.mode {
                 DialogMode::SelectDirectory => ui.label("Selected directory:"),
                 DialogMode::SelectFile => ui.label("Selected file:"),
-                DialogMode::SaveFile => {
-                    let response = ui.label("File name:");
-
-                    if let Some(err) = &self.file_name_input_error {
-                        // TODO: Draw tooltip above the input in the center, not below
-                        // To calc the width:
-                        // let width = ui.fonts(|f|f.glyph_width(&TextStyle::Body.resolve(ui.style()), ' '));
-                        // ui.spacing_mut().item_spacing.x = width;
-                        egui::containers::show_tooltip_for(
-                            ui.ctx(),
-                            response.id.with("__tooltip"),
-                            &response.rect.expand2(egui::Vec2::new(-15.0, 5.0)),
-                            |ui| {
-                                ui.horizontal_wrapped(|ui| {
-                                    ui.spacing_mut().item_spacing.x = 0.0;
-
-                                    ui.colored_label(ctx.style().visuals.error_fg_color, "⚠ ");
-                                    ui.label(err);
-                                })
-                            },
-                        );
-                    }
-
-                    response
-                }
+                DialogMode::SaveFile => ui.label("File name:"),
             };
 
             match &self.mode {
@@ -752,6 +728,30 @@ impl FileDialog {
 
                     if response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
+                    }
+
+                    if let Some(err) = &self.file_name_input_error {
+                        let mut pos = response.rect.min;
+
+                        // TODO: Dynamically calc position based on the tooltip size
+                        // To calc the width:
+                        // let width = ui.fonts(|f|f.glyph_width(&TextStyle::Body.resolve(ui.style()), ' '));
+                        // ui.spacing_mut().item_spacing.x = width;
+                        pos.y -= 35.0;
+
+                        egui::containers::show_tooltip_at(
+                            ui.ctx(),
+                            response.id.with("__tooltip"),
+                            Some(pos),
+                            |ui| {
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 0.0;
+
+                                    ui.colored_label(ctx.style().visuals.error_fg_color, "⚠ ");
+                                    ui.label(err);
+                                })
+                            },
+                        );
                     }
                 }
             };
