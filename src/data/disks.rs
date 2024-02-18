@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 pub struct Disk {
     mount_point: PathBuf,
     display_name: String,
+    is_removable: bool,
 }
 
 impl Disk {
@@ -15,6 +16,7 @@ impl Disk {
         Self {
             mount_point: disk.mount_point().to_path_buf(),
             display_name: Self::gen_display_name(disk),
+            is_removable: disk.is_removable(),
         }
     }
 
@@ -26,6 +28,10 @@ impl Disk {
     /// Returns the display name of the disk
     pub fn display_name(&self) -> &str {
         &self.display_name
+    }
+
+    pub fn is_removable(&self) -> bool {
+        self.is_removable
     }
 
     fn gen_display_name(disk: &sysinfo::Disk) -> String {
