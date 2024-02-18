@@ -178,7 +178,7 @@ impl FileDialog {
             window_fixed_pos: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
             window_max_size: None,
-            window_min_size: egui::Vec2::new(355.0, 200.0),
+            window_min_size: egui::Vec2::new(340.0, 170.0),
             window_anchor: None,
             window_resizable: true,
             window_movable: true,
@@ -532,11 +532,11 @@ impl FileDialog {
         ui.horizontal(|ui| {
             // Navigation buttons
             if let Some(x) = self.current_directory() {
-                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶") {
+                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶", None) {
                     let _ = self.load_parent_directory();
                 }
             } else {
-                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶");
+                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶", None);
             }
 
             if self.ui_button_sized(
@@ -544,11 +544,12 @@ impl FileDialog {
                 self.directory_offset + 1 < self.directory_stack.len(),
                 NAV_BUTTON_SIZE,
                 "⏴",
+                None,
             ) {
                 let _ = self.load_previous_directory();
             }
 
-            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵") {
+            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵", None) {
                 let _ = self.load_next_directory();
             }
 
@@ -557,6 +558,7 @@ impl FileDialog {
                 !self.create_directory_dialog.is_open(),
                 NAV_BUTTON_SIZE,
                 "+",
+                None,
             ) {
                 if let Some(x) = self.current_directory() {
                     self.create_directory_dialog.open(x.to_path_buf());
@@ -693,6 +695,7 @@ impl FileDialog {
 
         ui.add_space(5.0);
 
+        // ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
         ui.horizontal(|ui| {
             match &self.mode {
                 DialogMode::SelectDirectory => ui.label("Selected directory:"),
@@ -704,24 +707,37 @@ impl FileDialog {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
                     if self.is_selection_valid() {
                         if let Some(x) = &self.selected_item {
-                            ui.colored_label(ui.style().visuals.selection.bg_fill, x.file_name());
+                            use egui::containers::scroll_area::ScrollBarVisibility;
+
+                            egui::containers::ScrollArea::horizontal()
+                                .auto_shrink([false, false])
+                                .stick_to_right(true)
+                                .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
+                                .show(ui, |ui| {
+                                    ui.colored_label(
+                                        ui.style().visuals.selection.bg_fill,
+                                        x.file_name(),
+                                    );
+                                });
                         }
                     }
                 }
                 DialogMode::SaveFile => {
-                    let response = ui.add(egui::TextEdit::singleline(&mut self.file_name_input));
+                    let response = ui.add(
+                        egui::TextEdit::singleline(&mut self.file_name_input)
+                            .desired_width(f32::INFINITY),
+                    );
 
                     if response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
                     }
-
-                    if let Some(x) = &self.file_name_input_error {
-                        // TODO: Use error icon instead
-                        ui.label(x);
-                    }
                 }
             };
         });
+
+        if self.mode == DialogMode::SaveFile {
+            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
+        }
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
@@ -729,7 +745,13 @@ impl FileDialog {
                 DialogMode::SaveFile => "📥  Save",
             };
 
-            if self.ui_button_sized(ui, self.is_selection_valid(), BUTTON_SIZE, label) {
+            if self.ui_button_sized(
+                ui,
+                self.is_selection_valid(),
+                BUTTON_SIZE,
+                label,
+                self.file_name_input_error.as_deref(),
+            ) {
                 match &self.mode {
                     DialogMode::SelectDirectory | DialogMode::SelectFile => {
                         // self.selected_item should always contain a value,
@@ -943,11 +965,24 @@ impl FileDialog {
         enabled: bool,
         size: egui::Vec2,
         label: &str,
+        err_tooltip: Option<&str>,
     ) -> bool {
         let mut clicked = false;
 
         ui.add_enabled_ui(enabled, |ui| {
-            clicked = ui.add_sized(size, egui::Button::new(label)).clicked();
+            let response = ui.add_sized(size, egui::Button::new(label));
+            clicked = response.clicked();
+
+            if let Some(err) = err_tooltip {
+                response.on_disabled_hover_ui(|ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+
+                        ui.colored_label(ui.ctx().style().visuals.error_fg_color, "⚠ ");
+                        ui.label(err);
+                    });
+                });
+            }
         });
 
         clicked
