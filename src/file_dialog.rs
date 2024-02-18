@@ -970,7 +970,7 @@ impl FileDialog {
         let mut clicked = false;
 
         ui.add_enabled_ui(enabled, |ui| {
-            let response= ui.add_sized(size, egui::Button::new(label));
+            let response = ui.add_sized(size, egui::Button::new(label));
             clicked = response.clicked();
 
             if let Some(err) = err_tooltip {

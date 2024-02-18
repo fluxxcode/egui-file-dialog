@@ -113,12 +113,14 @@ impl CreateDirectoryDialog {
         if let Some(err) = &self.error {
             ui.add_space(5.0);
 
-            let response = ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing.x = 0.0;
+            let response = ui
+                .horizontal_wrapped(|ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
 
-                ui.colored_label(ui.style().visuals.error_fg_color, "⚠ ");
-                ui.label(err);
-            }).response;
+                    ui.colored_label(ui.style().visuals.error_fg_color, "⚠ ");
+                    ui.label(err);
+                })
+                .response;
 
             if self.scroll_to_error {
                 response.scroll_to_me(Some(egui::Align::Center));
