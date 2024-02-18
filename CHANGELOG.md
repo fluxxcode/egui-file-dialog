@@ -20,6 +20,7 @@
 - Fix eframe version in the example in `README.md` [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
 - Added "Planned features” section to `README.md` and minor improvements [#31](https://github.com/fluxxcode/egui-file-dialog/pull/31) (Renamed with [#35](https://github.com/fluxxcode/egui-file-dialog/pull/35))
 - Updated example screenshot in `README.md` to include new "Removable Devices" section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
+- Moved media files from `doc/img/` to `media/` [#37](https://github.com/fluxxcode/egui-file-dialog/pull/37)
 
 ## 2024-02-07 - v0.2.0 - API improvements
 ### 🚨 Breaking Changes
