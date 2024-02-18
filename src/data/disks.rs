@@ -15,7 +15,7 @@ impl Disk {
     pub fn from_sysinfo_disk(disk: &sysinfo::Disk) -> Self {
         Self {
             mount_point: disk.mount_point().to_path_buf(),
-            display_name: Self::gen_display_name(disk),
+            display_name: gen_display_name(disk),
             is_removable: disk.is_removable(),
         }
     }
@@ -32,21 +32,6 @@ impl Disk {
 
     pub fn is_removable(&self) -> bool {
         self.is_removable
-    }
-
-    fn gen_display_name(disk: &sysinfo::Disk) -> String {
-        // TODO: Get display name of the devices.
-        // Currently on Linux it returns "/dev/sda1" and on Windows it returns an
-        // empty string for the C:\\ drive.
-        let name = disk.name().to_str().unwrap_or_default().to_string();
-
-        // Try using the mount point as the display name if the specified name
-        // from sysinfo::Disk is empty or contains invalid characters
-        if name.is_empty() {
-            return disk.mount_point().to_str().unwrap_or_default().to_string();
-        }
-
-        name
     }
 }
 
@@ -74,4 +59,36 @@ impl Disks {
     pub fn iter(&self) -> std::slice::Iter<'_, Disk> {
         self.disks.iter()
     }
+}
+
+#[cfg(windows)]
+fn gen_display_name(disk: &sysinfo::Disk) -> String {
+    // TODO: Get display name of the devices.
+    // Currently on Windows it returns an empty string for the C:\\ drive.
+
+    let mut name = disk.name().to_str().unwrap_or_default().to_string();
+    let mount_point = disk.mount_point().to_str().unwrap_or_default().to_string().replace("\\", "");
+
+    // Try using the mount point as the display name if the specified name
+    // from sysinfo::Disk is empty or contains invalid characters
+    if name.is_empty() {
+        return mount_point;
+    }
+
+    name.push_str(format!(" ({})", mount_point).as_str());
+
+    name
+}
+
+#[cfg(not(windows))]
+fn gen_display_name(disk: &sysinfo::Disk) -> String {
+        let name = disk.name().to_str().unwrap_or_default().to_string();
+
+        // Try using the mount point as the display name if the specified name
+        // from sysinfo::Disk is empty or contains invalid characters
+        if name.is_empty() {
+            return disk.mount_point().to_str().unwrap_or_default().to_string();
+        }
+
+        name
 }
