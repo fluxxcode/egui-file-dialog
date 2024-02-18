@@ -154,6 +154,9 @@ impl Default for FileDialog {
 }
 
 impl FileDialog {
+    // ------------------------------------------------------------------------
+    // Creation:
+
     /// Creates a new file dialog instance with default values.
     pub fn new() -> Self {
         FileDialog {
@@ -196,96 +199,8 @@ impl FileDialog {
         }
     }
 
-    /// Sets the first loaded directory when the dialog opens.
-    /// If the path is a file, the file's parent directory is used. If the path then has no
-    /// parent directory or cannot be loaded, the user will receive an error.
-    /// However, the user directories and system disk allow the user to still select a file in
-    /// the event of an error.
-    ///
-    /// Relative and absolute paths are allowed, but absolute paths are recommended.
-    pub fn initial_directory(mut self, directory: PathBuf) -> Self {
-        self.initial_directory = directory.clone();
-        self
-    }
-
-    /// Overwrites the window title.
-    ///
-    /// By default, the title is set dynamically, based on the `DialogMode`
-    /// the dialog is currently in.
-    pub fn title(mut self, title: &str) -> Self {
-        self.window_overwrite_title = Some(title.to_string());
-        self
-    }
-
-    /// Sets the ID of the window.
-    pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
-        self.window_id = Some(id.into());
-        self
-    }
-
-    /// Sets the default position of the window.
-    pub fn default_pos(mut self, default_pos: impl Into<egui::Pos2>) -> Self {
-        self.window_default_pos = Some(default_pos.into());
-        self
-    }
-
-    /// Sets the window position and prevents it from being dragged around.
-    pub fn fixed_pos(mut self, pos: impl Into<egui::Pos2>) -> Self {
-        self.window_fixed_pos = Some(pos.into());
-        self
-    }
-
-    /// Sets the default size of the window.
-    pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
-        self.window_default_size = size.into();
-        self
-    }
-
-    /// Sets the maximum size of the window.
-    pub fn max_size(mut self, max_size: impl Into<egui::Vec2>) -> Self {
-        self.window_max_size = Some(max_size.into());
-        self
-    }
-
-    /// Sets the minimum size of the window.
-    ///
-    /// Specifying a smaller minimum size than the default can lead to unexpected behavior.
-    pub fn min_size(mut self, min_size: impl Into<egui::Vec2>) -> Self {
-        self.window_min_size = min_size.into();
-        self
-    }
-
-    /// Sets the anchor of the window.
-    pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
-        self.window_anchor = Some((align, offset.into()));
-        self
-    }
-
-    /// Sets if the window is resizable.
-    pub fn resizable(mut self, resizable: bool) -> Self {
-        self.window_resizable = resizable;
-        self
-    }
-
-    /// Sets if the window is movable.
-    ///
-    /// Has no effect if an anchor is set.
-    pub fn movable(mut self, movable: bool) -> Self {
-        self.window_movable = movable;
-        self
-    }
-
-    /// Sets if the title bar of the window is shown.
-    pub fn title_bar(mut self, title_bar: bool) -> Self {
-        self.window_title_bar = title_bar;
-        self
-    }
-
-    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
-    pub fn default_file_name(mut self, name: &str) -> Self {
-        self.default_file_name = name.to_string();
-        self
-    }
+    // -------------------------------------------------
+    // Open:
 
     /// Opens the file dialog in the given mode with the given options.
     /// This function resets the file dialog and takes care for the variables that need to be
@@ -418,6 +333,103 @@ impl FileDialog {
         let _ = self.open(DialogMode::SaveFile, true, None);
     }
 
+    // -------------------------------------------------
+    // Setter:
+
+    /// Sets the first loaded directory when the dialog opens.
+    /// If the path is a file, the file's parent directory is used. If the path then has no
+    /// parent directory or cannot be loaded, the user will receive an error.
+    /// However, the user directories and system disk allow the user to still select a file in
+    /// the event of an error.
+    ///
+    /// Relative and absolute paths are allowed, but absolute paths are recommended.
+    pub fn initial_directory(mut self, directory: PathBuf) -> Self {
+        self.initial_directory = directory.clone();
+        self
+    }
+
+    /// Overwrites the window title.
+    ///
+    /// By default, the title is set dynamically, based on the `DialogMode`
+    /// the dialog is currently in.
+    pub fn title(mut self, title: &str) -> Self {
+        self.window_overwrite_title = Some(title.to_string());
+        self
+    }
+
+    /// Sets the ID of the window.
+    pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
+        self.window_id = Some(id.into());
+        self
+    }
+
+    /// Sets the default position of the window.
+    pub fn default_pos(mut self, default_pos: impl Into<egui::Pos2>) -> Self {
+        self.window_default_pos = Some(default_pos.into());
+        self
+    }
+
+    /// Sets the window position and prevents it from being dragged around.
+    pub fn fixed_pos(mut self, pos: impl Into<egui::Pos2>) -> Self {
+        self.window_fixed_pos = Some(pos.into());
+        self
+    }
+
+    /// Sets the default size of the window.
+    pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
+        self.window_default_size = size.into();
+        self
+    }
+
+    /// Sets the maximum size of the window.
+    pub fn max_size(mut self, max_size: impl Into<egui::Vec2>) -> Self {
+        self.window_max_size = Some(max_size.into());
+        self
+    }
+
+    /// Sets the minimum size of the window.
+    ///
+    /// Specifying a smaller minimum size than the default can lead to unexpected behavior.
+    pub fn min_size(mut self, min_size: impl Into<egui::Vec2>) -> Self {
+        self.window_min_size = min_size.into();
+        self
+    }
+
+    /// Sets the anchor of the window.
+    pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
+        self.window_anchor = Some((align, offset.into()));
+        self
+    }
+
+    /// Sets if the window is resizable.
+    pub fn resizable(mut self, resizable: bool) -> Self {
+        self.window_resizable = resizable;
+        self
+    }
+
+    /// Sets if the window is movable.
+    ///
+    /// Has no effect if an anchor is set.
+    pub fn movable(mut self, movable: bool) -> Self {
+        self.window_movable = movable;
+        self
+    }
+
+    /// Sets if the title bar of the window is shown.
+    pub fn title_bar(mut self, title_bar: bool) -> Self {
+        self.window_title_bar = title_bar;
+        self
+    }
+
+    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
+    pub fn default_file_name(mut self, name: &str) -> Self {
+        self.default_file_name = name.to_string();
+        self
+    }
+
+    // -------------------------------------------------
+    // Getter:
+
     /// Returns the mode the dialog is currently in.
     pub fn mode(&self) -> DialogMode {
         self.mode
@@ -489,7 +501,10 @@ impl FileDialog {
 
         self
     }
+}
 
+/// UI methods
+impl FileDialog {
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
         let mut window = egui::Window::new(&self.window_title)
@@ -1005,7 +1020,10 @@ impl FileDialog {
 
         clicked
     }
+}
 
+/// Implementation
+impl FileDialog {
     /// Resets the dialog to use default values.
     /// Configuration variables such as `initial_directory` are retained.
     fn reset(&mut self) {
