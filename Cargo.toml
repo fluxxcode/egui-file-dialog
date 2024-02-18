@@ -6,7 +6,7 @@ members = [
 [package]
 name = "egui-file-dialog"
 description = "An easy-to-use file dialog for egui"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["fluxxcode"]
 repository = "https://github.com/fluxxcode/egui-file-dialog"
