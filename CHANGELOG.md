@@ -3,11 +3,14 @@
 ## Unreleased
 ### 🖥 UI
 - Improve dialog resizing [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
-  - Error when saving a file is now displayed as a tooltip when hovering over the save button
+  - Error when saving a file is now displayed as a tooltip when hovering over the save button \
+    ![Screenshot_20240218_172006](https://github.com/fluxxcode/egui-file-dialog/assets/55352293/002791a9-c6b1-4e12-a0bc-6d41e6b411e2)
   - Updated file name input to use all available space
   - Added scroll area around the selected item
   - The default minimum window size has been further reduced
-- Added an error icon before the error message when creating a folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
+- Added an error icon before the error message when creating a folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32) \
+  ![Screenshot_20240218_172105](https://github.com/fluxxcode/egui-file-dialog/assets/55352293/fa4acc59-1297-4d59-bfd6-277d50584cc6)
+
 ### 📚 Documentation
 - Fix typos in the documentation [#29](https://github.com/fluxxcode/egui-file-dialog/pull/29)
 - Fix eframe version in the example in README.md [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
