@@ -25,7 +25,7 @@ Check out [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/deve
 - Shortcut for user directories (Home, Documents, ...) and system disks
 - Resizable window
 
-## Currently missing features
+## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
 - Customize labels and enabled features
 - Selection of multiple directory items at once
