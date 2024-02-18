@@ -1,14 +1,14 @@
 # egui-file-dialog changelog
 
-## Unreleased
+## 2024-02-18 - v0.3.0 - UI improvements
 ### 🖥 UI
-- Improve dialog resizing [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
-  - Error when saving a file is now displayed as a tooltip when hovering over the save button \
+- Updated bottom panel so that the dialog can also be resized in `DialogMode::SaveFile` or when selecting a file or directory with a long name [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
+  - The error when saving a file is now displayed as a tooltip when hovering over the grayed out save button \
     ![preview](media/changelog/v0.3.0/error_tooltip.png)
   - Updated file name input to use all available space
-  - Added scroll area around the selected item
-  - The default minimum window size has been further reduced
-- Added an error icon before the error message when creating a folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32) \
+  - Added scroll area around the selected item, so that long file names can be displayed without making the dialog larger
+- The default minimum window size has been further reduced to `(340.0, 170.0)` [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
+- Added an error icon to the error message when creating a new folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32) \
   ![preview](media/changelog/v0.3.0/error_icon.png)
 - Removable devices are now listed in a separate devices section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
 - Added mount point to the disk names on Windows [#38](https://github.com/fluxxcode/egui-file-dialog/pull/38)
