@@ -937,7 +937,7 @@ impl FileDialog {
         }
     }
 
-    /// Updates the list of the system disks (Disks, Removable devices).
+    /// Updates the list of the system disks (Devices, Removable Devices).
     fn ui_update_devices(&mut self, ui: &mut egui::Ui) {
         let disks = std::mem::take(&mut self.system_disks);
 
@@ -951,7 +951,7 @@ impl FileDialog {
             self.ui_update_device_entry(ui, disk);
         }
 
-        // Remove devices like USB sticks
+        // Removable devices like USB sticks
         for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
             if i == 0 {
                 ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
