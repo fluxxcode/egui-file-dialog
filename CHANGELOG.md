@@ -11,6 +11,7 @@
 - Added an error icon before the error message when creating a folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32) \
   ![preview](media/changelog/v0.3.0/error_icon.png)
 - Removable devices are now listed in a separate devices section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
+- Added mount point to the disk names on Windows [#38](https://github.com/fluxxcode/egui-file-dialog/pull/38)
 
 ### 🔧 Changes
 - Restructure `file_dialog.rs` [#36](https://github.com/fluxxcode/egui-file-dialog/pull/36)
