@@ -10,11 +10,13 @@
   - The default minimum window size has been further reduced
 - Added an error icon before the error message when creating a folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32) \
   ![Screenshot_20240218_172105](https://github.com/fluxxcode/egui-file-dialog/assets/55352293/fa4acc59-1297-4d59-bfd6-277d50584cc6)
+- Removable devices are now listed in a separate devices section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
 
 ### 📚 Documentation
 - Fix typos in the documentation [#29](https://github.com/fluxxcode/egui-file-dialog/pull/29)
 - Fix eframe version in the example in README.md [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
 - Added “Currently missing features” section to README.md and minor improvements [#31](https://github.com/fluxxcode/egui-file-dialog/pull/31)
+- Updated example screenshot in `README.md` to include new "Removable Devices" section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
 
 ## 2024-02-07 - v0.2.0 - API improvements
 ### 🚨 Breaking Changes
