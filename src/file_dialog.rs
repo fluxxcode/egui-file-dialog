@@ -5,7 +5,7 @@ use std::{fs, io};
 
 use crate::create_directory_dialog::CreateDirectoryDialog;
 
-use crate::data::{DirectoryContent, DirectoryEntry, Disks, UserDirectories};
+use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -681,9 +681,6 @@ impl FileDialog {
                     ui.add_space(ctx.style().spacing.item_spacing.y * 2.0);
 
                     self.ui_update_user_directories(ui);
-
-                    ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
-
                     self.ui_update_devices(ui);
                 });
         });
@@ -940,22 +937,43 @@ impl FileDialog {
         }
     }
 
-    /// Updates the list of the system disks (Disks).
+    /// Updates the list of the system disks (Disks, Removable devices).
     fn ui_update_devices(&mut self, ui: &mut egui::Ui) {
-        ui.label("Devices");
-
         let disks = std::mem::take(&mut self.system_disks);
 
-        for disk in disks.iter() {
-            if ui
-                .selectable_label(false, format!("🖴  {}", disk.display_name()))
-                .clicked()
-            {
-                let _ = self.load_directory(disk.mount_point());
+        // Non removable devices like hard drives
+        for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Devices");
             }
+
+            self.ui_update_device_entry(ui, disk);
+        }
+
+        // Remove devices like USB sticks
+        for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Removable Devices");
+            }
+
+            self.ui_update_device_entry(ui, disk);
         }
 
         self.system_disks = disks;
+    }
+
+    /// Updates a device entry in the device list.
+    fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
+        let label = match device.is_removable() {
+            true => format!("💾  {}", device.display_name()),
+            false => format!("🖴  {}", device.display_name()),
+        };
+
+        if ui.selectable_label(false, label).clicked() {
+            let _ = self.load_directory(device.mount_point());
+        }
     }
 
     /// Helper function to add a sized button that can be enabled or disabled
