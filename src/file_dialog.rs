@@ -5,7 +5,7 @@ use std::{fs, io};
 
 use crate::create_directory_dialog::CreateDirectoryDialog;
 
-use crate::data::{DirectoryContent, DirectoryEntry, Disks, UserDirectories};
+use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -154,6 +154,9 @@ impl Default for FileDialog {
 }
 
 impl FileDialog {
+    // ------------------------------------------------------------------------
+    // Creation:
+
     /// Creates a new file dialog instance with default values.
     pub fn new() -> Self {
         FileDialog {
@@ -178,7 +181,7 @@ impl FileDialog {
             window_fixed_pos: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
             window_max_size: None,
-            window_min_size: egui::Vec2::new(355.0, 200.0),
+            window_min_size: egui::Vec2::new(340.0, 170.0),
             window_anchor: None,
             window_resizable: true,
             window_movable: true,
@@ -196,96 +199,8 @@ impl FileDialog {
         }
     }
 
-    /// Sets the first loaded directory when the dialog opens.
-    /// If the path is a file, the file's parent directory is used. If the path then has no
-    /// parent directory or cannot be loaded, the user will receive an error.
-    /// However, the user directories and system disk allow the user to still select a file in
-    /// the event of an error.
-    ///
-    /// Relative and absolute paths are allowed, but absolute paths are recommended.
-    pub fn initial_directory(mut self, directory: PathBuf) -> Self {
-        self.initial_directory = directory.clone();
-        self
-    }
-
-    /// Overwrites the window title.
-    ///
-    /// By default, the title is set dynamically, based on the `DialogMode`
-    /// the dialog is currently in.
-    pub fn title(mut self, title: &str) -> Self {
-        self.window_overwrite_title = Some(title.to_string());
-        self
-    }
-
-    /// Sets the ID of the window.
-    pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
-        self.window_id = Some(id.into());
-        self
-    }
-
-    /// Sets the default position of the window.
-    pub fn default_pos(mut self, default_pos: impl Into<egui::Pos2>) -> Self {
-        self.window_default_pos = Some(default_pos.into());
-        self
-    }
-
-    /// Sets the window position and prevents it from being dragged around.
-    pub fn fixed_pos(mut self, pos: impl Into<egui::Pos2>) -> Self {
-        self.window_fixed_pos = Some(pos.into());
-        self
-    }
-
-    /// Sets the default size of the window.
-    pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
-        self.window_default_size = size.into();
-        self
-    }
-
-    /// Sets the maximum size of the window.
-    pub fn max_size(mut self, max_size: impl Into<egui::Vec2>) -> Self {
-        self.window_max_size = Some(max_size.into());
-        self
-    }
-
-    /// Sets the minimum size of the window.
-    ///
-    /// Specifying a smaller minimum size than the default can lead to unexpected behavior.
-    pub fn min_size(mut self, min_size: impl Into<egui::Vec2>) -> Self {
-        self.window_min_size = min_size.into();
-        self
-    }
-
-    /// Sets the anchor of the window.
-    pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
-        self.window_anchor = Some((align, offset.into()));
-        self
-    }
-
-    /// Sets if the window is resizable.
-    pub fn resizable(mut self, resizable: bool) -> Self {
-        self.window_resizable = resizable;
-        self
-    }
-
-    /// Sets if the window is movable.
-    ///
-    /// Has no effect if an anchor is set.
-    pub fn movable(mut self, movable: bool) -> Self {
-        self.window_movable = movable;
-        self
-    }
-
-    /// Sets if the title bar of the window is shown.
-    pub fn title_bar(mut self, title_bar: bool) -> Self {
-        self.window_title_bar = title_bar;
-        self
-    }
-
-    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
-    pub fn default_file_name(mut self, name: &str) -> Self {
-        self.default_file_name = name.to_string();
-        self
-    }
+    // -------------------------------------------------
+    // Open:
 
     /// Opens the file dialog in the given mode with the given options.
     /// This function resets the file dialog and takes care for the variables that need to be
@@ -308,7 +223,7 @@ impl FileDialog {
     /// # Examples
     ///
     /// The following example shows how the dialog can be used for multiple
-    /// actions using the `operation_id``.
+    /// actions using the `operation_id`.
     ///
     /// ```
     /// use std::path::PathBuf;
@@ -418,6 +333,103 @@ impl FileDialog {
         let _ = self.open(DialogMode::SaveFile, true, None);
     }
 
+    // -------------------------------------------------
+    // Setter:
+
+    /// Sets the first loaded directory when the dialog opens.
+    /// If the path is a file, the file's parent directory is used. If the path then has no
+    /// parent directory or cannot be loaded, the user will receive an error.
+    /// However, the user directories and system disk allow the user to still select a file in
+    /// the event of an error.
+    ///
+    /// Relative and absolute paths are allowed, but absolute paths are recommended.
+    pub fn initial_directory(mut self, directory: PathBuf) -> Self {
+        self.initial_directory = directory.clone();
+        self
+    }
+
+    /// Overwrites the window title.
+    ///
+    /// By default, the title is set dynamically, based on the `DialogMode`
+    /// the dialog is currently in.
+    pub fn title(mut self, title: &str) -> Self {
+        self.window_overwrite_title = Some(title.to_string());
+        self
+    }
+
+    /// Sets the ID of the window.
+    pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
+        self.window_id = Some(id.into());
+        self
+    }
+
+    /// Sets the default position of the window.
+    pub fn default_pos(mut self, default_pos: impl Into<egui::Pos2>) -> Self {
+        self.window_default_pos = Some(default_pos.into());
+        self
+    }
+
+    /// Sets the window position and prevents it from being dragged around.
+    pub fn fixed_pos(mut self, pos: impl Into<egui::Pos2>) -> Self {
+        self.window_fixed_pos = Some(pos.into());
+        self
+    }
+
+    /// Sets the default size of the window.
+    pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
+        self.window_default_size = size.into();
+        self
+    }
+
+    /// Sets the maximum size of the window.
+    pub fn max_size(mut self, max_size: impl Into<egui::Vec2>) -> Self {
+        self.window_max_size = Some(max_size.into());
+        self
+    }
+
+    /// Sets the minimum size of the window.
+    ///
+    /// Specifying a smaller minimum size than the default can lead to unexpected behavior.
+    pub fn min_size(mut self, min_size: impl Into<egui::Vec2>) -> Self {
+        self.window_min_size = min_size.into();
+        self
+    }
+
+    /// Sets the anchor of the window.
+    pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
+        self.window_anchor = Some((align, offset.into()));
+        self
+    }
+
+    /// Sets if the window is resizable.
+    pub fn resizable(mut self, resizable: bool) -> Self {
+        self.window_resizable = resizable;
+        self
+    }
+
+    /// Sets if the window is movable.
+    ///
+    /// Has no effect if an anchor is set.
+    pub fn movable(mut self, movable: bool) -> Self {
+        self.window_movable = movable;
+        self
+    }
+
+    /// Sets if the title bar of the window is shown.
+    pub fn title_bar(mut self, title_bar: bool) -> Self {
+        self.window_title_bar = title_bar;
+        self
+    }
+
+    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
+    pub fn default_file_name(mut self, name: &str) -> Self {
+        self.default_file_name = name.to_string();
+        self
+    }
+
+    // -------------------------------------------------
+    // Getter:
+
     /// Returns the mode the dialog is currently in.
     pub fn mode(&self) -> DialogMode {
         self.mode
@@ -441,7 +453,7 @@ impl FileDialog {
 
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
-    /// See `FileDialog::open` more information.
+    /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
     }
@@ -489,7 +501,10 @@ impl FileDialog {
 
         self
     }
+}
 
+/// UI methods
+impl FileDialog {
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
         let mut window = egui::Window::new(&self.window_title)
@@ -532,11 +547,11 @@ impl FileDialog {
         ui.horizontal(|ui| {
             // Navigation buttons
             if let Some(x) = self.current_directory() {
-                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶") {
+                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶", None) {
                     let _ = self.load_parent_directory();
                 }
             } else {
-                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶");
+                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶", None);
             }
 
             if self.ui_button_sized(
@@ -544,11 +559,12 @@ impl FileDialog {
                 self.directory_offset + 1 < self.directory_stack.len(),
                 NAV_BUTTON_SIZE,
                 "⏴",
+                None,
             ) {
                 let _ = self.load_previous_directory();
             }
 
-            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵") {
+            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵", None) {
                 let _ = self.load_next_directory();
             }
 
@@ -557,6 +573,7 @@ impl FileDialog {
                 !self.create_directory_dialog.is_open(),
                 NAV_BUTTON_SIZE,
                 "+",
+                None,
             ) {
                 if let Some(x) = self.current_directory() {
                     self.create_directory_dialog.open(x.to_path_buf());
@@ -679,9 +696,6 @@ impl FileDialog {
                     ui.add_space(ctx.style().spacing.item_spacing.y * 2.0);
 
                     self.ui_update_user_directories(ui);
-
-                    ui.add_space(ctx.style().spacing.item_spacing.y * 4.0);
-
                     self.ui_update_devices(ui);
                 });
         });
@@ -693,6 +707,7 @@ impl FileDialog {
 
         ui.add_space(5.0);
 
+        // ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
         ui.horizontal(|ui| {
             match &self.mode {
                 DialogMode::SelectDirectory => ui.label("Selected directory:"),
@@ -704,24 +719,37 @@ impl FileDialog {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
                     if self.is_selection_valid() {
                         if let Some(x) = &self.selected_item {
-                            ui.colored_label(ui.style().visuals.selection.bg_fill, x.file_name());
+                            use egui::containers::scroll_area::ScrollBarVisibility;
+
+                            egui::containers::ScrollArea::horizontal()
+                                .auto_shrink([false, false])
+                                .stick_to_right(true)
+                                .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
+                                .show(ui, |ui| {
+                                    ui.colored_label(
+                                        ui.style().visuals.selection.bg_fill,
+                                        x.file_name(),
+                                    );
+                                });
                         }
                     }
                 }
                 DialogMode::SaveFile => {
-                    let response = ui.add(egui::TextEdit::singleline(&mut self.file_name_input));
+                    let response = ui.add(
+                        egui::TextEdit::singleline(&mut self.file_name_input)
+                            .desired_width(f32::INFINITY),
+                    );
 
                     if response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
                     }
-
-                    if let Some(x) = &self.file_name_input_error {
-                        // TODO: Use error icon instead
-                        ui.label(x);
-                    }
                 }
             };
         });
+
+        if self.mode == DialogMode::SaveFile {
+            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
+        }
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
@@ -729,7 +757,13 @@ impl FileDialog {
                 DialogMode::SaveFile => "📥  Save",
             };
 
-            if self.ui_button_sized(ui, self.is_selection_valid(), BUTTON_SIZE, label) {
+            if self.ui_button_sized(
+                ui,
+                self.is_selection_valid(),
+                BUTTON_SIZE,
+                label,
+                self.file_name_input_error.as_deref(),
+            ) {
                 match &self.mode {
                     DialogMode::SelectDirectory | DialogMode::SelectFile => {
                         // self.selected_item should always contain a value,
@@ -918,22 +952,43 @@ impl FileDialog {
         }
     }
 
-    /// Updates the list of the system disks (Disks).
+    /// Updates the list of the system disks (Devices, Removable Devices).
     fn ui_update_devices(&mut self, ui: &mut egui::Ui) {
-        ui.label("Devices");
-
         let disks = std::mem::take(&mut self.system_disks);
 
-        for disk in disks.iter() {
-            if ui
-                .selectable_label(false, format!("🖴  {}", disk.display_name()))
-                .clicked()
-            {
-                let _ = self.load_directory(disk.mount_point());
+        // Non removable devices like hard drives
+        for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Devices");
             }
+
+            self.ui_update_device_entry(ui, disk);
+        }
+
+        // Removable devices like USB sticks
+        for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Removable Devices");
+            }
+
+            self.ui_update_device_entry(ui, disk);
         }
 
         self.system_disks = disks;
+    }
+
+    /// Updates a device entry in the device list.
+    fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
+        let label = match device.is_removable() {
+            true => format!("💾  {}", device.display_name()),
+            false => format!("🖴  {}", device.display_name()),
+        };
+
+        if ui.selectable_label(false, label).clicked() {
+            let _ = self.load_directory(device.mount_point());
+        }
     }
 
     /// Helper function to add a sized button that can be enabled or disabled
@@ -943,16 +998,32 @@ impl FileDialog {
         enabled: bool,
         size: egui::Vec2,
         label: &str,
+        err_tooltip: Option<&str>,
     ) -> bool {
         let mut clicked = false;
 
         ui.add_enabled_ui(enabled, |ui| {
-            clicked = ui.add_sized(size, egui::Button::new(label)).clicked();
+            let response = ui.add_sized(size, egui::Button::new(label));
+            clicked = response.clicked();
+
+            if let Some(err) = err_tooltip {
+                response.on_disabled_hover_ui(|ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+
+                        ui.colored_label(ui.ctx().style().visuals.error_fg_color, "⚠ ");
+                        ui.label(err);
+                    });
+                });
+            }
         });
 
         clicked
     }
+}
 
+/// Implementation
+impl FileDialog {
     /// Resets the dialog to use default values.
     /// Configuration variables such as `initial_directory` are retained.
     fn reset(&mut self) {

@@ -1,5 +1,28 @@
 # egui-file-dialog changelog
 
+## 2024-02-18 - v0.3.0 - UI improvements
+### 🖥 UI
+- Updated bottom panel so that the dialog can also be resized in `DialogMode::SaveFile` or when selecting a file or directory with a long name [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
+  - The error when saving a file is now displayed as a tooltip when hovering over the grayed out save button \
+    ![preview](media/changelog/v0.3.0/error_tooltip.png)
+  - Updated file name input to use all available space
+  - Added scroll area around the selected item, so that long file names can be displayed without making the dialog larger
+- The default minimum window size has been further reduced to `(340.0, 170.0)` [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
+- Added an error icon to the error message when creating a new folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32) \
+  ![preview](media/changelog/v0.3.0/error_icon.png)
+- Removable devices are now listed in a separate devices section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
+- Added mount point to the disk names on Windows [#38](https://github.com/fluxxcode/egui-file-dialog/pull/38)
+
+### 🔧 Changes
+- Restructure `file_dialog.rs` [#36](https://github.com/fluxxcode/egui-file-dialog/pull/36)
+
+### 📚 Documentation
+- Fix typos in the documentation [#29](https://github.com/fluxxcode/egui-file-dialog/pull/29)
+- Fix eframe version in the example in `README.md` [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
+- Added "Planned features” section to `README.md` and minor improvements [#31](https://github.com/fluxxcode/egui-file-dialog/pull/31) (Renamed with [#35](https://github.com/fluxxcode/egui-file-dialog/pull/35))
+- Updated example screenshot in `README.md` to include new "Removable Devices" section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
+- Moved media files from `doc/img/` to `media/` [#37](https://github.com/fluxxcode/egui-file-dialog/pull/37)
+
 ## 2024-02-07 - v0.2.0 - API improvements
 ### 🚨 Breaking Changes
 - Rename `FileDialog::default_window_size` to `FileDialog::default_size` [#14](https://github.com/fluxxcode/egui-file-dialog/pull/14)

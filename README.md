@@ -6,13 +6,13 @@
 
 This repository provides an easy-to-use file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui). This makes it possible to use a file dialog directly in the egui application without having to rely on the file explorer of the operating system.
 
-<img src="doc/img/demo.png">
+<img src="media/demo.png">
 
 The goal for the future is that parts of the dialog can be dynamically adapted so that it can be used in different situations. One goal, for example, is that the labels can be dynamically adjusted to support different languages.
 
 The project is currently in a very early version. Some planned features are still missing and some improvements still need to be made.
 
-**NOTE**: As long as version 1.0.0 has not yet been reached, even minor version increases may contain breaking changes.
+Check out [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) in the develop branch to find the latest features included in the next release.
 
 **Currently only tested on Linux and Windows!**
 
@@ -25,14 +25,26 @@ The project is currently in a very early version. Some planned features are stil
 - Shortcut for user directories (Home, Documents, ...) and system disks
 - Resizable window
 
+## Planned features
+The following lists some of the features that are currently missing but are planned for the future!
+- Customize labels and enabled features
+- Selection of multiple directory items at once
+- Customizable file icons
+- Only show files with a specific file extension (The user can already filter files by file extension using the search, but there is currently no backend method for this or a dropdown to be able to select from predefined file extensions.)
+- Keyboard input
+- Context menus, for example for renaming, deleting or copying files or directories.
+- Option to show or hide hidden files and folders
+
 ## Example
+Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/master/examples) folder.
+
 The following example shows the basic use of the file dialog with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.
 
 Cargo.toml:
 ```toml
 [dependencies]
-eframe = "0.25.0"
-egui-file-dialog = "0.2.0"
+eframe = "0.26.0"
+egui-file-dialog = "0.3.0"
 ```
 
 main.rs:
