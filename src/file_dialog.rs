@@ -178,7 +178,7 @@ impl FileDialog {
             window_fixed_pos: None,
             window_default_size: egui::Vec2::new(650.0, 370.0),
             window_max_size: None,
-            window_min_size: egui::Vec2::new(340.0, 200.0),
+            window_min_size: egui::Vec2::new(340.0, 170.0),
             window_anchor: None,
             window_resizable: true,
             window_movable: true,
