@@ -67,7 +67,12 @@ fn gen_display_name(disk: &sysinfo::Disk) -> String {
     // Currently on Windows it returns an empty string for the C:\\ drive.
 
     let mut name = disk.name().to_str().unwrap_or_default().to_string();
-    let mount_point = disk.mount_point().to_str().unwrap_or_default().to_string().replace("\\", "");
+    let mount_point = disk
+        .mount_point()
+        .to_str()
+        .unwrap_or_default()
+        .to_string()
+        .replace("\\", "");
 
     // Try using the mount point as the display name if the specified name
     // from sysinfo::Disk is empty or contains invalid characters
@@ -82,13 +87,13 @@ fn gen_display_name(disk: &sysinfo::Disk) -> String {
 
 #[cfg(not(windows))]
 fn gen_display_name(disk: &sysinfo::Disk) -> String {
-        let name = disk.name().to_str().unwrap_or_default().to_string();
+    let name = disk.name().to_str().unwrap_or_default().to_string();
 
-        // Try using the mount point as the display name if the specified name
-        // from sysinfo::Disk is empty or contains invalid characters
-        if name.is_empty() {
-            return disk.mount_point().to_str().unwrap_or_default().to_string();
-        }
+    // Try using the mount point as the display name if the specified name
+    // from sysinfo::Disk is empty or contains invalid characters
+    if name.is_empty() {
+        return disk.mount_point().to_str().unwrap_or_default().to_string();
+    }
 
-        name
+    name
 }
