@@ -532,11 +532,11 @@ impl FileDialog {
         ui.horizontal(|ui| {
             // Navigation buttons
             if let Some(x) = self.current_directory() {
-                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶") {
+                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶", None) {
                     let _ = self.load_parent_directory();
                 }
             } else {
-                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶");
+                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶", None);
             }
 
             if self.ui_button_sized(
@@ -544,11 +544,12 @@ impl FileDialog {
                 self.directory_offset + 1 < self.directory_stack.len(),
                 NAV_BUTTON_SIZE,
                 "⏴",
+                None,
             ) {
                 let _ = self.load_previous_directory();
             }
 
-            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵") {
+            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵", None) {
                 let _ = self.load_next_directory();
             }
 
@@ -557,6 +558,7 @@ impl FileDialog {
                 !self.create_directory_dialog.is_open(),
                 NAV_BUTTON_SIZE,
                 "+",
+                None,
             ) {
                 if let Some(x) = self.current_directory() {
                     self.create_directory_dialog.open(x.to_path_buf());
@@ -729,30 +731,6 @@ impl FileDialog {
                     if response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
                     }
-
-                    if let Some(err) = &self.file_name_input_error {
-                        let mut pos = response.rect.min;
-
-                        // TODO: Dynamically calc position based on the tooltip size
-                        // To calc the width:
-                        // let width = ui.fonts(|f|f.glyph_width(&TextStyle::Body.resolve(ui.style()), ' '));
-                        // ui.spacing_mut().item_spacing.x = width;
-                        pos.y -= 35.0;
-
-                        egui::containers::show_tooltip_at(
-                            ui.ctx(),
-                            response.id.with("__tooltip"),
-                            Some(pos),
-                            |ui| {
-                                ui.horizontal_wrapped(|ui| {
-                                    ui.spacing_mut().item_spacing.x = 0.0;
-
-                                    ui.colored_label(ctx.style().visuals.error_fg_color, "⚠ ");
-                                    ui.label(err);
-                                })
-                            },
-                        );
-                    }
                 }
             };
         });
@@ -767,7 +745,13 @@ impl FileDialog {
                 DialogMode::SaveFile => "📥  Save",
             };
 
-            if self.ui_button_sized(ui, self.is_selection_valid(), BUTTON_SIZE, label) {
+            if self.ui_button_sized(
+                ui,
+                self.is_selection_valid(),
+                BUTTON_SIZE,
+                label,
+                self.file_name_input_error.as_deref(),
+            ) {
                 match &self.mode {
                     DialogMode::SelectDirectory | DialogMode::SelectFile => {
                         // self.selected_item should always contain a value,
@@ -981,11 +965,24 @@ impl FileDialog {
         enabled: bool,
         size: egui::Vec2,
         label: &str,
+        err_tooltip: Option<&str>,
     ) -> bool {
         let mut clicked = false;
 
         ui.add_enabled_ui(enabled, |ui| {
-            clicked = ui.add_sized(size, egui::Button::new(label)).clicked();
+            let response= ui.add_sized(size, egui::Button::new(label));
+            clicked = response.clicked();
+
+            if let Some(err) = err_tooltip {
+                response.on_disabled_hover_ui(|ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+
+                        ui.colored_label(ui.ctx().style().visuals.error_fg_color, "⚠ ");
+                        ui.label(err);
+                    });
+                });
+            }
         });
 
         clicked
