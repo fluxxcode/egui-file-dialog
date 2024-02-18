@@ -4,18 +4,21 @@
 ### 🖥 UI
 - Improve dialog resizing [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
   - Error when saving a file is now displayed as a tooltip when hovering over the save button \
-    ![Screenshot_20240218_172006](https://github.com/fluxxcode/egui-file-dialog/assets/55352293/002791a9-c6b1-4e12-a0bc-6d41e6b411e2)
+    ![preview](media/changelog/v0.3.0/error_tooltip.png)
   - Updated file name input to use all available space
   - Added scroll area around the selected item
   - The default minimum window size has been further reduced
 - Added an error icon before the error message when creating a folder [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32) \
-  ![Screenshot_20240218_172105](https://github.com/fluxxcode/egui-file-dialog/assets/55352293/fa4acc59-1297-4d59-bfd6-277d50584cc6)
+  ![preview](media/changelog/v0.3.0/error_icon.png)
 - Removable devices are now listed in a separate devices section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
+
+### 🔧 Changes
+- Restructure `file_dialog.rs` [#36](https://github.com/fluxxcode/egui-file-dialog/pull/36)
 
 ### 📚 Documentation
 - Fix typos in the documentation [#29](https://github.com/fluxxcode/egui-file-dialog/pull/29)
-- Fix eframe version in the example in README.md [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
-- Added “Currently missing features” section to README.md and minor improvements [#31](https://github.com/fluxxcode/egui-file-dialog/pull/31)
+- Fix eframe version in the example in `README.md` [#30](https://github.com/fluxxcode/egui-file-dialog/pull/30)
+- Added "Planned features” section to `README.md` and minor improvements [#31](https://github.com/fluxxcode/egui-file-dialog/pull/31) (Renamed with [#35](https://github.com/fluxxcode/egui-file-dialog/pull/35))
 - Updated example screenshot in `README.md` to include new "Removable Devices" section [#34](https://github.com/fluxxcode/egui-file-dialog/pull/34)
 
 ## 2024-02-07 - v0.2.0 - API improvements
