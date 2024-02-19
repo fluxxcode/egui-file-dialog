@@ -1195,6 +1195,8 @@ impl FileDialog {
     /// Loads the given directory and updates the `directory_stack`.
     /// The function deletes all directories from the `directory_stack` that are currently
     /// stored in the vector before the `directory_offset`.
+    ///
+    /// The function also sets the loaded directory as the selected item.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
         let full_path = match fs::canonicalize(path) {
             Ok(path) => path,
@@ -1220,7 +1222,12 @@ impl FileDialog {
         self.directory_stack.push(full_path);
         self.directory_offset = 0;
 
-        self.load_directory_content(path)
+        self.load_directory_content(path)?;
+
+        let dir_entry = DirectoryEntry::from_path(path);
+        self.select_item(&dir_entry);
+
+        Ok(())
     }
 
     /// Loads the directory content of the given path.
