@@ -50,7 +50,14 @@ impl DirectoryEntry {
         self.path
             .file_name()
             .and_then(|name| name.to_str())
-            .unwrap_or_default()
+            .unwrap_or_else(|| {
+                // Make sure the root directories like "/" or "C:\\" are displayed correctly
+                if self.path.iter().count() == 1 {
+                    return self.path.to_str().unwrap_or_default();
+                }
+
+                ""
+            })
     }
 }
 
