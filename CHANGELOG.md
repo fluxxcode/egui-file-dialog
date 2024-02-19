@@ -3,6 +3,7 @@
 ## [Unreleased] - v0.3.1 - Bug fixes
 ### 🐛 Bug Fixes
 - Fixed not being able to select a shortcut directory like Home or Documents [#43](https://github.com/fluxxcode/egui-file-dialog/pull/43)
+- Fixed issue where root directories were not displayed correctly [#44](https://github.com/fluxxcode/egui-file-dialog/pull/44)
 
 ## 2024-02-18 - v0.3.0 - UI improvements
 ### 🖥 UI
