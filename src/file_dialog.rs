@@ -200,7 +200,7 @@ impl FileDialog {
     }
 
     // -------------------------------------------------
-    // Open:
+    // Open, Update:
 
     /// Opens the file dialog in the given mode with the given options.
     /// This function resets the file dialog and takes care for the variables that need to be
@@ -333,6 +333,50 @@ impl FileDialog {
         let _ = self.open(DialogMode::SaveFile, true, None);
     }
 
+    /// The main update method that should be called every frame if the dialog is to be visible.
+    ///
+    /// This function has no effect if the dialog state is currently not `DialogState::Open`.
+    pub fn update(&mut self, ctx: &egui::Context) -> &Self {
+        if self.state != DialogState::Open {
+            return self;
+        }
+
+        let mut is_open = true;
+
+        self.create_window(&mut is_open).show(ctx, |ui| {
+            egui::TopBottomPanel::top("fe_top_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_top_panel(ctx, ui);
+                });
+
+            egui::SidePanel::left("fe_left_panel")
+                .resizable(true)
+                .default_width(150.0)
+                .width_range(90.0..=250.0)
+                .show_inside(ui, |ui| {
+                    self.ui_update_left_panel(ctx, ui);
+                });
+
+            egui::TopBottomPanel::bottom("fe_bottom_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_bottom_panel(ctx, ui);
+                });
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                self.ui_update_central_panel(ui);
+            });
+        });
+
+        // User closed the window without finishing the dialog
+        if !is_open {
+            self.cancel();
+        }
+
+        self
+    }
+
     // -------------------------------------------------
     // Setter:
 
@@ -456,50 +500,6 @@ impl FileDialog {
     /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
-    }
-
-    /// The main update method that should be called every frame if the dialog is to be visible.
-    ///
-    /// This function has no effect if the dialog state is currently not `DialogState::Open`.
-    pub fn update(&mut self, ctx: &egui::Context) -> &Self {
-        if self.state != DialogState::Open {
-            return self;
-        }
-
-        let mut is_open = true;
-
-        self.create_window(&mut is_open).show(ctx, |ui| {
-            egui::TopBottomPanel::top("fe_top_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_top_panel(ctx, ui);
-                });
-
-            egui::SidePanel::left("fe_left_panel")
-                .resizable(true)
-                .default_width(150.0)
-                .width_range(90.0..=250.0)
-                .show_inside(ui, |ui| {
-                    self.ui_update_left_panel(ctx, ui);
-                });
-
-            egui::TopBottomPanel::bottom("fe_bottom_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_bottom_panel(ctx, ui);
-                });
-
-            egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.ui_update_central_panel(ui);
-            });
-        });
-
-        // User closed the window without finishing the dialog
-        if !is_open {
-            self.cancel();
-        }
-
-        self
     }
 }
 
