@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## [Unreleased] - v0.3.1 - Bug fixes
+### 🐛 Bug Fixes
+- Fixed not being able to select a shortcut directory like Home or Documents [#43](https://github.com/fluxxcode/egui-file-dialog/pull/43)
+
 ## 2024-02-18 - v0.3.0 - UI improvements
 ### 🖥 UI
 - Updated bottom panel so that the dialog can also be resized in `DialogMode::SaveFile` or when selecting a file or directory with a long name [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
