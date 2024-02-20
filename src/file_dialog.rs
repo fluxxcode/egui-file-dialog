@@ -392,6 +392,12 @@ impl FileDialog {
         self
     }
 
+    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
+    pub fn default_file_name(mut self, name: &str) -> Self {
+        self.default_file_name = name.to_string();
+        self
+    }
+
     /// Overwrites the window title.
     ///
     /// By default, the title is set dynamically, based on the `DialogMode`
@@ -462,12 +468,6 @@ impl FileDialog {
     /// Sets if the title bar of the window is shown.
     pub fn title_bar(mut self, title_bar: bool) -> Self {
         self.window_title_bar = title_bar;
-        self
-    }
-
-    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
-    pub fn default_file_name(mut self, name: &str) -> Self {
-        self.default_file_name = name.to_string();
         self
     }
 
