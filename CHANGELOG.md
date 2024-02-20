@@ -10,6 +10,7 @@
 
 ### 📚 Documentation
 - `FileDialog::update` has been moved up in the documentation [#47](https://github.com/fluxxcode/egui-file-dialog/pull/47)
+- Added "Pinnable folders" to planned features in `README.md` [#49](https://github.com/fluxxcode/egui-file-dialog/pull/49)
 
 ## 2024-02-18 - v0.3.0 - UI improvements
 ### 🖥 UI
