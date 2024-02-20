@@ -485,6 +485,23 @@ impl FileDialog {
         }
     }
 
+    /// Returns the directory or file that the user selected, or the target file
+    /// if the dialog is in `DialogMode::SaveFile` mode.
+    /// Unlike `FileDialog::selected`, this method returns the selected path only once and
+    /// sets the dialog's state to `DialogState::Closed`.
+    ///
+    /// None is returned when the user has not yet selected an item.
+    pub fn take_selected(&mut self) -> Option<PathBuf> {
+        match &mut self.state {
+            DialogState::Selected(path) => {
+                let path = std::mem::take(path);
+                self.state = DialogState::Closed;
+                Some(path)
+            }
+            _ => None,
+        }
+    }
+
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
     /// See `FileDialog::open` for more information.
