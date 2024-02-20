@@ -200,7 +200,7 @@ impl FileDialog {
     }
 
     // -------------------------------------------------
-    // Open:
+    // Open, Update:
 
     /// Opens the file dialog in the given mode with the given options.
     /// This function resets the file dialog and takes care for the variables that need to be
@@ -333,6 +333,50 @@ impl FileDialog {
         let _ = self.open(DialogMode::SaveFile, true, None);
     }
 
+    /// The main update method that should be called every frame if the dialog is to be visible.
+    ///
+    /// This function has no effect if the dialog state is currently not `DialogState::Open`.
+    pub fn update(&mut self, ctx: &egui::Context) -> &Self {
+        if self.state != DialogState::Open {
+            return self;
+        }
+
+        let mut is_open = true;
+
+        self.create_window(&mut is_open).show(ctx, |ui| {
+            egui::TopBottomPanel::top("fe_top_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_top_panel(ctx, ui);
+                });
+
+            egui::SidePanel::left("fe_left_panel")
+                .resizable(true)
+                .default_width(150.0)
+                .width_range(90.0..=250.0)
+                .show_inside(ui, |ui| {
+                    self.ui_update_left_panel(ctx, ui);
+                });
+
+            egui::TopBottomPanel::bottom("fe_bottom_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_bottom_panel(ctx, ui);
+                });
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                self.ui_update_central_panel(ui);
+            });
+        });
+
+        // User closed the window without finishing the dialog
+        if !is_open {
+            self.cancel();
+        }
+
+        self
+    }
+
     // -------------------------------------------------
     // Setter:
 
@@ -456,50 +500,6 @@ impl FileDialog {
     /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
-    }
-
-    /// The main update method that should be called every frame if the dialog is to be visible.
-    ///
-    /// This function has no effect if the dialog state is currently not `DialogState::Open`.
-    pub fn update(&mut self, ctx: &egui::Context) -> &Self {
-        if self.state != DialogState::Open {
-            return self;
-        }
-
-        let mut is_open = true;
-
-        self.create_window(&mut is_open).show(ctx, |ui| {
-            egui::TopBottomPanel::top("fe_top_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_top_panel(ctx, ui);
-                });
-
-            egui::SidePanel::left("fe_left_panel")
-                .resizable(true)
-                .default_width(150.0)
-                .width_range(90.0..=250.0)
-                .show_inside(ui, |ui| {
-                    self.ui_update_left_panel(ctx, ui);
-                });
-
-            egui::TopBottomPanel::bottom("fe_bottom_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_bottom_panel(ctx, ui);
-                });
-
-            egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.ui_update_central_panel(ui);
-            });
-        });
-
-        // User closed the window without finishing the dialog
-        if !is_open {
-            self.cancel();
-        }
-
-        self
     }
 }
 
@@ -1195,6 +1195,8 @@ impl FileDialog {
     /// Loads the given directory and updates the `directory_stack`.
     /// The function deletes all directories from the `directory_stack` that are currently
     /// stored in the vector before the `directory_offset`.
+    ///
+    /// The function also sets the loaded directory as the selected item.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
         let full_path = match fs::canonicalize(path) {
             Ok(path) => path,
@@ -1220,7 +1222,12 @@ impl FileDialog {
         self.directory_stack.push(full_path);
         self.directory_offset = 0;
 
-        self.load_directory_content(path)
+        self.load_directory_content(path)?;
+
+        let dir_entry = DirectoryEntry::from_path(path);
+        self.select_item(&dir_entry);
+
+        Ok(())
     }
 
     /// Loads the directory content of the given path.

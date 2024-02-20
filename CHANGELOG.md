@@ -1,5 +1,17 @@
 # egui-file-dialog changelog
 
+## 2024-02-20 - v0.3.1 - Bug fixes
+### 🐛 Bug Fixes
+- Fixed not being able to select a shortcut directory like Home or Documents [#43](https://github.com/fluxxcode/egui-file-dialog/pull/43)
+- Fixed issue where root directories were not displayed correctly [#44](https://github.com/fluxxcode/egui-file-dialog/pull/44) and [#48](https://github.com/fluxxcode/egui-file-dialog/pull/48)
+
+### 🔧 Changes
+- Updated CI to also run on release branches [#46](https://github.com/fluxxcode/egui-file-dialog/pull/46)
+
+### 📚 Documentation
+- `FileDialog::update` has been moved up in the documentation [#47](https://github.com/fluxxcode/egui-file-dialog/pull/47)
+- Added "Pinnable folders" to planned features in `README.md` [#49](https://github.com/fluxxcode/egui-file-dialog/pull/49)
+
 ## 2024-02-18 - v0.3.0 - UI improvements
 ### 🖥 UI
 - Updated bottom panel so that the dialog can also be resized in `DialogMode::SaveFile` or when selecting a file or directory with a long name [#32](https://github.com/fluxxcode/egui-file-dialog/pull/32)
