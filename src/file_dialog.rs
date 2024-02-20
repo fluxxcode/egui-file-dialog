@@ -126,6 +126,10 @@ pub struct FileDialog {
     /// If the title bar of the window is shown
     window_title_bar: bool,
 
+    /// If the sidebar with the shortcut directories such as
+    /// “Home”, “Documents” etc. should be visible.
+    show_left_panel: bool,
+
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
 
@@ -186,6 +190,8 @@ impl FileDialog {
             window_resizable: true,
             window_movable: true,
             window_title_bar: true,
+
+            show_left_panel: true,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -350,13 +356,15 @@ impl FileDialog {
                     self.ui_update_top_panel(ctx, ui);
                 });
 
-            egui::SidePanel::left("fe_left_panel")
-                .resizable(true)
-                .default_width(150.0)
-                .width_range(90.0..=250.0)
-                .show_inside(ui, |ui| {
-                    self.ui_update_left_panel(ctx, ui);
-                });
+            if self.show_left_panel {
+                egui::SidePanel::left("fe_left_panel")
+                    .resizable(true)
+                    .default_width(150.0)
+                    .width_range(90.0..=250.0)
+                    .show_inside(ui, |ui| {
+                        self.ui_update_left_panel(ctx, ui);
+                    });
+            }
 
             egui::TopBottomPanel::bottom("fe_bottom_panel")
                 .resizable(false)
@@ -389,6 +397,12 @@ impl FileDialog {
     /// Relative and absolute paths are allowed, but absolute paths are recommended.
     pub fn initial_directory(mut self, directory: PathBuf) -> Self {
         self.initial_directory = directory.clone();
+        self
+    }
+
+    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
+    pub fn default_file_name(mut self, name: &str) -> Self {
+        self.default_file_name = name.to_string();
         self
     }
 
@@ -465,9 +479,10 @@ impl FileDialog {
         self
     }
 
-    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
-    pub fn default_file_name(mut self, name: &str) -> Self {
-        self.default_file_name = name.to_string();
+    /// Sets if the sidebar with the shortcut directories such as
+    /// “Home”, “Documents” etc. should be visible.
+    pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
+        self.show_left_panel = show_left_panel;
         self
     }
 
