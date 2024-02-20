@@ -50,7 +50,34 @@ impl DirectoryEntry {
         self.path
             .file_name()
             .and_then(|name| name.to_str())
-            .unwrap_or_default()
+            .unwrap_or_else(|| {
+                // Make sure the root directories like ["C:", "\"] and ["\\?\C:", "\"] are
+                // displayed correctly
+                #[cfg(windows)]
+                if self.path.components().count() == 2 {
+                    let path = self
+                        .path
+                        .iter()
+                        .nth(0)
+                        .and_then(|seg| seg.to_str())
+                        .unwrap_or_default();
+
+                    // Skip path namespace prefix if present, for example: "\\?\C:"
+                    if path.contains(r"\\?\") {
+                        return path.get(4..).unwrap_or(path);
+                    }
+
+                    return path;
+                }
+
+                // Make sure the root directory "/" is displayed correctly
+                #[cfg(not(windows))]
+                if self.path.iter().count() == 1 {
+                    return self.path.to_str().unwrap_or_default();
+                }
+
+                ""
+            })
     }
 }
 

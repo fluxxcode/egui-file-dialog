@@ -3,10 +3,12 @@ on:
     branches:
       - master
       - develop
+      - rel/*
   pull_request:
     branches:
       - master
       - develop
+      - rel/*
 
 name: Rust
 

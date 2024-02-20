@@ -30,6 +30,7 @@ The following lists some of the features that are currently missing but are plan
 - Customize labels and enabled features
 - Selection of multiple directory items at once
 - Customizable file icons
+- Pinnable folders for quick access: [#42](https://github.com/fluxxcode/egui-file-dialog/issues/42)
 - Only show files with a specific file extension (The user can already filter files by file extension using the search, but there is currently no backend method for this or a dropdown to be able to select from predefined file extensions.)
 - Keyboard input
 - Context menus, for example for renaming, deleting or copying files or directories.
@@ -44,7 +45,7 @@ Cargo.toml:
 ```toml
 [dependencies]
 eframe = "0.26.0"
-egui-file-dialog = "0.3.0"
+egui-file-dialog = "0.3.1"
 ```
 
 main.rs:
