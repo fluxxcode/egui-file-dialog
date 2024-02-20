@@ -474,16 +474,6 @@ impl FileDialog {
     // -------------------------------------------------
     // Getter:
 
-    /// Returns the mode the dialog is currently in.
-    pub fn mode(&self) -> DialogMode {
-        self.mode
-    }
-
-    /// Returns the state the dialog is currently in.
-    pub fn state(&self) -> DialogState {
-        self.state.clone()
-    }
-
     /// Returns the directory or file that the user selected, or the target file
     /// if the dialog is in `DialogMode::SaveFile` mode.
     ///
@@ -500,6 +490,16 @@ impl FileDialog {
     /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
+    }
+
+    /// Returns the mode the dialog is currently in.
+    pub fn mode(&self) -> DialogMode {
+        self.mode
+    }
+
+    /// Returns the state the dialog is currently in.
+    pub fn state(&self) -> DialogState {
+        self.state.clone()
     }
 }
 
