@@ -347,40 +347,7 @@ impl FileDialog {
             return self;
         }
 
-        let mut is_open = true;
-
-        self.create_window(&mut is_open).show(ctx, |ui| {
-            egui::TopBottomPanel::top("fe_top_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_top_panel(ctx, ui);
-                });
-
-            if self.show_left_panel {
-                egui::SidePanel::left("fe_left_panel")
-                    .resizable(true)
-                    .default_width(150.0)
-                    .width_range(90.0..=250.0)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_left_panel(ctx, ui);
-                    });
-            }
-
-            egui::TopBottomPanel::bottom("fe_bottom_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_bottom_panel(ctx, ui);
-                });
-
-            egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.ui_update_central_panel(ui);
-            });
-        });
-
-        // User closed the window without finishing the dialog
-        if !is_open {
-            self.cancel();
-        }
+        self.update_ui(ctx);
 
         self
     }
@@ -537,6 +504,44 @@ impl FileDialog {
 
 /// UI methods
 impl FileDialog {
+    /// Main update method of the UI
+    fn update_ui(&mut self, ctx: &egui::Context) {
+        let mut is_open = true;
+
+        self.create_window(&mut is_open).show(ctx, |ui| {
+            egui::TopBottomPanel::top("fe_top_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_top_panel(ctx, ui);
+                });
+
+            if self.show_left_panel {
+                egui::SidePanel::left("fe_left_panel")
+                    .resizable(true)
+                    .default_width(150.0)
+                    .width_range(90.0..=250.0)
+                    .show_inside(ui, |ui| {
+                        self.ui_update_left_panel(ctx, ui);
+                    });
+            }
+
+            egui::TopBottomPanel::bottom("fe_bottom_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_bottom_panel(ctx, ui);
+                });
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                self.ui_update_central_panel(ui);
+            });
+        });
+
+        // User closed the window without finishing the dialog
+        if !is_open {
+            self.cancel();
+        }
+    }
+
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
         let mut window = egui::Window::new(&self.window_title)
