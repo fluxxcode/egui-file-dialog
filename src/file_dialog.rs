@@ -474,16 +474,6 @@ impl FileDialog {
     // -------------------------------------------------
     // Getter:
 
-    /// Returns the mode the dialog is currently in.
-    pub fn mode(&self) -> DialogMode {
-        self.mode
-    }
-
-    /// Returns the state the dialog is currently in.
-    pub fn state(&self) -> DialogState {
-        self.state.clone()
-    }
-
     /// Returns the directory or file that the user selected, or the target file
     /// if the dialog is in `DialogMode::SaveFile` mode.
     ///
@@ -495,11 +485,38 @@ impl FileDialog {
         }
     }
 
+    /// Returns the directory or file that the user selected, or the target file
+    /// if the dialog is in `DialogMode::SaveFile` mode.
+    /// Unlike `FileDialog::selected`, this method returns the selected path only once and
+    /// sets the dialog's state to `DialogState::Closed`.
+    ///
+    /// None is returned when the user has not yet selected an item.
+    pub fn take_selected(&mut self) -> Option<PathBuf> {
+        match &mut self.state {
+            DialogState::Selected(path) => {
+                let path = std::mem::take(path);
+                self.state = DialogState::Closed;
+                Some(path)
+            }
+            _ => None,
+        }
+    }
+
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
     /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
+    }
+
+    /// Returns the mode the dialog is currently in.
+    pub fn mode(&self) -> DialogMode {
+        self.mode
+    }
+
+    /// Returns the state the dialog is currently in.
+    pub fn state(&self) -> DialogState {
+        self.state.clone()
     }
 }
 

@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## [Unreleased] - v0.4.0 - Customization
+### ✨ Features
+- Added `FileDialog::take_selected` as an alternative to `FileDialog::selected` [#52](https://github.com/fluxxcode/egui-file-dialog/pull/52)
+
 ## 2024-02-20 - v0.3.1 - Bug fixes
 ### 🐛 Bug Fixes
 - Fixed not being able to select a shortcut directory like Home or Documents [#43](https://github.com/fluxxcode/egui-file-dialog/pull/43)

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use eframe::egui;
-use egui_file_dialog::{DialogMode, DialogState, FileDialog};
+use egui_file_dialog::{DialogMode, FileDialog};
 
 struct MyApp {
     file_dialog: FileDialog,
@@ -50,14 +50,15 @@ impl eframe::App for MyApp {
             }
             ui.label(format!("File to save: {:?}", self.saved_file));
 
-            match self.file_dialog.update(ctx).state() {
-                DialogState::Selected(path) => match self.file_dialog.mode() {
+            self.file_dialog.update(ctx);
+
+            if let Some(path) = self.file_dialog.take_selected() {
+                match self.file_dialog.mode() {
                     DialogMode::SelectDirectory => self.selected_directory = Some(path),
                     DialogMode::SelectFile => self.selected_file = Some(path),
                     DialogMode::SaveFile => self.saved_file = Some(path),
-                },
-                _ => {}
-            };
+                }
+            }
         });
     }
 }
