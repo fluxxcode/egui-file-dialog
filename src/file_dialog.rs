@@ -528,7 +528,7 @@ impl FileDialog {
             egui::TopBottomPanel::bottom("fe_bottom_panel")
                 .resizable(false)
                 .show_inside(ui, |ui| {
-                    self.ui_update_bottom_panel(ctx, ui);
+                    self.ui_update_bottom_panel(ui);
                 });
 
             egui::CentralPanel::default().show_inside(ui, |ui| {
@@ -855,12 +855,21 @@ impl FileDialog {
     }
 
     /// Updates the bottom panel showing the selected item and main action buttons.
-    fn ui_update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
+    fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
 
         ui.add_space(5.0);
 
-        // ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+        self.ui_update_selection_preview(ui);
+
+        if self.mode == DialogMode::SaveFile {
+            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
+        }
+
+        self.ui_update_action_buttons(ui);
+    }
+
+    /// Updates the selection preview like "Selected directory: X"
+    fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             match &self.mode {
                 DialogMode::SelectDirectory => ui.label("Selected directory:"),
@@ -899,10 +908,11 @@ impl FileDialog {
                 }
             };
         });
+    }
 
-        if self.mode == DialogMode::SaveFile {
-            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
-        }
+    /// Updates the action buttons like save, open and cancel
+    fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui) {
+        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
@@ -943,7 +953,7 @@ impl FileDialog {
                 }
             }
 
-            ui.add_space(ctx.style().spacing.item_spacing.y);
+            ui.add_space(ui.ctx().style().spacing.item_spacing.y);
 
             if ui
                 .add_sized(BUTTON_SIZE, egui::Button::new("🚫 Cancel"))
