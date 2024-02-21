@@ -129,10 +129,12 @@ pub struct FileDialog {
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     show_left_panel: bool,
-    /// If the places section in the left sidebar should be visible.
+    /// If the Places section in the left sidebar should be visible.
     show_places: bool,
-    /// If the places section in the left sidebar should be visible.
+    /// If the Devices section in the left sidebar should be visible.
     show_devices: bool,
+    /// If the Removable Devices section in the left sidebar should be visible.
+    show_removable_devices: bool,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -198,6 +200,7 @@ impl FileDialog {
             show_left_panel: true,
             show_places: true,
             show_devices: true,
+            show_removable_devices: true,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -474,6 +477,15 @@ impl FileDialog {
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
     pub fn show_devices(mut self, show_devices: bool) -> Self {
         self.show_devices = show_devices;
+        self
+    }
+
+    /// Sets if the "Removable Devices" section should be visible in the left sidebar.
+    /// The Removable Devices section contains the removable disks like USB disks.
+    ///
+    /// Has no effect when `FileDialog::show_left_panel` is disabled.
+    pub fn show_removable_devices(mut self, show_removable_devices: bool) -> Self {
+        self.show_removable_devices = show_removable_devices;
         self
     }
 
@@ -757,7 +769,7 @@ impl FileDialog {
     }
 
     /// Updates the left panel of the dialog. Including the list of the user directories (Places)
-    /// and system disks.
+    /// and system disks (Devices, Removable Devices).
     fn ui_update_left_panel(&mut self, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             egui::containers::ScrollArea::vertical()
@@ -775,7 +787,12 @@ impl FileDialog {
                         spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
                     }
 
-                    self.ui_update_removable_devices(ui, &disks, spacing);
+                    if self.show_removable_devices
+                        && self.ui_update_removable_devices(ui, spacing, &disks)
+                    {
+                        // Add this when we add a new section after removable drives
+                        // spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                    }
 
                     self.system_disks = disks;
                 });
@@ -856,6 +873,9 @@ impl FileDialog {
     }
 
     /// Updates the list of devices like system disks
+    ///
+    /// Returns true if at least one device was included in the list and the
+    /// heading is visible. If no device was listed, false is returned.
     fn ui_update_devices(&mut self, ui: &mut egui::Ui, spacing: f32, disks: &Disks) -> bool {
         let mut visible = false;
 
@@ -874,15 +894,29 @@ impl FileDialog {
     }
 
     /// Updates the list of removable devices like USB drives
-    fn ui_update_removable_devices(&mut self, ui: &mut egui::Ui, disks: &Disks, spacing: f32) {
+    ///
+    /// Returns true if at least one device was included in the list and the
+    /// heading is visible. If no device was listed, false is returned.
+    fn ui_update_removable_devices(
+        &mut self,
+        ui: &mut egui::Ui,
+        spacing: f32,
+        disks: &Disks,
+    ) -> bool {
+        let mut visible = false;
+
         for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label("Removable Devices");
+
+                visible = true;
             }
 
             self.ui_update_device_entry(ui, disk);
         }
+
+        visible
     }
 
     /// Updates a device entry of a device list like "Devices" or "Removable Devices".
