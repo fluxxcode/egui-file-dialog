@@ -347,40 +347,7 @@ impl FileDialog {
             return self;
         }
 
-        let mut is_open = true;
-
-        self.create_window(&mut is_open).show(ctx, |ui| {
-            egui::TopBottomPanel::top("fe_top_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_top_panel(ctx, ui);
-                });
-
-            if self.show_left_panel {
-                egui::SidePanel::left("fe_left_panel")
-                    .resizable(true)
-                    .default_width(150.0)
-                    .width_range(90.0..=250.0)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_left_panel(ctx, ui);
-                    });
-            }
-
-            egui::TopBottomPanel::bottom("fe_bottom_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_bottom_panel(ctx, ui);
-                });
-
-            egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.ui_update_central_panel(ui);
-            });
-        });
-
-        // User closed the window without finishing the dialog
-        if !is_open {
-            self.cancel();
-        }
+        self.update_ui(ctx);
 
         self
     }
@@ -537,6 +504,44 @@ impl FileDialog {
 
 /// UI methods
 impl FileDialog {
+    /// Main update method of the UI
+    fn update_ui(&mut self, ctx: &egui::Context) {
+        let mut is_open = true;
+
+        self.create_window(&mut is_open).show(ctx, |ui| {
+            egui::TopBottomPanel::top("fe_top_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_top_panel(ui);
+                });
+
+            if self.show_left_panel {
+                egui::SidePanel::left("fe_left_panel")
+                    .resizable(true)
+                    .default_width(150.0)
+                    .width_range(90.0..=250.0)
+                    .show_inside(ui, |ui| {
+                        self.ui_update_left_panel(ui);
+                    });
+            }
+
+            egui::TopBottomPanel::bottom("fe_bottom_panel")
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_bottom_panel(ui);
+                });
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                self.ui_update_central_panel(ui);
+            });
+        });
+
+        // User closed the window without finishing the dialog
+        if !is_open {
+            self.cancel();
+        }
+    }
+
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
         let mut window = egui::Window::new(&self.window_title)
@@ -573,173 +578,297 @@ impl FileDialog {
 
     /// Updates the top panel of the dialog. Including the navigation buttons,
     /// the current path display, the reload button and the search field.
-    fn ui_update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        const NAV_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
+    fn ui_update_top_panel(&mut self, ui: &mut egui::Ui) {
+        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
 
         ui.horizontal(|ui| {
-            // Navigation buttons
-            if let Some(x) = self.current_directory() {
-                if self.ui_button_sized(ui, x.parent().is_some(), NAV_BUTTON_SIZE, "⏶", None) {
-                    let _ = self.load_parent_directory();
-                }
-            } else {
-                let _ = self.ui_button_sized(ui, false, NAV_BUTTON_SIZE, "⏶", None);
-            }
+            self.ui_update_nav_buttons(ui, &BUTTON_SIZE);
 
-            if self.ui_button_sized(
-                ui,
-                self.directory_offset + 1 < self.directory_stack.len(),
-                NAV_BUTTON_SIZE,
-                "⏴",
-                None,
-            ) {
-                let _ = self.load_previous_directory();
-            }
-
-            if self.ui_button_sized(ui, self.directory_offset != 0, NAV_BUTTON_SIZE, "⏵", None) {
-                let _ = self.load_next_directory();
-            }
-
-            if self.ui_button_sized(
-                ui,
-                !self.create_directory_dialog.is_open(),
-                NAV_BUTTON_SIZE,
-                "+",
-                None,
-            ) {
-                if let Some(x) = self.current_directory() {
-                    self.create_directory_dialog.open(x.to_path_buf());
-                }
-            }
-
-            // Leave area for the reload button and search window
+            // Leave some area for the reload button and search input
             let path_display_width = ui.available_width() - 180.0;
 
-            // Current path display
-            egui::Frame::default()
-                .stroke(egui::Stroke::new(
-                    1.0,
-                    ctx.style().visuals.window_stroke.color,
-                ))
-                .inner_margin(egui::Margin {
-                    left: 4.0,
-                    right: 8.0,
-                    top: 4.0,
-                    bottom: 4.0,
-                })
-                .rounding(egui::Rounding::from(4.0))
-                .show(ui, |ui| {
-                    ui.style_mut().always_scroll_the_only_direction = true;
-                    ui.style_mut().spacing.scroll.bar_width = 8.0;
-
-                    egui::ScrollArea::horizontal()
-                        .auto_shrink([false, false])
-                        .stick_to_right(true)
-                        .max_width(path_display_width)
-                        .show(ui, |ui| {
-                            ui.horizontal(|ui| {
-                                ui.style_mut().spacing.item_spacing.x /= 2.5;
-
-                                let mut path = PathBuf::new();
-
-                                if let Some(data) = self.current_directory() {
-                                    #[cfg(windows)]
-                                    let mut drive_letter = String::from("\\");
-
-                                    for (i, segment) in data.iter().enumerate() {
-                                        path.push(segment);
-
-                                        #[cfg(windows)]
-                                        let mut file_name = segment.to_str().unwrap_or("<ERR>");
-
-                                        #[cfg(windows)]
-                                        {
-                                            // Skip the path namespace prefix generated by
-                                            // fs::canonicalize() on Windows
-                                            if i == 0 && file_name.contains(r"\\?\") {
-                                                drive_letter = file_name.replace(r"\\?\", "");
-                                                continue;
-                                            }
-
-                                            // Replace the root segment with the disk letter
-                                            if i == 1 && segment == "\\" {
-                                                file_name = drive_letter.as_str();
-                                            } else if i != 0 {
-                                                ui.label(">");
-                                            }
-                                        }
-
-                                        #[cfg(not(windows))]
-                                        let file_name = segment.to_str().unwrap_or("<ERR>");
-
-                                        #[cfg(not(windows))]
-                                        if i != 0 {
-                                            ui.label(">");
-                                        }
-
-                                        if ui.button(file_name).clicked() {
-                                            let _ = self.load_directory(path.as_path());
-                                            return;
-                                        }
-                                    }
-                                }
-                            });
-                        });
-                });
+            self.ui_update_current_path_display(ui, path_display_width);
 
             // Reload button
-            if ui
-                .add_sized(NAV_BUTTON_SIZE, egui::Button::new("⟲"))
-                .clicked()
-            {
+            if ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked() {
                 self.refresh();
             }
 
-            // Search bar
-            egui::Frame::default()
-                .stroke(egui::Stroke::new(
-                    1.0,
-                    ctx.style().visuals.window_stroke.color,
-                ))
-                .inner_margin(egui::Margin::symmetric(4.0, 4.0))
-                .rounding(egui::Rounding::from(4.0))
-                .show(ui, |ui| {
-                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
-                        ui.add_space(ctx.style().spacing.item_spacing.y);
-                        ui.label("🔍");
-                        ui.add_sized(
-                            egui::Vec2::new(ui.available_width(), 0.0),
-                            egui::TextEdit::singleline(&mut self.search_value),
-                        );
-                    });
-                });
+            self.ui_update_search(ui);
         });
 
-        ui.add_space(ctx.style().spacing.item_spacing.y);
+        ui.add_space(ui.ctx().style().spacing.item_spacing.y);
+    }
+
+    /// Updates the navigation buttons like parent or previous directory
+    fn ui_update_nav_buttons(&mut self, ui: &mut egui::Ui, button_size: &egui::Vec2) {
+        if let Some(x) = self.current_directory() {
+            if self.ui_button_sized(ui, x.parent().is_some(), *button_size, "⏶", None) {
+                let _ = self.load_parent_directory();
+            }
+        } else {
+            let _ = self.ui_button_sized(ui, false, *button_size, "⏶", None);
+        }
+
+        if self.ui_button_sized(
+            ui,
+            self.directory_offset + 1 < self.directory_stack.len(),
+            *button_size,
+            "⏴",
+            None,
+        ) {
+            let _ = self.load_previous_directory();
+        }
+
+        if self.ui_button_sized(ui, self.directory_offset != 0, *button_size, "⏵", None) {
+            let _ = self.load_next_directory();
+        }
+
+        if self.ui_button_sized(
+            ui,
+            !self.create_directory_dialog.is_open(),
+            *button_size,
+            "+",
+            None,
+        ) {
+            if let Some(x) = self.current_directory() {
+                self.create_directory_dialog.open(x.to_path_buf());
+            }
+        }
+    }
+
+    /// Updates the view to display the currently open path
+    fn ui_update_current_path_display(&mut self, ui: &mut egui::Ui, width: f32) {
+        egui::Frame::default()
+            .stroke(egui::Stroke::new(
+                1.0,
+                ui.ctx().style().visuals.window_stroke.color,
+            ))
+            .inner_margin(egui::Margin {
+                left: 4.0,
+                right: 8.0,
+                top: 4.0,
+                bottom: 4.0,
+            })
+            .rounding(egui::Rounding::from(4.0))
+            .show(ui, |ui| {
+                ui.style_mut().always_scroll_the_only_direction = true;
+                ui.style_mut().spacing.scroll.bar_width = 8.0;
+
+                egui::ScrollArea::horizontal()
+                    .auto_shrink([false, false])
+                    .stick_to_right(true)
+                    .max_width(width)
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.style_mut().spacing.item_spacing.x /= 2.5;
+
+                            let mut path = PathBuf::new();
+
+                            if let Some(data) = self.current_directory() {
+                                #[cfg(windows)]
+                                let mut drive_letter = String::from("\\");
+
+                                for (i, segment) in data.iter().enumerate() {
+                                    path.push(segment);
+
+                                    #[cfg(windows)]
+                                    let mut file_name = segment.to_str().unwrap_or("<ERR>");
+
+                                    #[cfg(windows)]
+                                    {
+                                        // Skip the path namespace prefix generated by
+                                        // fs::canonicalize() on Windows
+                                        if i == 0 && file_name.contains(r"\\?\") {
+                                            drive_letter = file_name.replace(r"\\?\", "");
+                                            continue;
+                                        }
+
+                                        // Replace the root segment with the disk letter
+                                        if i == 1 && segment == "\\" {
+                                            file_name = drive_letter.as_str();
+                                        } else if i != 0 {
+                                            ui.label(">");
+                                        }
+                                    }
+
+                                    #[cfg(not(windows))]
+                                    let file_name = segment.to_str().unwrap_or("<ERR>");
+
+                                    #[cfg(not(windows))]
+                                    if i != 0 {
+                                        ui.label(">");
+                                    }
+
+                                    if ui.button(file_name).clicked() {
+                                        let _ = self.load_directory(path.as_path());
+                                        return;
+                                    }
+                                }
+                            }
+                        });
+                    });
+            });
+    }
+
+    /// Updates the search input
+    fn ui_update_search(&mut self, ui: &mut egui::Ui) {
+        egui::Frame::default()
+            .stroke(egui::Stroke::new(
+                1.0,
+                ui.ctx().style().visuals.window_stroke.color,
+            ))
+            .inner_margin(egui::Margin::symmetric(4.0, 4.0))
+            .rounding(egui::Rounding::from(4.0))
+            .show(ui, |ui| {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+                    ui.add_space(ui.ctx().style().spacing.item_spacing.y);
+                    ui.label("🔍");
+                    ui.add_sized(
+                        egui::Vec2::new(ui.available_width(), 0.0),
+                        egui::TextEdit::singleline(&mut self.search_value),
+                    );
+                });
+            });
     }
 
     /// Updates the left panel of the dialog. Including the list of the user directories (Places)
     /// and system disks.
-    fn ui_update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn ui_update_left_panel(&mut self, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    ui.add_space(ctx.style().spacing.item_spacing.y * 2.0);
+                    ui.add_space(ui.ctx().style().spacing.item_spacing.y * 2.0);
 
                     self.ui_update_user_directories(ui);
-                    self.ui_update_devices(ui);
+
+                    let disks = std::mem::take(&mut self.system_disks);
+
+                    self.ui_update_devices(ui, &disks);
+                    self.ui_update_removable_devices(ui, &disks);
+
+                    self.system_disks = disks;
                 });
         });
     }
 
-    /// Updates the bottom panel showing the selected item and main action buttons.
-    fn ui_update_bottom_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
+    /// Updates the list of the user directories (Places).
+    fn ui_update_user_directories(&mut self, ui: &mut egui::Ui) {
+        if let Some(dirs) = self.user_directories.clone() {
+            ui.label("Places");
 
+            if let Some(path) = dirs.home_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🏠  Home")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+
+            if let Some(path) = dirs.desktop_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🖵  Desktop")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.document_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🗐  Documents")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.download_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "📥  Downloads")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.audio_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🎵  Audio")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.picture_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🖼  Pictures")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.video_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🎞  Videos")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+        }
+    }
+
+    /// Updates the list of devices like system disks
+    fn ui_update_devices(&mut self, ui: &mut egui::Ui, disks: &Disks) {
+        for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Devices");
+            }
+
+            self.ui_update_device_entry(ui, disk);
+        }
+    }
+
+    /// Updates the list of removable devices like USB drives
+    fn ui_update_removable_devices(&mut self, ui: &mut egui::Ui, disks: &Disks) {
+        for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Removable Devices");
+            }
+
+            self.ui_update_device_entry(ui, disk);
+        }
+    }
+
+    /// Updates a device entry of a device list like "Devices" or "Removable Devices".
+    fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
+        let label = match device.is_removable() {
+            true => format!("💾  {}", device.display_name()),
+            false => format!("🖴  {}", device.display_name()),
+        };
+
+        if ui.selectable_label(false, label).clicked() {
+            let _ = self.load_directory(device.mount_point());
+        }
+    }
+
+    /// Updates the bottom panel showing the selected item and main action buttons.
+    fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
         ui.add_space(5.0);
 
-        // ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+        self.ui_update_selection_preview(ui);
+
+        if self.mode == DialogMode::SaveFile {
+            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
+        }
+
+        self.ui_update_action_buttons(ui);
+    }
+
+    /// Updates the selection preview like "Selected directory: X"
+    fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             match &self.mode {
                 DialogMode::SelectDirectory => ui.label("Selected directory:"),
@@ -778,10 +907,11 @@ impl FileDialog {
                 }
             };
         });
+    }
 
-        if self.mode == DialogMode::SaveFile {
-            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
-        }
+    /// Updates the action buttons like save, open and cancel
+    fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui) {
+        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
@@ -822,7 +952,7 @@ impl FileDialog {
                 }
             }
 
-            ui.add_space(ctx.style().spacing.item_spacing.y);
+            ui.add_space(ui.ctx().style().spacing.item_spacing.y);
 
             if ui
                 .add_sized(BUTTON_SIZE, egui::Button::new("🚫 Cancel"))
@@ -917,110 +1047,6 @@ impl FileDialog {
                     }
                 });
         });
-    }
-
-    /// Updates the list of the user directories (Places).
-    fn ui_update_user_directories(&mut self, ui: &mut egui::Ui) {
-        if let Some(dirs) = self.user_directories.clone() {
-            ui.label("Places");
-
-            if let Some(path) = dirs.home_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🏠  Home")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-
-            if let Some(path) = dirs.desktop_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🖵  Desktop")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.document_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🗐  Documents")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.download_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "📥  Downloads")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.audio_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🎵  Audio")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.picture_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🖼  Pictures")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.video_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🎞  Videos")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-        }
-    }
-
-    /// Updates the list of the system disks (Devices, Removable Devices).
-    fn ui_update_devices(&mut self, ui: &mut egui::Ui) {
-        let disks = std::mem::take(&mut self.system_disks);
-
-        // Non removable devices like hard drives
-        for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
-            if i == 0 {
-                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
-                ui.label("Devices");
-            }
-
-            self.ui_update_device_entry(ui, disk);
-        }
-
-        // Removable devices like USB sticks
-        for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
-            if i == 0 {
-                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
-                ui.label("Removable Devices");
-            }
-
-            self.ui_update_device_entry(ui, disk);
-        }
-
-        self.system_disks = disks;
-    }
-
-    /// Updates a device entry in the device list.
-    fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
-        let label = match device.is_removable() {
-            true => format!("💾  {}", device.display_name()),
-            false => format!("🖴  {}", device.display_name()),
-        };
-
-        if ui.selectable_label(false, label).clicked() {
-            let _ = self.load_directory(device.mount_point());
-        }
     }
 
     /// Helper function to add a sized button that can be enabled or disabled
