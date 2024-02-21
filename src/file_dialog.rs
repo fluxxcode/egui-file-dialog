@@ -36,37 +36,52 @@ pub enum DialogState {
     Cancelled,
 }
 
+/// Contains configuration values of a file dialog.
+///
+/// The configuration of a file dialog can be overwritten with `FileDialog::overwrite_config`. \
+/// If you only need to configure a single file dialog, you don't need to
+/// manually use a `FileDialogConfig` object. `FileDialog` provides setter methods for
+/// each of these configuration options, for example: `FileDialog::initial_directory`
+/// or `FileDialog::default_size`. \
+/// `FileDialogConfig` is useful when you need to configure multiple `FileDialog` objects with the
+/// same or almost the same options.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FileDialogConfig {
+    // ------------------------------------------------------------------------
+    // General options:
     /// The first directory that will be opened when the dialog opens.
     pub initial_directory: PathBuf,
     /// The default filename when opening the dialog in `DialogMode::SaveFile` mode.
     pub default_file_name: String,
 
+    // ------------------------------------------------------------------------
+    // Window options:
     /// If set, the window title will be overwritten and set to the fixed value instead
     /// of being set dynamically.
-    pub window_overwrite_title: Option<String>,
+    pub overwrite_title: Option<String>,
     /// The ID of the window.
-    pub window_id: Option<egui::Id>,
+    pub id: Option<egui::Id>,
     /// The default position of the window.
-    pub window_default_pos: Option<egui::Pos2>,
+    pub default_pos: Option<egui::Pos2>,
     /// Sets the window position and prevents it from being dragged around.
-    pub window_fixed_pos: Option<egui::Pos2>,
+    pub fixed_pos: Option<egui::Pos2>,
     /// The default size of the window.
-    pub window_default_size: egui::Vec2,
+    pub default_size: egui::Vec2,
     /// The maximum size of the window.
-    pub window_max_size: Option<egui::Vec2>,
+    pub max_size: Option<egui::Vec2>,
     /// The minimum size of the window.
-    pub window_min_size: egui::Vec2,
+    pub min_size: egui::Vec2,
     /// The anchor of the window.
-    pub window_anchor: Option<(egui::Align2, egui::Vec2)>,
+    pub anchor: Option<(egui::Align2, egui::Vec2)>,
     /// If the window is resizable.
-    pub window_resizable: bool,
+    pub resizable: bool,
     /// If the window is movable.
-    pub window_movable: bool,
+    pub movable: bool,
     /// If the title bar of the window is shown.
-    pub window_title_bar: bool,
+    pub title_bar: bool,
 
+    // ------------------------------------------------------------------------
+    // Feature options:
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub show_left_panel: bool,
@@ -84,17 +99,17 @@ impl Default for FileDialogConfig {
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
 
-            window_overwrite_title: None,
-            window_id: None,
-            window_default_pos: None,
-            window_fixed_pos: None,
-            window_default_size: egui::Vec2::new(650.0, 370.0),
-            window_max_size: None,
-            window_min_size: egui::Vec2::new(340.0, 170.0),
-            window_anchor: None,
-            window_resizable: true,
-            window_movable: true,
-            window_title_bar: true,
+            overwrite_title: None,
+            id: None,
+            default_pos: None,
+            fixed_pos: None,
+            default_size: egui::Vec2::new(650.0, 370.0),
+            max_size: None,
+            min_size: egui::Vec2::new(340.0, 170.0),
+            anchor: None,
+            resizable: true,
+            movable: true,
+            title_bar: true,
 
             show_left_panel: true,
             show_places: true,
@@ -324,7 +339,7 @@ impl FileDialog {
         self.show_files = show_files;
         self.operation_id = operation_id.map(String::from);
 
-        if let Some(title) = &self.config.window_overwrite_title {
+        if let Some(title) = &self.config.overwrite_title {
             self.window_title = title.clone();
         } else {
             self.window_title = match mode {
@@ -405,37 +420,37 @@ impl FileDialog {
     /// By default, the title is set dynamically, based on the `DialogMode`
     /// the dialog is currently in.
     pub fn title(mut self, title: &str) -> Self {
-        self.config.window_overwrite_title = Some(title.to_string());
+        self.config.overwrite_title = Some(title.to_string());
         self
     }
 
     /// Sets the ID of the window.
     pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
-        self.config.window_id = Some(id.into());
+        self.config.id = Some(id.into());
         self
     }
 
     /// Sets the default position of the window.
     pub fn default_pos(mut self, default_pos: impl Into<egui::Pos2>) -> Self {
-        self.config.window_default_pos = Some(default_pos.into());
+        self.config.default_pos = Some(default_pos.into());
         self
     }
 
     /// Sets the window position and prevents it from being dragged around.
     pub fn fixed_pos(mut self, pos: impl Into<egui::Pos2>) -> Self {
-        self.config.window_fixed_pos = Some(pos.into());
+        self.config.fixed_pos = Some(pos.into());
         self
     }
 
     /// Sets the default size of the window.
     pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
-        self.config.window_default_size = size.into();
+        self.config.default_size = size.into();
         self
     }
 
     /// Sets the maximum size of the window.
     pub fn max_size(mut self, max_size: impl Into<egui::Vec2>) -> Self {
-        self.config.window_max_size = Some(max_size.into());
+        self.config.max_size = Some(max_size.into());
         self
     }
 
@@ -443,19 +458,19 @@ impl FileDialog {
     ///
     /// Specifying a smaller minimum size than the default can lead to unexpected behavior.
     pub fn min_size(mut self, min_size: impl Into<egui::Vec2>) -> Self {
-        self.config.window_min_size = min_size.into();
+        self.config.min_size = min_size.into();
         self
     }
 
     /// Sets the anchor of the window.
     pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
-        self.config.window_anchor = Some((align, offset.into()));
+        self.config.anchor = Some((align, offset.into()));
         self
     }
 
     /// Sets if the window is resizable.
     pub fn resizable(mut self, resizable: bool) -> Self {
-        self.config.window_resizable = resizable;
+        self.config.resizable = resizable;
         self
     }
 
@@ -463,13 +478,13 @@ impl FileDialog {
     ///
     /// Has no effect if an anchor is set.
     pub fn movable(mut self, movable: bool) -> Self {
-        self.config.window_movable = movable;
+        self.config.movable = movable;
         self
     }
 
     /// Sets if the title bar of the window is shown.
     pub fn title_bar(mut self, title_bar: bool) -> Self {
-        self.config.window_title_bar = title_bar;
+        self.config.title_bar = title_bar;
         self
     }
 
@@ -600,30 +615,30 @@ impl FileDialog {
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
         let mut window = egui::Window::new(&self.window_title)
             .open(is_open)
-            .default_size(self.config.window_default_size)
-            .min_size(self.config.window_min_size)
-            .resizable(self.config.window_resizable)
-            .movable(self.config.window_movable)
-            .title_bar(self.config.window_title_bar)
+            .default_size(self.config.default_size)
+            .min_size(self.config.min_size)
+            .resizable(self.config.resizable)
+            .movable(self.config.movable)
+            .title_bar(self.config.title_bar)
             .collapsible(false);
 
-        if let Some(id) = self.config.window_id {
+        if let Some(id) = self.config.id {
             window = window.id(id);
         }
 
-        if let Some(pos) = self.config.window_default_pos {
+        if let Some(pos) = self.config.default_pos {
             window = window.default_pos(pos);
         }
 
-        if let Some(pos) = self.config.window_fixed_pos {
+        if let Some(pos) = self.config.fixed_pos {
             window = window.fixed_pos(pos);
         }
 
-        if let Some((anchor, offset)) = self.config.window_anchor {
+        if let Some((anchor, offset)) = self.config.anchor {
             window = window.anchor(anchor, offset);
         }
 
-        if let Some(size) = self.config.window_max_size {
+        if let Some(size) = self.config.max_size {
             window = window.max_size(size);
         }
 
