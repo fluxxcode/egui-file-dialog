@@ -36,6 +36,74 @@ pub enum DialogState {
     Cancelled,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FileDialogConfig {
+    /// The first directory that will be opened when the dialog opens.
+    pub initial_directory: PathBuf,
+    /// The default filename when opening the dialog in `DialogMode::SaveFile` mode.
+    pub default_file_name: String,
+
+    /// If set, the window title will be overwritten and set to the fixed value instead
+    /// of being set dynamically.
+    pub window_overwrite_title: Option<String>,
+    /// The ID of the window.
+    pub window_id: Option<egui::Id>,
+    /// The default position of the window.
+    pub window_default_pos: Option<egui::Pos2>,
+    /// Sets the window position and prevents it from being dragged around.
+    pub window_fixed_pos: Option<egui::Pos2>,
+    /// The default size of the window.
+    pub window_default_size: egui::Vec2,
+    /// The maximum size of the window.
+    pub window_max_size: Option<egui::Vec2>,
+    /// The minimum size of the window.
+    pub window_min_size: egui::Vec2,
+    /// The anchor of the window.
+    pub window_anchor: Option<(egui::Align2, egui::Vec2)>,
+    /// If the window is resizable.
+    pub window_resizable: bool,
+    /// If the window is movable.
+    pub window_movable: bool,
+    /// If the title bar of the window is shown.
+    pub window_title_bar: bool,
+
+    /// If the sidebar with the shortcut directories such as
+    /// “Home”, “Documents” etc. should be visible.
+    pub show_left_panel: bool,
+    /// If the Places section in the left sidebar should be visible.
+    pub show_places: bool,
+    /// If the Devices section in the left sidebar should be visible.
+    pub show_devices: bool,
+    /// If the Removable Devices section in the left sidebar should be visible.
+    pub show_removable_devices: bool,
+}
+
+impl Default for FileDialogConfig {
+    fn default() -> Self {
+        Self {
+            initial_directory: std::env::current_dir().unwrap_or_default(),
+            default_file_name: String::new(),
+
+            window_overwrite_title: None,
+            window_id: None,
+            window_default_pos: None,
+            window_fixed_pos: None,
+            window_default_size: egui::Vec2::new(650.0, 370.0),
+            window_max_size: None,
+            window_min_size: egui::Vec2::new(340.0, 170.0),
+            window_anchor: None,
+            window_resizable: true,
+            window_movable: true,
+            window_title_bar: true,
+
+            show_left_panel: true,
+            show_places: true,
+            show_devices: true,
+            show_removable_devices: true,
+        }
+    }
+}
+
 /// Represents a file dialog instance.
 ///
 /// The `FileDialog` instance can be used multiple times and for different actions.
@@ -62,12 +130,13 @@ pub enum DialogState {
 /// }
 /// ```
 pub struct FileDialog {
+    /// The configuration of the file dialog
+    config: FileDialogConfig,
+
     /// The mode the dialog is currently in
     mode: DialogMode,
     /// The state the dialog is currently in
     state: DialogState,
-    /// The first directory that will be opened when the dialog opens
-    initial_directory: PathBuf,
     /// If files are displayed in addition to directories.
     /// This option will be ignored when mode == DialogMode::SelectFile.
     show_files: bool,
@@ -102,39 +171,6 @@ pub struct FileDialog {
     /// The currently used window title.
     /// This changes depending on the mode the dialog is in.
     window_title: String,
-    /// If set, the window title will be overwritten and set to the fixed value instead
-    /// of being set dynamically.
-    window_overwrite_title: Option<String>,
-    /// The ID of the window.
-    window_id: Option<egui::Id>,
-    /// The default position of the window.
-    window_default_pos: Option<egui::Pos2>,
-    /// Sets the window position and prevents it from being dragged around.
-    window_fixed_pos: Option<egui::Pos2>,
-    /// The default size of the window.
-    window_default_size: egui::Vec2,
-    /// The maximum size of the window.
-    window_max_size: Option<egui::Vec2>,
-    /// The minimum size of the window.
-    window_min_size: egui::Vec2,
-    /// The anchor of the window.
-    window_anchor: Option<(egui::Align2, egui::Vec2)>,
-    /// If the window is resizable
-    window_resizable: bool,
-    /// If the window is movable
-    window_movable: bool,
-    /// If the title bar of the window is shown
-    window_title_bar: bool,
-
-    /// If the sidebar with the shortcut directories such as
-    /// “Home”, “Documents” etc. should be visible.
-    show_left_panel: bool,
-    /// If the Places section in the left sidebar should be visible.
-    show_places: bool,
-    /// If the Devices section in the left sidebar should be visible.
-    show_devices: bool,
-    /// If the Removable Devices section in the left sidebar should be visible.
-    show_removable_devices: bool,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -142,8 +178,6 @@ pub struct FileDialog {
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
     selected_item: Option<DirectoryEntry>,
-    /// The default filename when opening the dialog in DialogMode::SaveFile mode.
-    default_file_name: String,
     /// Buffer for the input of the file name when the dialog is in "SaveFile" mode.
     file_name_input: String,
     /// This variables contains the error message if the file_name_input is invalid.
@@ -169,10 +203,11 @@ impl FileDialog {
 
     /// Creates a new file dialog instance with default values.
     pub fn new() -> Self {
-        FileDialog {
+        Self {
+            config: FileDialogConfig::default(),
+
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
-            initial_directory: std::env::current_dir().unwrap_or_default(),
             show_files: true,
             operation_id: None,
 
@@ -185,27 +220,10 @@ impl FileDialog {
             directory_error: None,
 
             window_title: String::from("Select directory"),
-            window_overwrite_title: None,
-            window_id: None,
-            window_default_pos: None,
-            window_fixed_pos: None,
-            window_default_size: egui::Vec2::new(650.0, 370.0),
-            window_max_size: None,
-            window_min_size: egui::Vec2::new(340.0, 170.0),
-            window_anchor: None,
-            window_resizable: true,
-            window_movable: true,
-            window_title_bar: true,
-
-            show_left_panel: true,
-            show_places: true,
-            show_devices: true,
-            show_removable_devices: true,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
             selected_item: None,
-            default_file_name: String::new(),
             file_name_input: String::new(),
             file_name_input_error: None,
 
@@ -287,9 +305,9 @@ impl FileDialog {
         // If the path then has no parent directory, the user will see an error that the path
         // does not exist. However, using the user directories or disks, the user is still able
         // to select an item or save a file.
-        if self.initial_directory.is_file() {
-            if let Some(parent) = self.initial_directory.parent() {
-                self.initial_directory = parent.to_path_buf();
+        if self.config.initial_directory.is_file() {
+            if let Some(parent) = self.config.initial_directory.parent() {
+                self.config.initial_directory = parent.to_path_buf();
             }
         }
 
@@ -298,7 +316,7 @@ impl FileDialog {
         }
 
         if mode == DialogMode::SaveFile {
-            self.file_name_input = self.default_file_name.clone();
+            self.file_name_input = self.config.default_file_name.clone();
         }
 
         self.mode = mode;
@@ -306,7 +324,7 @@ impl FileDialog {
         self.show_files = show_files;
         self.operation_id = operation_id.map(String::from);
 
-        if let Some(title) = &self.window_overwrite_title {
+        if let Some(title) = &self.config.window_overwrite_title {
             self.window_title = title.clone();
         } else {
             self.window_title = match mode {
@@ -316,7 +334,7 @@ impl FileDialog {
             };
         }
 
-        self.load_directory(&self.initial_directory.clone())
+        self.load_directory(&self.config.initial_directory.clone())
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
@@ -372,13 +390,13 @@ impl FileDialog {
     ///
     /// Relative and absolute paths are allowed, but absolute paths are recommended.
     pub fn initial_directory(mut self, directory: PathBuf) -> Self {
-        self.initial_directory = directory.clone();
+        self.config.initial_directory = directory.clone();
         self
     }
 
     /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
-        self.default_file_name = name.to_string();
+        self.config.default_file_name = name.to_string();
         self
     }
 
@@ -387,37 +405,37 @@ impl FileDialog {
     /// By default, the title is set dynamically, based on the `DialogMode`
     /// the dialog is currently in.
     pub fn title(mut self, title: &str) -> Self {
-        self.window_overwrite_title = Some(title.to_string());
+        self.config.window_overwrite_title = Some(title.to_string());
         self
     }
 
     /// Sets the ID of the window.
     pub fn id(mut self, id: impl Into<egui::Id>) -> Self {
-        self.window_id = Some(id.into());
+        self.config.window_id = Some(id.into());
         self
     }
 
     /// Sets the default position of the window.
     pub fn default_pos(mut self, default_pos: impl Into<egui::Pos2>) -> Self {
-        self.window_default_pos = Some(default_pos.into());
+        self.config.window_default_pos = Some(default_pos.into());
         self
     }
 
     /// Sets the window position and prevents it from being dragged around.
     pub fn fixed_pos(mut self, pos: impl Into<egui::Pos2>) -> Self {
-        self.window_fixed_pos = Some(pos.into());
+        self.config.window_fixed_pos = Some(pos.into());
         self
     }
 
     /// Sets the default size of the window.
     pub fn default_size(mut self, size: impl Into<egui::Vec2>) -> Self {
-        self.window_default_size = size.into();
+        self.config.window_default_size = size.into();
         self
     }
 
     /// Sets the maximum size of the window.
     pub fn max_size(mut self, max_size: impl Into<egui::Vec2>) -> Self {
-        self.window_max_size = Some(max_size.into());
+        self.config.window_max_size = Some(max_size.into());
         self
     }
 
@@ -425,19 +443,19 @@ impl FileDialog {
     ///
     /// Specifying a smaller minimum size than the default can lead to unexpected behavior.
     pub fn min_size(mut self, min_size: impl Into<egui::Vec2>) -> Self {
-        self.window_min_size = min_size.into();
+        self.config.window_min_size = min_size.into();
         self
     }
 
     /// Sets the anchor of the window.
     pub fn anchor(mut self, align: egui::Align2, offset: impl Into<egui::Vec2>) -> Self {
-        self.window_anchor = Some((align, offset.into()));
+        self.config.window_anchor = Some((align, offset.into()));
         self
     }
 
     /// Sets if the window is resizable.
     pub fn resizable(mut self, resizable: bool) -> Self {
-        self.window_resizable = resizable;
+        self.config.window_resizable = resizable;
         self
     }
 
@@ -445,20 +463,20 @@ impl FileDialog {
     ///
     /// Has no effect if an anchor is set.
     pub fn movable(mut self, movable: bool) -> Self {
-        self.window_movable = movable;
+        self.config.window_movable = movable;
         self
     }
 
     /// Sets if the title bar of the window is shown.
     pub fn title_bar(mut self, title_bar: bool) -> Self {
-        self.window_title_bar = title_bar;
+        self.config.window_title_bar = title_bar;
         self
     }
 
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
-        self.show_left_panel = show_left_panel;
+        self.config.show_left_panel = show_left_panel;
         self
     }
 
@@ -467,7 +485,7 @@ impl FileDialog {
     ///
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
     pub fn show_places(mut self, show_places: bool) -> Self {
-        self.show_places = show_places;
+        self.config.show_places = show_places;
         self
     }
 
@@ -476,7 +494,7 @@ impl FileDialog {
     ///
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
     pub fn show_devices(mut self, show_devices: bool) -> Self {
-        self.show_devices = show_devices;
+        self.config.show_devices = show_devices;
         self
     }
 
@@ -485,7 +503,7 @@ impl FileDialog {
     ///
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
     pub fn show_removable_devices(mut self, show_removable_devices: bool) -> Self {
-        self.show_removable_devices = show_removable_devices;
+        self.config.show_removable_devices = show_removable_devices;
         self
     }
 
@@ -551,7 +569,7 @@ impl FileDialog {
                     self.ui_update_top_panel(ui);
                 });
 
-            if self.show_left_panel {
+            if self.config.show_left_panel {
                 egui::SidePanel::left("fe_left_panel")
                     .resizable(true)
                     .default_width(150.0)
@@ -582,30 +600,30 @@ impl FileDialog {
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
         let mut window = egui::Window::new(&self.window_title)
             .open(is_open)
-            .default_size(self.window_default_size)
-            .min_size(self.window_min_size)
-            .resizable(self.window_resizable)
-            .movable(self.window_movable)
-            .title_bar(self.window_title_bar)
+            .default_size(self.config.window_default_size)
+            .min_size(self.config.window_min_size)
+            .resizable(self.config.window_resizable)
+            .movable(self.config.window_movable)
+            .title_bar(self.config.window_title_bar)
             .collapsible(false);
 
-        if let Some(id) = self.window_id {
+        if let Some(id) = self.config.window_id {
             window = window.id(id);
         }
 
-        if let Some(pos) = self.window_default_pos {
+        if let Some(pos) = self.config.window_default_pos {
             window = window.default_pos(pos);
         }
 
-        if let Some(pos) = self.window_fixed_pos {
+        if let Some(pos) = self.config.window_fixed_pos {
             window = window.fixed_pos(pos);
         }
 
-        if let Some((anchor, offset)) = self.window_anchor {
+        if let Some((anchor, offset)) = self.config.window_anchor {
             window = window.anchor(anchor, offset);
         }
 
-        if let Some(size) = self.window_max_size {
+        if let Some(size) = self.config.window_max_size {
             window = window.max_size(size);
         }
 
@@ -777,17 +795,17 @@ impl FileDialog {
                 .show(ui, |ui| {
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
 
-                    if self.show_places && self.ui_update_user_directories(ui, spacing) {
+                    if self.config.show_places && self.ui_update_user_directories(ui, spacing) {
                         spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
                     }
 
                     let disks = std::mem::take(&mut self.system_disks);
 
-                    if self.show_devices && self.ui_update_devices(ui, spacing, &disks) {
+                    if self.config.show_devices && self.ui_update_devices(ui, spacing, &disks) {
                         spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
                     }
 
-                    if self.show_removable_devices
+                    if self.config.show_removable_devices
                         && self.ui_update_removable_devices(ui, spacing, &disks)
                     {
                         // Add this when we add a new section after removable devices
