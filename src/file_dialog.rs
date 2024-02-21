@@ -790,7 +790,7 @@ impl FileDialog {
                     if self.show_removable_devices
                         && self.ui_update_removable_devices(ui, spacing, &disks)
                     {
-                        // Add this when we add a new section after removable drives
+                        // Add this when we add a new section after removable devices
                         // spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
                     }
 
