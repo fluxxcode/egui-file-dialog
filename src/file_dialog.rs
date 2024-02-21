@@ -512,7 +512,7 @@ impl FileDialog {
             egui::TopBottomPanel::top("fe_top_panel")
                 .resizable(false)
                 .show_inside(ui, |ui| {
-                    self.ui_update_top_panel(ctx, ui);
+                    self.ui_update_top_panel(ui);
                 });
 
             if self.show_left_panel {
@@ -521,7 +521,7 @@ impl FileDialog {
                     .default_width(150.0)
                     .width_range(90.0..=250.0)
                     .show_inside(ui, |ui| {
-                        self.ui_update_left_panel(ctx, ui);
+                        self.ui_update_left_panel(ui);
                     });
             }
 
@@ -578,7 +578,7 @@ impl FileDialog {
 
     /// Updates the top panel of the dialog. Including the navigation buttons,
     /// the current path display, the reload button and the search field.
-    fn ui_update_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn ui_update_top_panel(&mut self, ui: &mut egui::Ui) {
         const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
 
         ui.horizontal(|ui| {
@@ -597,7 +597,7 @@ impl FileDialog {
             self.ui_update_search(ui);
         });
 
-        ui.add_space(ctx.style().spacing.item_spacing.y);
+        ui.add_space(ui.ctx().style().spacing.item_spacing.y);
     }
 
     /// Updates the navigation buttons like parent or previous directory
@@ -734,12 +734,12 @@ impl FileDialog {
 
     /// Updates the left panel of the dialog. Including the list of the user directories (Places)
     /// and system disks.
-    fn ui_update_left_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn ui_update_left_panel(&mut self, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    ui.add_space(ctx.style().spacing.item_spacing.y * 2.0);
+                    ui.add_space(ui.ctx().style().spacing.item_spacing.y * 2.0);
 
                     self.ui_update_user_directories(ui);
 
