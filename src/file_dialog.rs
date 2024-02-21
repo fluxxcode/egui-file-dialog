@@ -397,6 +397,66 @@ impl FileDialog {
     // -------------------------------------------------
     // Setter:
 
+    /// Overwrites the configuration of the file dialog.
+    ///
+    /// This is useful when you want to configure multiple `FileDialog` objects with the
+    /// same configuration. If you only want to configure a single object,
+    /// it's probably easier to use the setter methods like `FileDialog::initial_directory`
+    /// or `FileDialog::default_pos`.
+    ///
+    /// NOTE: Any configuration that was set before `FileDialog::overwrite_config`
+    /// will be overwritten! \
+    /// This means, for example, that the following code is invalid:
+    /// ```
+    /// pub use egui_file_dialog::{FileDialog, FileDialogConfig};
+    ///
+    /// fn create_file_dialog() -> FileDialog {
+    ///     FileDialog::new()
+    ///        .title("Hello world")
+    ///         // This will overwrite `.title("Hello world")`!
+    ///        .overwrite_config(FileDialogConfig::default())
+    /// }
+    ///
+    /// ```
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use egui_file_dialog::{FileDialog, FileDialogConfig};
+    ///
+    /// struct MyApp {
+    ///     file_dialog_a: FileDialog,
+    ///     file_dialog_b: FileDialog,
+    /// }
+    ///
+    /// impl MyApp {
+    ///     pub fn new() -> Self {
+    ///         let config = FileDialogConfig {
+    ///             default_size: egui::Vec2::new(500.0, 500.0),
+    ///             resizable: false,
+    ///             movable: false,
+    ///             ..Default::default()
+    ///         };
+    ///
+    ///         Self {
+    ///             file_dialog_a: FileDialog::new()
+    ///                 .overwrite_config(config.clone())
+    ///                 .title("File Dialog A")
+    ///                 .id("fd_a"),
+    ///
+    ///             file_dialog_b: FileDialog::new()
+    ///                 .overwrite_config(config)
+    ///                 .title("File Dialog B")
+    ///                 .id("fd_b"),
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    pub fn overwrite_config(mut self, config: FileDialogConfig) -> Self {
+        self.config = config;
+        self
+    }
+
     /// Sets the first loaded directory when the dialog opens.
     /// If the path is a file, the file's parent directory is used. If the path then has no
     /// parent directory or cannot be loaded, the user will receive an error.
