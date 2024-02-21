@@ -3,6 +3,7 @@
 ## [Unreleased] - v0.4.0 - Customization
 ### ✨ Features
 - Added `FileDialog::take_selected` as an alternative to `FileDialog::selected` [#52](https://github.com/fluxxcode/egui-file-dialog/pull/52)
+- Added `FileDialogConfig` and `FileDialog::overwrite_config` to override the configuration of a file dialog. This is useful if you want to configure multiple `FileDialog` objects with the same options. [#58](https://github.com/fluxxcode/egui-file-dialog/pull/58)
 - Added `FileDialog::show_left_panel` to show or hide the left panel with the shortcut directories such as “Home”, “Documents”, etc. [#54](https://github.com/fluxxcode/egui-file-dialog/pull/54)
 - Added `FileDialog::show_places`, `FileDialog::show_devices` and `FileDialog::show_removable_devices` to show or hide individual section of the left panel [#57](https://github.com/fluxxcode/egui-file-dialog/pull/57)
 
