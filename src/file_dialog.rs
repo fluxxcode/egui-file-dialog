@@ -131,6 +131,8 @@ pub struct FileDialog {
     show_left_panel: bool,
     /// If the places section in the left sidebar should be visible.
     show_places: bool,
+    /// If the places section in the left sidebar should be visible.
+    show_devices: bool,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -195,6 +197,7 @@ impl FileDialog {
 
             show_left_panel: true,
             show_places: true,
+            show_devices: true,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -462,6 +465,15 @@ impl FileDialog {
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
     pub fn show_places(mut self, show_places: bool) -> Self {
         self.show_places = show_places;
+        self
+    }
+
+    /// Sets if the "Devices" section should be visible in the left sidebar.
+    /// The Devices section contains the non removable system disks.
+    ///
+    /// Has no effect when `FileDialog::show_left_panel` is disabled.
+    pub fn show_devices(mut self, show_devices: bool) -> Self {
+        self.show_devices = show_devices;
         self
     }
 
@@ -759,7 +771,10 @@ impl FileDialog {
 
                     let disks = std::mem::take(&mut self.system_disks);
 
-                    self.ui_update_devices(ui, &disks, spacing);
+                    if self.show_devices && self.ui_update_devices(ui, spacing, &disks) {
+                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                    }
+
                     self.ui_update_removable_devices(ui, &disks, spacing);
 
                     self.system_disks = disks;
@@ -841,15 +856,21 @@ impl FileDialog {
     }
 
     /// Updates the list of devices like system disks
-    fn ui_update_devices(&mut self, ui: &mut egui::Ui, disks: &Disks, spacing: f32) {
+    fn ui_update_devices(&mut self, ui: &mut egui::Ui, spacing: f32, disks: &Disks) -> bool {
+        let mut visible = false;
+
         for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label("Devices");
+
+                visible = true;
             }
 
             self.ui_update_device_entry(ui, disk);
         }
+
+        visible
     }
 
     /// Updates the list of removable devices like USB drives
