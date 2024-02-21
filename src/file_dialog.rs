@@ -856,7 +856,6 @@ impl FileDialog {
 
     /// Updates the bottom panel showing the selected item and main action buttons.
     fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
-
         ui.add_space(5.0);
 
         self.ui_update_selection_preview(ui);
