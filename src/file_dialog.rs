@@ -733,9 +733,116 @@ impl FileDialog {
                     ui.add_space(ctx.style().spacing.item_spacing.y * 2.0);
 
                     self.ui_update_user_directories(ui);
-                    self.ui_update_devices(ui);
+
+                    let disks = std::mem::take(&mut self.system_disks);
+
+                    self.ui_update_devices(ui, &disks);
+                    self.ui_update_removable_devices(ui, &disks);
+
+                    self.system_disks = disks;
                 });
         });
+    }
+
+    /// Updates the list of the user directories (Places).
+    fn ui_update_user_directories(&mut self, ui: &mut egui::Ui) {
+        if let Some(dirs) = self.user_directories.clone() {
+            ui.label("Places");
+
+            if let Some(path) = dirs.home_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🏠  Home")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+
+            if let Some(path) = dirs.desktop_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🖵  Desktop")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.document_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🗐  Documents")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.download_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "📥  Downloads")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.audio_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🎵  Audio")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.picture_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🖼  Pictures")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+            if let Some(path) = dirs.video_dir() {
+                if ui
+                    .selectable_label(self.current_directory() == Some(path), "🎞  Videos")
+                    .clicked()
+                {
+                    let _ = self.load_directory(path);
+                }
+            }
+        }
+    }
+
+    /// Updates the list of devices like system disks
+    fn ui_update_devices(&mut self, ui: &mut egui::Ui, disks: &Disks) {
+        for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Devices");
+            }
+
+            self.ui_update_device_entry(ui, disk);
+        }
+    }
+
+    /// Updates the list of removable devices like USB drives
+    fn ui_update_removable_devices(&mut self, ui: &mut egui::Ui, disks: &Disks) {
+        for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
+            if i == 0 {
+                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.label("Removable Devices");
+            }
+
+            self.ui_update_device_entry(ui, disk);
+        }
+    }
+
+    /// Updates a device entry of a device list like "Devices" or "Removable Devices".
+    fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
+        let label = match device.is_removable() {
+            true => format!("💾  {}", device.display_name()),
+            false => format!("🖴  {}", device.display_name()),
+        };
+
+        if ui.selectable_label(false, label).clicked() {
+            let _ = self.load_directory(device.mount_point());
+        }
     }
 
     /// Updates the bottom panel showing the selected item and main action buttons.
@@ -922,110 +1029,6 @@ impl FileDialog {
                     }
                 });
         });
-    }
-
-    /// Updates the list of the user directories (Places).
-    fn ui_update_user_directories(&mut self, ui: &mut egui::Ui) {
-        if let Some(dirs) = self.user_directories.clone() {
-            ui.label("Places");
-
-            if let Some(path) = dirs.home_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🏠  Home")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-
-            if let Some(path) = dirs.desktop_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🖵  Desktop")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.document_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🗐  Documents")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.download_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "📥  Downloads")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.audio_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🎵  Audio")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.picture_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🖼  Pictures")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-            if let Some(path) = dirs.video_dir() {
-                if ui
-                    .selectable_label(self.current_directory() == Some(path), "🎞  Videos")
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
-            }
-        }
-    }
-
-    /// Updates the list of the system disks (Devices, Removable Devices).
-    fn ui_update_devices(&mut self, ui: &mut egui::Ui) {
-        let disks = std::mem::take(&mut self.system_disks);
-
-        // Non removable devices like hard drives
-        for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
-            if i == 0 {
-                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
-                ui.label("Devices");
-            }
-
-            self.ui_update_device_entry(ui, disk);
-        }
-
-        // Removable devices like USB sticks
-        for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
-            if i == 0 {
-                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
-                ui.label("Removable Devices");
-            }
-
-            self.ui_update_device_entry(ui, disk);
-        }
-
-        self.system_disks = disks;
-    }
-
-    /// Updates a device entry in the device list.
-    fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
-        let label = match device.is_removable() {
-            true => format!("💾  {}", device.display_name()),
-            false => format!("🖴  {}", device.display_name()),
-        };
-
-        if ui.selectable_label(false, label).clicked() {
-            let _ = self.load_directory(device.mount_point());
-        }
     }
 
     /// Helper function to add a sized button that can be enabled or disabled
