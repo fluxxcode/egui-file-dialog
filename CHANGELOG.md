@@ -4,6 +4,7 @@
 ### ✨ Features
 - Added `FileDialog::take_selected` as an alternative to `FileDialog::selected` [#52](https://github.com/fluxxcode/egui-file-dialog/pull/52)
 - Added `FileDialog::show_left_panel` to show or hide the left panel with the shortcut directories such as “Home”, “Documents”, etc. [#54](https://github.com/fluxxcode/egui-file-dialog/pull/54)
+- Added `FileDialog::show_places`, `FileDialog::show_devices` and `FileDialog::show_removable_devices` to show or hide individual section of the left panel [#57](https://github.com/fluxxcode/egui-file-dialog/pull/57)
 
 ### 🔧 Changes
 - Cleanup and restructure `FileDialog` UI methods [#56](https://github.com/fluxxcode/egui-file-dialog/pull/56)
