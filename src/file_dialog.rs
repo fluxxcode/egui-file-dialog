@@ -58,7 +58,7 @@ pub struct FileDialogConfig {
     // Window options:
     /// If set, the window title will be overwritten and set to the fixed value instead
     /// of being set dynamically.
-    pub overwrite_title: Option<String>,
+    pub title: Option<String>,
     /// The ID of the window.
     pub id: Option<egui::Id>,
     /// The default position of the window.
@@ -99,7 +99,7 @@ impl Default for FileDialogConfig {
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
 
-            overwrite_title: None,
+            title: None,
             id: None,
             default_pos: None,
             fixed_pos: None,
@@ -339,7 +339,7 @@ impl FileDialog {
         self.show_files = show_files;
         self.operation_id = operation_id.map(String::from);
 
-        if let Some(title) = &self.config.overwrite_title {
+        if let Some(title) = &self.config.title {
             self.window_title = title.clone();
         } else {
             self.window_title = match mode {
@@ -420,7 +420,7 @@ impl FileDialog {
     /// By default, the title is set dynamically, based on the `DialogMode`
     /// the dialog is currently in.
     pub fn title(mut self, title: &str) -> Self {
-        self.config.overwrite_title = Some(title.to_string());
+        self.config.title = Some(title.to_string());
         self
     }
 
