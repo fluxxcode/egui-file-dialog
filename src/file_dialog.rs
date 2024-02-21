@@ -129,6 +129,8 @@ pub struct FileDialog {
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     show_left_panel: bool,
+    /// If the places section in the left sidebar should be visible.
+    show_places: bool,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -192,6 +194,7 @@ impl FileDialog {
             window_title_bar: true,
 
             show_left_panel: true,
+            show_places: true,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -450,6 +453,15 @@ impl FileDialog {
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
         self.show_left_panel = show_left_panel;
+        self
+    }
+
+    /// Sets if the "Places" section should be visible in the left sidebar.
+    /// The Places section contains the user directories such as Home or Documents.
+    ///
+    /// Has no effect when `FileDialog::show_left_panel` is disabled.
+    pub fn show_places(mut self, show_places: bool) -> Self {
+        self.show_places = show_places;
         self
     }
 
@@ -739,14 +751,16 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    ui.add_space(ui.ctx().style().spacing.item_spacing.y * 2.0);
+                    let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
 
-                    self.ui_update_user_directories(ui);
+                    if self.show_places && self.ui_update_user_directories(ui, spacing) {
+                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                    }
 
                     let disks = std::mem::take(&mut self.system_disks);
 
-                    self.ui_update_devices(ui, &disks);
-                    self.ui_update_removable_devices(ui, &disks);
+                    self.ui_update_devices(ui, &disks, spacing);
+                    self.ui_update_removable_devices(ui, &disks, spacing);
 
                     self.system_disks = disks;
                 });
@@ -754,8 +768,12 @@ impl FileDialog {
     }
 
     /// Updates the list of the user directories (Places).
-    fn ui_update_user_directories(&mut self, ui: &mut egui::Ui) {
+    ///
+    /// Returns true if at least one directory was included in the list and the
+    /// heading is visible. If no directory was listed, false is returned.
+    fn ui_update_user_directories(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         if let Some(dirs) = self.user_directories.clone() {
+            ui.add_space(spacing);
             ui.label("Places");
 
             if let Some(path) = dirs.home_dir() {
@@ -815,14 +833,18 @@ impl FileDialog {
                     let _ = self.load_directory(path);
                 }
             }
+
+            return true;
         }
+
+        false
     }
 
     /// Updates the list of devices like system disks
-    fn ui_update_devices(&mut self, ui: &mut egui::Ui, disks: &Disks) {
+    fn ui_update_devices(&mut self, ui: &mut egui::Ui, disks: &Disks, spacing: f32) {
         for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
             if i == 0 {
-                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.add_space(spacing);
                 ui.label("Devices");
             }
 
@@ -831,10 +853,10 @@ impl FileDialog {
     }
 
     /// Updates the list of removable devices like USB drives
-    fn ui_update_removable_devices(&mut self, ui: &mut egui::Ui, disks: &Disks) {
+    fn ui_update_removable_devices(&mut self, ui: &mut egui::Ui, disks: &Disks, spacing: f32) {
         for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
             if i == 0 {
-                ui.add_space(ui.style().spacing.item_spacing.y * 4.0);
+                ui.add_space(spacing);
                 ui.label("Removable Devices");
             }
 
