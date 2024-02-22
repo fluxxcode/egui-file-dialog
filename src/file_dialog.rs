@@ -82,6 +82,10 @@ pub struct FileDialogConfig {
 
     // ------------------------------------------------------------------------
     // Feature options:
+    /// If the top panel with the navigation buttons, current path display and search input
+    /// should be visible.
+    pub show_top_panel: bool,
+
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub show_left_panel: bool,
@@ -110,6 +114,8 @@ impl Default for FileDialogConfig {
             resizable: true,
             movable: true,
             title_bar: true,
+
+            show_top_panel: true,
 
             show_left_panel: true,
             show_places: true,
@@ -548,6 +554,13 @@ impl FileDialog {
         self
     }
 
+    /// Sets if the top panel with the navigation buttons, current path display
+    /// and search input should be visible.
+    pub fn show_top_panel(mut self, show_top_panel: bool) -> Self {
+        self.config.show_top_panel = show_top_panel;
+        self
+    }
+
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
@@ -638,11 +651,13 @@ impl FileDialog {
         let mut is_open = true;
 
         self.create_window(&mut is_open).show(ctx, |ui| {
-            egui::TopBottomPanel::top("fe_top_panel")
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_top_panel(ui);
-                });
+            if self.config.show_top_panel {
+                egui::TopBottomPanel::top("fe_top_panel")
+                    .resizable(false)
+                    .show_inside(ui, |ui| {
+                        self.ui_update_top_panel(ui);
+                    });
+            }
 
             if self.config.show_left_panel {
                 egui::SidePanel::left("fe_left_panel")
