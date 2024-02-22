@@ -9,6 +9,7 @@
 - Added `FileDialog::show_parent_button`, `FileDialog::show_back_button` and `FileDialog::show_forward_button` to show or hide the individual navigation buttons in the top panel. [#61](https://github.com/fluxxcode/egui-file-dialog/pull/61)
 - Added `FileDialog::show_new_folder_button` to show or hide the button to create a new folder [#62](https://github.com/fluxxcode/egui-file-dialog/pull/62)
 - Added `FileDialog::show_current_path` to show or hide the current path in the top panel [#63](https://github.com/fluxxcode/egui-file-dialog/pull/63)
+- Added `FileDialog::show_reload_button` to show or hide the reload button in the top panel [#64](https://github.com/fluxxcode/egui-file-dialog/pull/64)
 - Added `FileDialog::show_left_panel` to show or hide the left panel  [#54](https://github.com/fluxxcode/egui-file-dialog/pull/54)
 - Added `FileDialog::show_places`, `FileDialog::show_devices` and `FileDialog::show_removable_devices` to show or hide individual section of the left panel [#57](https://github.com/fluxxcode/egui-file-dialog/pull/57)
 

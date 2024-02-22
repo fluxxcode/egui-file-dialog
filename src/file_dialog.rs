@@ -95,6 +95,8 @@ pub struct FileDialogConfig {
     pub show_new_folder_button: bool,
     /// If the current path display in the top panel should be visible.
     pub show_current_path: bool,
+    /// If the reload button in the top panel should be visible.
+    pub show_reload_button: bool,
 
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
@@ -131,6 +133,7 @@ impl Default for FileDialogConfig {
             show_forward_button: true,
             show_new_folder_button: true,
             show_current_path: true,
+            show_reload_button: true,
 
             show_left_panel: true,
             show_places: true,
@@ -616,6 +619,14 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the reload button should be visible in the top panel.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_reload_button(mut self, show_reload_button: bool) -> Self {
+        self.config.show_reload_button = show_reload_button;
+        self
+    }
+
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
@@ -791,7 +802,9 @@ impl FileDialog {
             }
 
             // Reload button
-            if ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked() {
+            if self.config.show_reload_button
+                && ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked()
+            {
                 self.refresh();
             }
 
