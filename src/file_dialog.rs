@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use crate::config::FileDialogConfig;
+use crate::config::{FileDialogConfig, FileDialogLabels};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 
@@ -265,9 +265,9 @@ impl FileDialog {
             self.window_title = title.clone();
         } else {
             self.window_title = match mode {
-                DialogMode::SelectDirectory => "📁 Select Folder".to_string(),
-                DialogMode::SelectFile => "📂 Open File".to_string(),
-                DialogMode::SaveFile => "📥 Save File".to_string(),
+                DialogMode::SelectDirectory => self.config.labels.title_select_directory.clone(),
+                DialogMode::SelectFile => self.config.labels.title_select_file.clone(),
+                DialogMode::SaveFile => self.config.labels.title_save_file.clone(),
             };
         }
 
@@ -379,6 +379,16 @@ impl FileDialog {
     /// ```
     pub fn overwrite_config(mut self, config: FileDialogConfig) -> Self {
         self.config = config;
+        self
+    }
+
+    /// Sets the labels the file dialog uses.
+    ///
+    /// Used to enable multiple language support.
+    ///
+    /// See `FileDialogLabels` for more information.
+    pub fn labels(mut self, labels: FileDialogLabels) -> Self {
+        self.config.labels = labels;
         self
     }
 
@@ -918,11 +928,14 @@ impl FileDialog {
     fn ui_update_user_directories(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         if let Some(dirs) = self.user_directories.clone() {
             ui.add_space(spacing);
-            ui.label("Places");
+            ui.label(self.config.labels.heading_places.as_str());
 
             if let Some(path) = dirs.home_dir() {
                 if ui
-                    .selectable_label(self.current_directory() == Some(path), "🏠  Home")
+                    .selectable_label(
+                        self.current_directory() == Some(path),
+                        self.config.labels.home_dir.as_str(),
+                    )
                     .clicked()
                 {
                     let _ = self.load_directory(path);
@@ -931,7 +944,10 @@ impl FileDialog {
 
             if let Some(path) = dirs.desktop_dir() {
                 if ui
-                    .selectable_label(self.current_directory() == Some(path), "🖵  Desktop")
+                    .selectable_label(
+                        self.current_directory() == Some(path),
+                        self.config.labels.desktop_dir.as_str(),
+                    )
                     .clicked()
                 {
                     let _ = self.load_directory(path);
@@ -939,7 +955,10 @@ impl FileDialog {
             }
             if let Some(path) = dirs.document_dir() {
                 if ui
-                    .selectable_label(self.current_directory() == Some(path), "🗐  Documents")
+                    .selectable_label(
+                        self.current_directory() == Some(path),
+                        self.config.labels.documents_dir.as_str(),
+                    )
                     .clicked()
                 {
                     let _ = self.load_directory(path);
@@ -947,7 +966,10 @@ impl FileDialog {
             }
             if let Some(path) = dirs.download_dir() {
                 if ui
-                    .selectable_label(self.current_directory() == Some(path), "📥  Downloads")
+                    .selectable_label(
+                        self.current_directory() == Some(path),
+                        self.config.labels.downloads_dir.as_str(),
+                    )
                     .clicked()
                 {
                     let _ = self.load_directory(path);
@@ -955,7 +977,10 @@ impl FileDialog {
             }
             if let Some(path) = dirs.audio_dir() {
                 if ui
-                    .selectable_label(self.current_directory() == Some(path), "🎵  Audio")
+                    .selectable_label(
+                        self.current_directory() == Some(path),
+                        self.config.labels.audio_dir.as_str(),
+                    )
                     .clicked()
                 {
                     let _ = self.load_directory(path);
@@ -963,7 +988,10 @@ impl FileDialog {
             }
             if let Some(path) = dirs.picture_dir() {
                 if ui
-                    .selectable_label(self.current_directory() == Some(path), "🖼  Pictures")
+                    .selectable_label(
+                        self.current_directory() == Some(path),
+                        self.config.labels.pictures_dir.as_str(),
+                    )
                     .clicked()
                 {
                     let _ = self.load_directory(path);
@@ -971,7 +999,10 @@ impl FileDialog {
             }
             if let Some(path) = dirs.video_dir() {
                 if ui
-                    .selectable_label(self.current_directory() == Some(path), "🎞  Videos")
+                    .selectable_label(
+                        self.current_directory() == Some(path),
+                        self.config.labels.videos_dir.as_str(),
+                    )
                     .clicked()
                 {
                     let _ = self.load_directory(path);
@@ -994,7 +1025,7 @@ impl FileDialog {
         for (i, disk) in disks.iter().filter(|x| !x.is_removable()).enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
-                ui.label("Devices");
+                ui.label(self.config.labels.heading_devices.as_str());
 
                 visible = true;
             }
@@ -1020,7 +1051,7 @@ impl FileDialog {
         for (i, disk) in disks.iter().filter(|x| x.is_removable()).enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
-                ui.label("Removable Devices");
+                ui.label(self.config.labels.heading_removable_devices.as_str());
 
                 visible = true;
             }
@@ -1060,9 +1091,11 @@ impl FileDialog {
     fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             match &self.mode {
-                DialogMode::SelectDirectory => ui.label("Selected directory:"),
-                DialogMode::SelectFile => ui.label("Selected file:"),
-                DialogMode::SaveFile => ui.label("File name:"),
+                DialogMode::SelectDirectory => {
+                    ui.label(self.config.labels.selected_directory.as_str())
+                }
+                DialogMode::SelectFile => ui.label(self.config.labels.selected_file.as_str()),
+                DialogMode::SaveFile => ui.label(self.config.labels.file_name.as_str()),
             };
 
             match &self.mode {
@@ -1104,8 +1137,10 @@ impl FileDialog {
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile => "🗀  Open",
-                DialogMode::SaveFile => "📥  Save",
+                DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                    self.config.labels.open_button.as_str()
+                }
+                DialogMode::SaveFile => self.config.labels.save_button.as_str(),
             };
 
             if self.ui_button_sized(
@@ -1144,7 +1179,10 @@ impl FileDialog {
             ui.add_space(ui.ctx().style().spacing.item_spacing.y);
 
             if ui
-                .add_sized(BUTTON_SIZE, egui::Button::new("🚫 Cancel"))
+                .add_sized(
+                    BUTTON_SIZE,
+                    egui::Button::new(self.config.labels.cancel_button.as_str()),
+                )
                 .clicked()
             {
                 self.cancel();
@@ -1228,7 +1266,11 @@ impl FileDialog {
                     self.scroll_to_selection = false;
                     self.directory_content = data;
 
-                    if let Some(path) = self.create_directory_dialog.update(ui).directory() {
+                    if let Some(path) = self
+                        .create_directory_dialog
+                        .update(ui, &self.config.labels)
+                        .directory()
+                    {
                         let entry = DirectoryEntry::from_path(&path);
 
                         self.directory_content.push(entry.clone());
@@ -1344,7 +1386,7 @@ impl FileDialog {
     /// Returns None if the file name is valid. Otherwise returns an error message.
     fn validate_file_name_input(&self) -> Option<String> {
         if self.file_name_input.is_empty() {
-            return Some("The file name cannot be empty".to_string());
+            return Some(self.config.labels.err_empty_file_name.clone());
         }
 
         if let Some(x) = self.current_directory() {
@@ -1352,10 +1394,10 @@ impl FileDialog {
             full_path.push(self.file_name_input.as_str());
 
             if full_path.is_dir() {
-                return Some("A directory with the name already exists".to_string());
+                return Some(self.config.labels.err_directory_exists.clone());
             }
             if full_path.is_file() {
-                return Some("A file with the name already exists".to_string());
+                return Some(self.config.labels.err_file_exists.clone());
             }
         } else {
             // There is most likely a bug in the code if we get this error message!
