@@ -93,6 +93,8 @@ pub struct FileDialogConfig {
     pub show_forward_button: bool,
     /// If the button to create a new folder should be visible at the top.
     pub show_new_folder_button: bool,
+    /// If the current path display in the top panel should be visible.
+    pub show_current_path: bool,
 
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
@@ -128,6 +130,7 @@ impl Default for FileDialogConfig {
             show_back_button: true,
             show_forward_button: true,
             show_new_folder_button: true,
+            show_current_path: true,
 
             show_left_panel: true,
             show_places: true,
@@ -605,6 +608,14 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the current path should be visible in the top panel.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_current_path(mut self, show_current_path: bool) -> Self {
+        self.config.show_current_path = show_current_path;
+        self
+    }
+
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
@@ -775,7 +786,9 @@ impl FileDialog {
             // Leave some area for the reload button and search input
             let path_display_width = ui.available_width() - 180.0;
 
-            self.ui_update_current_path_display(ui, path_display_width);
+            if self.config.show_current_path {
+                self.ui_update_current_path_display(ui, path_display_width);
+            }
 
             // Reload button
             if ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked() {
