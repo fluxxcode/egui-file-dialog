@@ -143,7 +143,7 @@ impl Default for FileDialogConfig {
 /// };
 ///
 /// let file_dialog = FileDialog::new().labels(labels_german);
-/// ````
+/// ```
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FileDialogLabels {
     // ------------------------------------------------------------------------
