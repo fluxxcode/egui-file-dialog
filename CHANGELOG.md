@@ -4,9 +4,11 @@
 ### ✨ Features
 - Added `FileDialog::take_selected` as an alternative to `FileDialog::selected` [#52](https://github.com/fluxxcode/egui-file-dialog/pull/52)
 - Added `FileDialogConfig` and `FileDialog::overwrite_config` to override the configuration of a file dialog. This is useful if you want to configure multiple `FileDialog` objects with the same options. [#58](https://github.com/fluxxcode/egui-file-dialog/pull/58)
-- Added `FileDialog::show_top_panel` to show or hide the top panel with the navigation buttons, current path, etc. [#60](https://github.com/fluxxcode/egui-file-dialog/pull/60)
-- Added `FileDialog::show_parent_button`, `FileDialog::show_back_button` and `FileDialog::show_forward_button` to show or hide the individual navigation buttons in the top panel. [#64](https://github.com/fluxxcode/egui-file-dialog/pull/61)
-- Added `FileDialog::show_left_panel` to show or hide the left panel with the shortcut directories such as “Home”, “Documents”, etc. [#54](https://github.com/fluxxcode/egui-file-dialog/pull/54)
+#### Methods for showing or hiding certain dialog areas and functions
+- Added `FileDialog::show_top_panel` to show or hide the top panel [#60](https://github.com/fluxxcode/egui-file-dialog/pull/60)
+- Added `FileDialog::show_parent_button`, `FileDialog::show_back_button` and `FileDialog::show_forward_button` to show or hide the individual navigation buttons in the top panel. [#61](https://github.com/fluxxcode/egui-file-dialog/pull/61)
+- Added `FileDialog::show_new_folder_button` to show or hide the button to create a new folder [#62](https://github.com/fluxxcode/egui-file-dialog/pull/62)
+- Added `FileDialog::show_left_panel` to show or hide the left panel  [#54](https://github.com/fluxxcode/egui-file-dialog/pull/54)
 - Added `FileDialog::show_places`, `FileDialog::show_devices` and `FileDialog::show_removable_devices` to show or hide individual section of the left panel [#57](https://github.com/fluxxcode/egui-file-dialog/pull/57)
 
 ### 🔧 Changes
