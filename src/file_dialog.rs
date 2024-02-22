@@ -400,6 +400,13 @@ impl FileDialog {
         self
     }
 
+    /// Sets the separator of the directories when displaying a path.
+    /// Currently only used when the current path is displayed in the top panel.
+    pub fn directory_separator(mut self, separator: &str) -> Self {
+        self.config.directory_separator = separator.to_string();
+        self
+    }
+
     /// Overwrites the window title.
     ///
     /// By default, the title is set dynamically, based on the `DialogMode`
@@ -829,7 +836,7 @@ impl FileDialog {
                                         if i == 1 && segment == "\\" {
                                             file_name = drive_letter.as_str();
                                         } else if i != 0 {
-                                            ui.label(">");
+                                            ui.label(self.config.directory_separator.as_str());
                                         }
                                     }
 
@@ -838,7 +845,7 @@ impl FileDialog {
 
                                     #[cfg(not(windows))]
                                     if i != 0 {
-                                        ui.label(">");
+                                        ui.label(self.config.directory_separator.as_str());
                                     }
 
                                     if ui.button(file_name).clicked() {

@@ -1,3 +1,5 @@
+#![warn(missing_docs)] // Let's keep the public API well documented!
+
 use std::path::PathBuf;
 
 /// Contains configuration values of a file dialog.
@@ -20,6 +22,9 @@ pub struct FileDialogConfig {
     pub initial_directory: PathBuf,
     /// The default filename when opening the dialog in `DialogMode::SaveFile` mode.
     pub default_file_name: String,
+    /// Sets the separator of the directories when displaying a path.
+    /// Currently only used when the current path is displayed in the top panel.
+    pub directory_separator: String,
 
     // ------------------------------------------------------------------------
     // Window options:
@@ -83,6 +88,7 @@ impl Default for FileDialogConfig {
         Self {
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
+            directory_separator: String::from(">"),
 
             title: None,
             id: None,

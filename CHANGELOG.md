@@ -4,6 +4,8 @@
 ### ✨ Features
 - Added `FileDialog::take_selected` as an alternative to `FileDialog::selected` [#52](https://github.com/fluxxcode/egui-file-dialog/pull/52)
 - Added `FileDialogConfig`, `FileDialog::with_config` and `FileDialog::overwrite_config` to set and override the configuration of a file dialog. This is useful if you want to configure multiple `FileDialog` objects with the same options. [#58](https://github.com/fluxxcode/egui-file-dialog/pull/58) and [#67](https://github.com/fluxxcode/egui-file-dialog/pull/67)
+- Added `FileDialog::directory_separator` to overwrite the directory separator that is used when displaying the current path [#68](https://github.com/fluxxcode/egui-file-dialog/pull/68)
+
 #### Methods for showing or hiding certain dialog areas and functions
 - Added `FileDialog::show_top_panel` to show or hide the top panel [#60](https://github.com/fluxxcode/egui-file-dialog/pull/60)
 - Added `FileDialog::show_parent_button`, `FileDialog::show_back_button` and `FileDialog::show_forward_button` to show or hide the individual navigation buttons in the top panel. [#61](https://github.com/fluxxcode/egui-file-dialog/pull/61)
