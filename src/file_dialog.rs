@@ -97,6 +97,8 @@ pub struct FileDialogConfig {
     pub show_current_path: bool,
     /// If the reload button in the top panel should be visible.
     pub show_reload_button: bool,
+    /// If the search input in the top panel should be visible.
+    pub show_search: bool,
 
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
@@ -134,6 +136,7 @@ impl Default for FileDialogConfig {
             show_new_folder_button: true,
             show_current_path: true,
             show_reload_button: true,
+            show_search: true,
 
             show_left_panel: true,
             show_places: true,
@@ -627,6 +630,14 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the search input should be visible in the top panel.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_search(mut self, show_search: bool) -> Self {
+        self.config.show_search = show_search;
+        self
+    }
+
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
@@ -794,8 +805,16 @@ impl FileDialog {
         ui.horizontal(|ui| {
             self.ui_update_nav_buttons(ui, &BUTTON_SIZE);
 
+            let mut path_display_width = ui.available_width();
+
             // Leave some area for the reload button and search input
-            let path_display_width = ui.available_width() - 180.0;
+            if self.config.show_reload_button {
+                path_display_width -= BUTTON_SIZE.x + ui.style().spacing.item_spacing.x * 2.5;
+            }
+
+            if self.config.show_search {
+                path_display_width -= 140.0;
+            }
 
             if self.config.show_current_path {
                 self.ui_update_current_path_display(ui, path_display_width);
@@ -808,7 +827,9 @@ impl FileDialog {
                 self.refresh();
             }
 
-            self.ui_update_search(ui);
+            if self.config.show_search {
+                self.ui_update_search(ui);
+            }
         });
 
         ui.add_space(ui.ctx().style().spacing.item_spacing.y);
