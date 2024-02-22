@@ -53,8 +53,10 @@
 //! }
 //! ```
 
-mod file_dialog;
-pub use file_dialog::{DialogMode, DialogState, FileDialog, FileDialogConfig};
-
+mod config;
 mod create_directory_dialog;
 mod data;
+mod file_dialog;
+
+pub use config::FileDialogConfig;
+pub use file_dialog::{DialogMode, DialogState, FileDialog};
