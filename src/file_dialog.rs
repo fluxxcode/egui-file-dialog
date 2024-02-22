@@ -164,6 +164,11 @@ impl FileDialog {
         }
     }
 
+    /// Creates a new file dialog object and initializes it with the specified configuration.
+    pub fn with_config(config: FileDialogConfig) -> Self {
+        Self::new().overwrite_config(config)
+    }
+
     // -------------------------------------------------
     // Open, Update:
 
@@ -320,6 +325,9 @@ impl FileDialog {
     /// same configuration. If you only want to configure a single object,
     /// it's probably easier to use the setter methods like `FileDialog::initial_directory`
     /// or `FileDialog::default_pos`.
+    ///
+    /// If you want to create a new FileDialog object with a config,
+    /// you probably want to use `FileDialog::with_config`.
     ///
     /// NOTE: Any configuration that was set before `FileDialog::overwrite_config`
     /// will be overwritten! \
