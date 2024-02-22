@@ -1,3 +1,5 @@
+#![warn(missing_docs)] // Let's keep the public API well documented!
+
 use std::path::PathBuf;
 
 /// Contains configuration values of a file dialog.
