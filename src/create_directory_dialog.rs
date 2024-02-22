@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::FileDialogLabels;
+
 pub struct CreateDirectoryResponse {
     /// Contains the path to the directory that was created.
     directory: Option<PathBuf>,
@@ -74,7 +76,11 @@ impl CreateDirectoryDialog {
 
     /// Main update function of the dialog. Should be called in every frame
     /// in which the dialog is to be displayed.
-    pub fn update(&mut self, ui: &mut egui::Ui) -> CreateDirectoryResponse {
+    pub fn update(
+        &mut self,
+        ui: &mut egui::Ui,
+        labels: &FileDialogLabels,
+    ) -> CreateDirectoryResponse {
         if !self.open {
             return CreateDirectoryResponse::new_empty();
         }
@@ -90,12 +96,12 @@ impl CreateDirectoryDialog {
                 response.scroll_to_me(Some(egui::Align::Center));
                 response.request_focus();
 
-                self.error = self.validate_input();
+                self.error = self.validate_input(labels);
                 self.init = false;
             }
 
             if response.changed() {
-                self.error = self.validate_input();
+                self.error = self.validate_input(labels);
             }
 
             if ui
@@ -165,19 +171,19 @@ impl CreateDirectoryDialog {
 
     /// Validates the folder name input.
     /// Returns None if the name is valid. Otherwise returns the error message.
-    fn validate_input(&mut self) -> Option<String> {
+    fn validate_input(&mut self, labels: &FileDialogLabels) -> Option<String> {
         if self.input.is_empty() {
-            return self.create_error("Name of the folder can not be empty");
+            return self.create_error(&labels.err_empty_file_name);
         }
 
         if let Some(mut x) = self.directory.clone() {
             x.push(self.input.as_str());
 
             if x.is_dir() {
-                return self.create_error("A directory with the name already exists");
+                return self.create_error(&labels.err_directory_exists);
             }
             if x.is_file() {
-                return self.create_error("A file with the name already exists");
+                return self.create_error(&labels.err_file_exists);
             }
         } else {
             // This error should not occur because the validate_input function is only
