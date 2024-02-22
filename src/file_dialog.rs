@@ -85,6 +85,12 @@ pub struct FileDialogConfig {
     /// If the top panel with the navigation buttons, current path display and search input
     /// should be visible.
     pub show_top_panel: bool,
+    /// Whether the parent folder button should be visible at the top.
+    pub show_parent_button: bool,
+    /// Whether the back button should be visible at the top.
+    pub show_back_button: bool,
+    /// Whether the forward button should be visible at the top.
+    pub show_forward_button: bool,
 
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
@@ -116,6 +122,9 @@ impl Default for FileDialogConfig {
             title_bar: true,
 
             show_top_panel: true,
+            show_parent_button: true,
+            show_back_button: true,
+            show_forward_button: true,
 
             show_left_panel: true,
             show_places: true,
@@ -561,6 +570,30 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the parent folder button should be visible in the top panel.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_parent_button(mut self, show_parent_button: bool) -> Self {
+        self.config.show_parent_button = show_parent_button;
+        self
+    }
+
+    /// Sets whether the back button should be visible in the top panel.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_back_button(mut self, show_back_button: bool) -> Self {
+        self.config.show_back_button = show_back_button;
+        self
+    }
+
+    /// Sets whether the forward button should be visible in the top panel.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_forward_button(mut self, show_forward_button: bool) -> Self {
+        self.config.show_forward_button = show_forward_button;
+        self
+    }
+
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
@@ -746,25 +779,31 @@ impl FileDialog {
 
     /// Updates the navigation buttons like parent or previous directory
     fn ui_update_nav_buttons(&mut self, ui: &mut egui::Ui, button_size: &egui::Vec2) {
-        if let Some(x) = self.current_directory() {
-            if self.ui_button_sized(ui, x.parent().is_some(), *button_size, "⏶", None) {
-                let _ = self.load_parent_directory();
+        if self.config.show_parent_button {
+            if let Some(x) = self.current_directory() {
+                if self.ui_button_sized(ui, x.parent().is_some(), *button_size, "⏶", None) {
+                    let _ = self.load_parent_directory();
+                }
+            } else {
+                let _ = self.ui_button_sized(ui, false, *button_size, "⏶", None);
             }
-        } else {
-            let _ = self.ui_button_sized(ui, false, *button_size, "⏶", None);
         }
 
-        if self.ui_button_sized(
-            ui,
-            self.directory_offset + 1 < self.directory_stack.len(),
-            *button_size,
-            "⏴",
-            None,
-        ) {
+        if self.config.show_back_button
+            && self.ui_button_sized(
+                ui,
+                self.directory_offset + 1 < self.directory_stack.len(),
+                *button_size,
+                "⏴",
+                None,
+            )
+        {
             let _ = self.load_previous_directory();
         }
 
-        if self.ui_button_sized(ui, self.directory_offset != 0, *button_size, "⏵", None) {
+        if self.config.show_forward_button
+            && self.ui_button_sized(ui, self.directory_offset != 0, *button_size, "⏵", None)
+        {
             let _ = self.load_next_directory();
         }
 
