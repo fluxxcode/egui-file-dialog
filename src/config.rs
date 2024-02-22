@@ -129,8 +129,20 @@ impl Default for FileDialogConfig {
 ///
 /// # Example
 ///
+/// The following example shows how the default title of the dialog can be displayed
+/// in German instead of English.
+///
 /// ```
-/// todo!("Example!");
+/// use egui_file_dialog::{FileDialog, FileDialogLabels};
+///
+/// let labels_german = FileDialogLabels {
+///     title_select_directory: "📁 Ordner Öffnen".to_string(),
+///     title_select_file: "📂 Datei Öffnen".to_string(),
+///     title_save_file: "📥 Datei Speichern".to_string(),
+///     ..Default::default()
+/// };
+///
+/// let file_dialog = FileDialog::new().labels(labels_german);
 /// ````
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FileDialogLabels {
