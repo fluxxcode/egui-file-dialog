@@ -91,6 +91,8 @@ pub struct FileDialogConfig {
     pub show_back_button: bool,
     /// Whether the forward button should be visible at the top.
     pub show_forward_button: bool,
+    /// If the button to create a new folder should be visible at the top.
+    pub show_new_folder_button: bool,
 
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
@@ -125,6 +127,7 @@ impl Default for FileDialogConfig {
             show_parent_button: true,
             show_back_button: true,
             show_forward_button: true,
+            show_new_folder_button: true,
 
             show_left_panel: true,
             show_places: true,
@@ -594,6 +597,14 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the button to create a new folder should be visible in the top panel.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_new_folder_button(mut self, show_new_folder_button: bool) -> Self {
+        self.config.show_new_folder_button = show_new_folder_button;
+        self
+    }
+
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
@@ -807,13 +818,15 @@ impl FileDialog {
             let _ = self.load_next_directory();
         }
 
-        if self.ui_button_sized(
-            ui,
-            !self.create_directory_dialog.is_open(),
-            *button_size,
-            "+",
-            None,
-        ) {
+        if self.config.show_new_folder_button
+            && self.ui_button_sized(
+                ui,
+                !self.create_directory_dialog.is_open(),
+                *button_size,
+                "+",
+                None,
+            )
+        {
             if let Some(x) = self.current_directory() {
                 self.create_directory_dialog.open(x.to_path_buf());
             }
