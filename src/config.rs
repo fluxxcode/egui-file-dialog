@@ -2,11 +2,14 @@ use std::path::PathBuf;
 
 /// Contains configuration values of a file dialog.
 ///
-/// The configuration of a file dialog can be overwritten with `FileDialog::overwrite_config`. \
+/// The configuration of a file dialog can be set using
+/// `FileDialog::with_config` or `FileDialog::overwrite_config`.
+///
 /// If you only need to configure a single file dialog, you don't need to
 /// manually use a `FileDialogConfig` object. `FileDialog` provides setter methods for
 /// each of these configuration options, for example: `FileDialog::initial_directory`
-/// or `FileDialog::default_size`. \
+/// or `FileDialog::default_size`.
+///
 /// `FileDialogConfig` is useful when you need to configure multiple `FileDialog` objects with the
 /// same or almost the same options.
 #[derive(Debug, PartialEq, Eq, Clone)]
