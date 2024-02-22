@@ -789,22 +789,22 @@ impl FileDialog {
             }
         }
 
-        if self.config.show_back_button {
-            if self.ui_button_sized(
+        if self.config.show_back_button
+            && self.ui_button_sized(
                 ui,
                 self.directory_offset + 1 < self.directory_stack.len(),
                 *button_size,
                 "⏴",
                 None,
-            ) {
-                let _ = self.load_previous_directory();
-            }
+            )
+        {
+            let _ = self.load_previous_directory();
         }
 
-        if self.config.show_forward_button {
-            if self.ui_button_sized(ui, self.directory_offset != 0, *button_size, "⏵", None) {
-                let _ = self.load_next_directory();
-            }
+        if self.config.show_forward_button
+            && self.ui_button_sized(ui, self.directory_offset != 0, *button_size, "⏵", None)
+        {
+            let _ = self.load_next_directory();
         }
 
         if self.ui_button_sized(
