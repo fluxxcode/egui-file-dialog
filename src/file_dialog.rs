@@ -1244,18 +1244,13 @@ impl FileDialog {
                             continue;
                         }
 
-                        let icon = match path.is_dir() {
-                            true => &self.config.folder_icon,
-                            _ => &self.config.file_icon,
-                        };
-
                         let mut selected = false;
                         if let Some(x) = &self.selected_item {
                             selected = x == path;
                         }
 
                         let response =
-                            ui.selectable_label(selected, format!("{} {}", icon, file_name));
+                            ui.selectable_label(selected, format!("{} {}", path.icon(), file_name));
 
                         if selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
@@ -1292,7 +1287,7 @@ impl FileDialog {
                         .update(ui, &self.config)
                         .directory()
                     {
-                        let entry = DirectoryEntry::from_path(&path);
+                        let entry = DirectoryEntry::from_path(&self.config, &path);
 
                         self.directory_content.push(entry.clone());
                         self.select_item(&entry);
@@ -1538,7 +1533,7 @@ impl FileDialog {
 
         self.load_directory_content(path)?;
 
-        let dir_entry = DirectoryEntry::from_path(path);
+        let dir_entry = DirectoryEntry::from_path(&self.config, path);
         self.select_item(&dir_entry);
 
         Ok(())
@@ -1548,13 +1543,14 @@ impl FileDialog {
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
         self.directory_error = None;
 
-        self.directory_content = match DirectoryContent::from_path(path, self.show_files) {
-            Ok(content) => content,
-            Err(err) => {
-                self.directory_error = Some(err.to_string());
-                return Err(err);
-            }
-        };
+        self.directory_content =
+            match DirectoryContent::from_path(&self.config, path, self.show_files) {
+                Ok(content) => content,
+                Err(err) => {
+                    self.directory_error = Some(err.to_string());
+                    return Err(err);
+                }
+            };
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;

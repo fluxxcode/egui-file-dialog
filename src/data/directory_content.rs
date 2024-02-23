@@ -1,6 +1,8 @@
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
+use crate::FileDialogConfig;
+
 /// Contains the metadata of a directory item.
 /// This struct is mainly there so that the metadata can be loaded once and not that
 /// a request has to be sent to the OS every frame using, for example, `path.is_file()`.
@@ -9,15 +11,17 @@ pub struct DirectoryEntry {
     path: PathBuf,
     is_directory: bool,
     is_system_file: bool,
+    icon: String,
 }
 
 impl DirectoryEntry {
     /// Creates a new directory entry from a path
-    pub fn from_path(path: &Path) -> Self {
+    pub fn from_path(config: &FileDialogConfig, path: &Path) -> Self {
         Self {
             path: path.to_path_buf(),
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
+            icon: gen_path_icon(config, path),
         }
     }
 
@@ -38,6 +42,11 @@ impl DirectoryEntry {
     /// Returns true if the item is a system file.
     pub fn is_system_file(&self) -> bool {
         self.is_system_file
+    }
+
+    /// Returns the icon of the directory item.
+    pub fn icon(&self) -> &str {
+        &self.icon
     }
 
     /// Returns the path of the directory item.
@@ -95,9 +104,13 @@ impl DirectoryContent {
 
     /// Create a new DirectoryContent object and loads the contents of the given path.
     /// Use include_files to include or exclude files in the content list.
-    pub fn from_path(path: &Path, include_files: bool) -> io::Result<Self> {
+    pub fn from_path(
+        config: &FileDialogConfig,
+        path: &Path,
+        include_files: bool,
+    ) -> io::Result<Self> {
         Ok(Self {
-            content: load_directory(path, include_files)?,
+            content: load_directory(config, path, include_files)?,
         })
     }
 
@@ -114,14 +127,18 @@ impl DirectoryContent {
 }
 
 /// Loads the contents of the given directory.
-fn load_directory(path: &Path, include_files: bool) -> io::Result<Vec<DirectoryEntry>> {
+fn load_directory(
+    config: &FileDialogConfig,
+    path: &Path,
+    include_files: bool,
+) -> io::Result<Vec<DirectoryEntry>> {
     let paths = fs::read_dir(path)?;
 
     let mut result: Vec<DirectoryEntry> = Vec::new();
     for path in paths {
         match path {
             Ok(entry) => {
-                let entry = DirectoryEntry::from_path(entry.path().as_path());
+                let entry = DirectoryEntry::from_path(config, entry.path().as_path());
 
                 if entry.is_system_file() {
                     continue;
@@ -148,4 +165,11 @@ fn load_directory(path: &Path, include_files: bool) -> io::Result<Vec<DirectoryE
     // TODO: Implement "Show hidden files and folders" option
 
     Ok(result)
+}
+
+fn gen_path_icon(config: &FileDialogConfig, path: &Path) -> String {
+    match path.is_dir() {
+        true => config.folder_icon.clone(),
+        false => config.file_icon.clone(),
+    }
 }
