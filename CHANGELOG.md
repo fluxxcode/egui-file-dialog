@@ -6,6 +6,7 @@
 - Added `FileDialogConfig`, `FileDialog::with_config` and `FileDialog::overwrite_config` to set and override the configuration of a file dialog. This is useful if you want to configure multiple `FileDialog` objects with the same options. [#58](https://github.com/fluxxcode/egui-file-dialog/pull/58) and [#67](https://github.com/fluxxcode/egui-file-dialog/pull/67)
 - Added `FileDialogLabels` and `FileDialog::labels` to enable multiple language support [#69](https://github.com/fluxxcode/egui-file-dialog/pull/69)
 - Added `FileDialog::directory_separator` to overwrite the directory separator that is used when displaying the current path [#68](https://github.com/fluxxcode/egui-file-dialog/pull/68)
+- Added `FileDialog::err_icon`, `FileDialog::folder_icon` and `FileDialog::file_icon` to customize the respective icons [#72]()
 
 #### Methods for showing or hiding certain dialog areas and functions
 - Added `FileDialog::show_top_panel` to show or hide the top panel [#60](https://github.com/fluxxcode/egui-file-dialog/pull/60)
