@@ -14,7 +14,9 @@ pub struct IconFilter {
 
 impl std::fmt::Debug for IconFilter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "icon: {}, filter: <FN>", self.icon)
+        f.debug_struct("IconFilter")
+            .field("icon", &self.icon)
+            .finish()
     }
 }
 
