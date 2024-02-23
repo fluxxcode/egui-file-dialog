@@ -28,6 +28,13 @@ pub struct FileDialogConfig {
     /// Currently only used when the current path is displayed in the top panel.
     pub directory_separator: String,
 
+    /// The icon that is used to display error messages.
+    pub err_icon: String,
+    /// The default icon used to display files.
+    pub file_icon: String,
+    /// The default icon used to display folders.
+    pub folder_icon: String,
+
     // ------------------------------------------------------------------------
     // Window options:
     /// If set, the window title will be overwritten and set to the fixed value instead
@@ -93,6 +100,10 @@ impl Default for FileDialogConfig {
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             directory_separator: String::from(">"),
+
+            err_icon: String::from("⚠"),
+            file_icon: String::from("🖹"),
+            folder_icon: String::from("🗀"),
 
             title: None,
             id: None,

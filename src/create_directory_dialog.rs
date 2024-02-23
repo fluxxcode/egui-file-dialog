@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::FileDialogLabels;
+use crate::{FileDialogConfig, FileDialogLabels};
 
 pub struct CreateDirectoryResponse {
     /// Contains the path to the directory that was created.
@@ -79,7 +79,7 @@ impl CreateDirectoryDialog {
     pub fn update(
         &mut self,
         ui: &mut egui::Ui,
-        labels: &FileDialogLabels,
+        config: &FileDialogConfig,
     ) -> CreateDirectoryResponse {
         if !self.open {
             return CreateDirectoryResponse::new_empty();
@@ -88,7 +88,7 @@ impl CreateDirectoryDialog {
         let mut result = CreateDirectoryResponse::new_empty();
 
         ui.horizontal(|ui| {
-            ui.label("🗀");
+            ui.label(&config.folder_icon);
 
             let response = ui.text_edit_singleline(&mut self.input);
 
@@ -96,12 +96,12 @@ impl CreateDirectoryDialog {
                 response.scroll_to_me(Some(egui::Align::Center));
                 response.request_focus();
 
-                self.error = self.validate_input(labels);
+                self.error = self.validate_input(&config.labels);
                 self.init = false;
             }
 
             if response.changed() {
-                self.error = self.validate_input(labels);
+                self.error = self.validate_input(&config.labels);
             }
 
             if ui
@@ -123,7 +123,11 @@ impl CreateDirectoryDialog {
                 .horizontal_wrapped(|ui| {
                     ui.spacing_mut().item_spacing.x = 0.0;
 
-                    ui.colored_label(ui.style().visuals.error_fg_color, "⚠ ");
+                    ui.colored_label(
+                        ui.style().visuals.error_fg_color,
+                        format!("{} ", config.err_icon),
+                    );
+
                     ui.label(err);
                 })
                 .response;
