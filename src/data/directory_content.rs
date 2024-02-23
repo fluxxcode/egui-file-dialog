@@ -167,6 +167,8 @@ fn load_directory(
     Ok(result)
 }
 
+/// Generates the icon for the specific path.
+/// The default icon configuration is taken into account, as well as any configured file icon filters.
 fn gen_path_icon(config: &FileDialogConfig, path: &Path) -> String {
     for def in &config.file_icon_filters {
         if (def.filter)(path) {
