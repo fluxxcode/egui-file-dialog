@@ -20,6 +20,9 @@
 ### 🔧 Changes
 - Cleanup and restructure `FileDialog` UI methods [#56](https://github.com/fluxxcode/egui-file-dialog/pull/56)
 
+### 📚 Documentation
+- Added downloads and total lines badge to `README.md` [#71](https://github.com/fluxxcode/egui-file-dialog/pull/71)
+
 ## 2024-02-20 - v0.3.1 - Bug fixes
 ### 🐛 Bug Fixes
 - Fixed not being able to select a shortcut directory like Home or Documents [#43](https://github.com/fluxxcode/egui-file-dialog/pull/43)
