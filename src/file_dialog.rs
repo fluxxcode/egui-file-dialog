@@ -1212,7 +1212,10 @@ impl FileDialog {
     fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
         if let Some(err) = &self.directory_error {
             ui.centered_and_justified(|ui| {
-                ui.colored_label(egui::Color32::RED, format!("{} {}", self.config.err_icon, err));
+                ui.colored_label(
+                    ui.style().visuals.error_fg_color,
+                    format!("{} {}", self.config.err_icon, err),
+                );
             });
             return;
         }
@@ -1320,7 +1323,7 @@ impl FileDialog {
 
                         ui.colored_label(
                             ui.ctx().style().visuals.error_fg_color,
-                            format!("{} ", self.config.err_icon)
+                            format!("{} ", self.config.err_icon),
                         );
 
                         ui.label(err);
