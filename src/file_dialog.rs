@@ -417,6 +417,24 @@ impl FileDialog {
         self
     }
 
+    /// Sets the icon that is used to display errors.
+    pub fn err_icon(mut self, icon: &str) -> Self {
+        self.config.err_icon = icon.to_string();
+        self
+    }
+
+    /// Sets the default icon that is used to display files.
+    pub fn file_icon(mut self, icon: &str) -> Self {
+        self.config.file_icon = icon.to_string();
+        self
+    }
+
+    /// Sets the default icon that is used to display folders.
+    pub fn folder_icon(mut self, icon: &str) -> Self {
+        self.config.folder_icon = icon.to_string();
+        self
+    }
+
     /// Overwrites the window title.
     ///
     /// By default, the title is set dynamically, based on the `DialogMode`
@@ -1194,7 +1212,7 @@ impl FileDialog {
     fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
         if let Some(err) = &self.directory_error {
             ui.centered_and_justified(|ui| {
-                ui.colored_label(egui::Color32::RED, format!("⚠ {}", err));
+                ui.colored_label(egui::Color32::RED, format!("{} {}", self.config.err_icon, err));
             });
             return;
         }
@@ -1224,8 +1242,8 @@ impl FileDialog {
                         }
 
                         let icon = match path.is_dir() {
-                            true => "🗀",
-                            _ => "🖹",
+                            true => &self.config.folder_icon,
+                            _ => &self.config.file_icon,
                         };
 
                         let mut selected = false;
@@ -1268,7 +1286,7 @@ impl FileDialog {
 
                     if let Some(path) = self
                         .create_directory_dialog
-                        .update(ui, &self.config.labels)
+                        .update(ui, &self.config)
                         .directory()
                     {
                         let entry = DirectoryEntry::from_path(&path);
@@ -1300,7 +1318,11 @@ impl FileDialog {
                     ui.horizontal_wrapped(|ui| {
                         ui.spacing_mut().item_spacing.x = 0.0;
 
-                        ui.colored_label(ui.ctx().style().visuals.error_fg_color, "⚠ ");
+                        ui.colored_label(
+                            ui.ctx().style().visuals.error_fg_color,
+                            format!("{} ", self.config.err_icon)
+                        );
+
                         ui.label(err);
                     });
                 });
