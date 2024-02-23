@@ -168,6 +168,12 @@ fn load_directory(
 }
 
 fn gen_path_icon(config: &FileDialogConfig, path: &Path) -> String {
+    for def in &config.file_icon_filters {
+        if (def.filter)(path) {
+            return def.icon.clone();
+        }
+    }
+
     match path.is_dir() {
         true => config.folder_icon.clone(),
         false => config.file_icon.clone(),
