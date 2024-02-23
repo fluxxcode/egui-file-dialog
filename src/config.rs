@@ -101,7 +101,7 @@ impl Default for FileDialogConfig {
             directory_separator: String::from(">"),
 
             err_icon: String::from("⚠"),
-            file_icon: String::from("🖹"),
+            file_icon: String::from("🗋"),
             folder_icon: String::from("🗀"),
 
             title: None,
