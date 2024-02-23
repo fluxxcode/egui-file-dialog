@@ -1,4 +1,3 @@
-#![warn(missing_docs)] // Let's keep the public API well documented!
 
 use std::path::PathBuf;
 

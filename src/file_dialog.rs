@@ -1,5 +1,3 @@
-#![warn(missing_docs)] // Let's keep the public API well documented!
-
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
