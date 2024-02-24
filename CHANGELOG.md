@@ -24,6 +24,9 @@
 - Added `FileDialog::show_left_panel` to show or hide the left panel  [#54](https://github.com/fluxxcode/egui-file-dialog/pull/54)
 - Added `FileDialog::show_places`, `FileDialog::show_devices` and `FileDialog::show_removable_devices` to show or hide individual section of the left panel [#57](https://github.com/fluxxcode/egui-file-dialog/pull/57)
 
+### 🐛 Bug Fixes
+- Fixed not every path being canonicalized [#76](https://github.com/fluxxcode/egui-file-dialog/pull/76)
+
 ### 🔧 Changes
 - Cleanup and restructure `FileDialog` UI methods [#56](https://github.com/fluxxcode/egui-file-dialog/pull/56)
 
