@@ -269,7 +269,10 @@ impl FileDialog {
             };
         }
 
-        self.load_directory(&self.config.initial_directory.clone())
+        let path = fs::canonicalize(&self.config.initial_directory)
+            .unwrap_or(self.config.initial_directory.clone());
+
+        self.load_directory(&path)
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
@@ -1546,14 +1549,6 @@ impl FileDialog {
     ///
     /// The function also sets the loaded directory as the selected item.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
-        let path = match fs::canonicalize(path) {
-            Ok(path) => path,
-            Err(err) => {
-                self.directory_error = Some(err.to_string());
-                return Err(err);
-            }
-        };
-
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
         if let Some(x) = self.current_directory() {
@@ -1567,12 +1562,12 @@ impl FileDialog {
                 .drain(self.directory_stack.len() - self.directory_offset..);
         }
 
-        self.directory_stack.push(path.clone());
+        self.directory_stack.push(path.to_path_buf());
         self.directory_offset = 0;
 
-        self.load_directory_content(&path)?;
+        self.load_directory_content(path)?;
 
-        let dir_entry = DirectoryEntry::from_path(&self.config, &path);
+        let dir_entry = DirectoryEntry::from_path(&self.config, path);
         self.select_item(&dir_entry);
 
         Ok(())
