@@ -269,10 +269,10 @@ impl FileDialog {
             };
         }
 
-        let path = fs::canonicalize(&self.config.initial_directory)
-            .unwrap_or(self.config.initial_directory.clone());
-
-        self.load_directory(&path)
+        self.load_directory(
+            &fs::canonicalize(&self.config.initial_directory)
+                .unwrap_or(self.config.initial_directory.clone()),
+        )
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
