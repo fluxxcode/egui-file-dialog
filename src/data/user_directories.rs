@@ -18,17 +18,17 @@ pub struct UserDirectories {
 impl UserDirectories {
     /// Creates a new UserDirectories object.
     /// Returns None if no valid home directory path could be retrieved from the operating system.
-    pub fn new() -> Option<Self> {
+    pub fn new(canonicalize_paths: bool) -> Option<Self> {
         if let Some(dirs) = directories::UserDirs::new() {
             return Some(Self {
-                home_dir: Self::canonicalize(Some(dirs.home_dir())),
+                home_dir: Self::canonicalize(Some(dirs.home_dir()), canonicalize_paths),
 
-                audio_dir: Self::canonicalize(dirs.audio_dir()),
-                desktop_dir: Self::canonicalize(dirs.desktop_dir()),
-                document_dir: Self::canonicalize(dirs.document_dir()),
-                download_dir: Self::canonicalize(dirs.download_dir()),
-                picture_dir: Self::canonicalize(dirs.picture_dir()),
-                video_dir: Self::canonicalize(dirs.video_dir()),
+                audio_dir: Self::canonicalize(dirs.audio_dir(), canonicalize_paths),
+                desktop_dir: Self::canonicalize(dirs.desktop_dir(), canonicalize_paths),
+                document_dir: Self::canonicalize(dirs.document_dir(), canonicalize_paths),
+                download_dir: Self::canonicalize(dirs.download_dir(), canonicalize_paths),
+                picture_dir: Self::canonicalize(dirs.picture_dir(), canonicalize_paths),
+                video_dir: Self::canonicalize(dirs.video_dir(), canonicalize_paths),
             });
         }
 
@@ -64,7 +64,11 @@ impl UserDirectories {
     }
 
     /// Canonicalizes the given paths. Returns None if an error occurred.
-    fn canonicalize(path: Option<&Path>) -> Option<PathBuf> {
+    fn canonicalize(path: Option<&Path>, canonicalize: bool) -> Option<PathBuf> {
+        if !canonicalize {
+            return path.map(PathBuf::from);
+        }
+
         if let Some(path) = path {
             return match fs::canonicalize(path) {
                 Ok(p) => Some(p),

@@ -64,6 +64,8 @@ pub struct FileDialogConfig {
     /// Sets the separator of the directories when displaying a path.
     /// Currently only used when the current path is displayed in the top panel.
     pub directory_separator: String,
+    /// If the paths in the file dialog should be canonicalized before use.
+    pub canonicalize_paths: bool,
 
     /// The icon that is used to display error messages.
     pub err_icon: String,
@@ -145,6 +147,7 @@ impl Default for FileDialogConfig {
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             directory_separator: String::from(">"),
+            canonicalize_paths: true,
 
             err_icon: String::from("⚠"),
             default_file_icon: String::from("🗋"),
