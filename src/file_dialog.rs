@@ -1534,7 +1534,7 @@ impl FileDialog {
     /// Otherwise, the result of the directory loading operation is returned.
     fn reload_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
-            return self.load_directory_content(x.to_path_buf().as_path());
+            return self.load_directory_content(&x.to_path_buf());
         }
 
         Ok(())
@@ -1546,7 +1546,7 @@ impl FileDialog {
     ///
     /// The function also sets the loaded directory as the selected item.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
-        let full_path = match fs::canonicalize(path) {
+        let path = match fs::canonicalize(path) {
             Ok(path) => path,
             Err(err) => {
                 self.directory_error = Some(err.to_string());
@@ -1557,7 +1557,7 @@ impl FileDialog {
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
         if let Some(x) = self.current_directory() {
-            if x == full_path {
+            if x == path {
                 return Ok(());
             }
         }
@@ -1567,12 +1567,12 @@ impl FileDialog {
                 .drain(self.directory_stack.len() - self.directory_offset..);
         }
 
-        self.directory_stack.push(full_path);
+        self.directory_stack.push(path.clone());
         self.directory_offset = 0;
 
-        self.load_directory_content(path)?;
+        self.load_directory_content(&path)?;
 
-        let dir_entry = DirectoryEntry::from_path(&self.config, path);
+        let dir_entry = DirectoryEntry::from_path(&self.config, &path);
         self.select_item(&dir_entry);
 
         Ok(())
