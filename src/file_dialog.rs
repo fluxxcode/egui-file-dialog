@@ -1,9 +1,7 @@
-#![warn(missing_docs)] // Let's keep the public API well documented!
-
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use crate::config::{FileDialogConfig, FileDialogLabels};
+use crate::config::{FileDialogConfig, FileDialogLabels, Filter};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 
@@ -424,14 +422,39 @@ impl FileDialog {
     }
 
     /// Sets the default icon that is used to display files.
-    pub fn file_icon(mut self, icon: &str) -> Self {
-        self.config.file_icon = icon.to_string();
+    pub fn default_file_icon(mut self, icon: &str) -> Self {
+        self.config.default_file_icon = icon.to_string();
         self
     }
 
     /// Sets the default icon that is used to display folders.
-    pub fn folder_icon(mut self, icon: &str) -> Self {
-        self.config.folder_icon = icon.to_string();
+    pub fn default_folder_icon(mut self, icon: &str) -> Self {
+        self.config.default_folder_icon = icon.to_string();
+        self
+    }
+
+    /// Sets a new icon for specific files or folders.
+    ///
+    /// # Arguments
+    ///
+    /// * `icon` - The icon that should be used.
+    /// * `filter` - Sets a filter function that checks whether a given
+    ///   Path matches the criteria for this icon.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// let config = FileDialog::new()
+    ///     // .png files should use the "document with picture (U+1F5BB)" icon.
+    ///     .set_file_icon("🖻", Arc::new(|path| path.extension().unwrap_or_default() == "png"))
+    ///     // .git directories should use the "web-github (U+E624)" icon.
+    ///     .set_file_icon("", Arc::new(|path| path.file_name().unwrap_or_default() == ".git"));
+    /// ```
+    pub fn set_file_icon(mut self, icon: &str, filter: Filter<std::path::Path>) -> Self {
+        self.config = self.config.set_file_icon(icon, filter);
         self
     }
 
@@ -1244,18 +1267,13 @@ impl FileDialog {
                             continue;
                         }
 
-                        let icon = match path.is_dir() {
-                            true => &self.config.folder_icon,
-                            _ => &self.config.file_icon,
-                        };
-
                         let mut selected = false;
                         if let Some(x) = &self.selected_item {
                             selected = x == path;
                         }
 
                         let response =
-                            ui.selectable_label(selected, format!("{} {}", icon, file_name));
+                            ui.selectable_label(selected, format!("{} {}", path.icon(), file_name));
 
                         if selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
@@ -1292,7 +1310,7 @@ impl FileDialog {
                         .update(ui, &self.config)
                         .directory()
                     {
-                        let entry = DirectoryEntry::from_path(&path);
+                        let entry = DirectoryEntry::from_path(&self.config, &path);
 
                         self.directory_content.push(entry.clone());
                         self.select_item(&entry);
@@ -1538,7 +1556,7 @@ impl FileDialog {
 
         self.load_directory_content(path)?;
 
-        let dir_entry = DirectoryEntry::from_path(path);
+        let dir_entry = DirectoryEntry::from_path(&self.config, path);
         self.select_item(&dir_entry);
 
         Ok(())
@@ -1548,13 +1566,14 @@ impl FileDialog {
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
         self.directory_error = None;
 
-        self.directory_content = match DirectoryContent::from_path(path, self.show_files) {
-            Ok(content) => content,
-            Err(err) => {
-                self.directory_error = Some(err.to_string());
-                return Err(err);
-            }
-        };
+        self.directory_content =
+            match DirectoryContent::from_path(&self.config, path, self.show_files) {
+                Ok(content) => content,
+                Err(err) => {
+                    self.directory_error = Some(err.to_string());
+                    return Err(err);
+                }
+            };
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;

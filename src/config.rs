@@ -1,6 +1,25 @@
-#![warn(missing_docs)] // Let's keep the public API well documented!
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
-use std::path::PathBuf;
+/// Function that returns true if the specific item matches the filter.
+pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
+
+/// Sets a specific icon for directory entries.
+#[derive(Clone)]
+pub struct IconFilter {
+    /// The icon that should be used.
+    pub icon: String,
+    /// Sets a filter function that checks whether a given Path matches the criteria for this icon.
+    pub filter: Filter<Path>,
+}
+
+impl std::fmt::Debug for IconFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("IconFilter")
+            .field("icon", &self.icon)
+            .finish()
+    }
+}
 
 /// Contains configuration values of a file dialog.
 ///
@@ -14,7 +33,25 @@ use std::path::PathBuf;
 ///
 /// `FileDialogConfig` is useful when you need to configure multiple `FileDialog` objects with the
 /// same or almost the same options.
-#[derive(Debug, PartialEq, Eq, Clone)]
+///
+/// # Example
+///
+/// ```
+/// use egui_file_dialog::{FileDialog, FileDialogConfig};
+///
+/// let config = FileDialogConfig {
+///     initial_directory: std::path::PathBuf::from("/app/config"),
+///     fixed_pos: Some(egui::Pos2::new(40.0, 40.0)),
+///     show_left_panel: false,
+///     ..Default::default()
+/// };
+///
+/// let file_dialog_a = FileDialog::with_config(config.clone())
+///     .id("file-dialog-a");
+///
+/// let file_dialog_b = FileDialog::with_config(config.clone());
+/// ```
+#[derive(Debug, Clone)]
 pub struct FileDialogConfig {
     // ------------------------------------------------------------------------
     // General options:
@@ -31,9 +68,13 @@ pub struct FileDialogConfig {
     /// The icon that is used to display error messages.
     pub err_icon: String,
     /// The default icon used to display files.
-    pub file_icon: String,
+    pub default_file_icon: String,
     /// The default icon used to display folders.
-    pub folder_icon: String,
+    pub default_folder_icon: String,
+
+    /// Sets custom icons for different files or folders.
+    /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
+    pub file_icon_filters: Vec<IconFilter>,
 
     // ------------------------------------------------------------------------
     // Window options:
@@ -102,8 +143,10 @@ impl Default for FileDialogConfig {
             directory_separator: String::from(">"),
 
             err_icon: String::from("⚠"),
-            file_icon: String::from("🖹"),
-            folder_icon: String::from("🗀"),
+            default_file_icon: String::from("🗋"),
+            default_folder_icon: String::from("🗀"),
+
+            file_icon_filters: Vec::new(),
 
             title: None,
             id: None,
@@ -131,6 +174,37 @@ impl Default for FileDialogConfig {
             show_devices: true,
             show_removable_devices: true,
         }
+    }
+}
+
+impl FileDialogConfig {
+    /// Sets a new icon for specific files or folders.
+    ///
+    /// # Arguments
+    ///
+    /// * `icon` - The icon that should be used.
+    /// * `filter` - Sets a filter function that checks whether a given
+    ///   Path matches the criteria for this icon.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialogConfig;
+    ///
+    /// let config = FileDialogConfig::default()
+    ///     // .png files should use the "document with picture (U+1F5BB)" icon.
+    ///     .set_file_icon("🖻", Arc::new(|path| path.extension().unwrap_or_default() == "png"))
+    ///     // .git directories should use the "web-github (U+E624)" icon.
+    ///     .set_file_icon("", Arc::new(|path| path.file_name().unwrap_or_default() == ".git"));
+    /// ```
+    pub fn set_file_icon(mut self, icon: &str, filter: Filter<Path>) -> Self {
+        self.file_icon_filters.push(IconFilter {
+            icon: icon.to_string(),
+            filter,
+        });
+
+        self
     }
 }
 

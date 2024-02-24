@@ -53,6 +53,8 @@
 //! }
 //! ```
 
+#![warn(missing_docs)] // Let's keep the public API well documented!
+
 mod config;
 mod create_directory_dialog;
 mod data;
