@@ -33,6 +33,24 @@ impl std::fmt::Debug for IconFilter {
 ///
 /// `FileDialogConfig` is useful when you need to configure multiple `FileDialog` objects with the
 /// same or almost the same options.
+///
+/// # Example
+///
+/// ```
+/// use egui_file_dialog::{FileDialog, FileDialogConfig};
+///
+/// let config = FileDialogConfig {
+///     initial_directory: std::path::PathBuf::from("/app/config"),
+///     fixed_pos: Some(egui::Pos2::new(40.0, 40.0)),
+///     show_left_panel: false,
+///     ..Default::default()
+/// };
+///
+/// let file_dialog_a = FileDialog::with_config(config.clone())
+///     .id("file-dialog-a");
+///
+/// let file_dialog_b = FileDialog::with_config(config.clone());
+/// ```
 #[derive(Debug, Clone)]
 pub struct FileDialogConfig {
     // ------------------------------------------------------------------------
