@@ -444,13 +444,14 @@ impl FileDialog {
     /// # Examples
     ///
     /// ```
+    /// use std::sync::Arc;
     /// use egui_file_dialog::FileDialog;
     ///
     /// let config = FileDialog::new()
     ///     // .png files should use the "document with picture (U+1F5BB)" icon.
-    ///     .set_file_icon("🖻", |path| path.extension().unwrap_or_default() == "png")
+    ///     .set_file_icon("🖻", Arc::new(|path| path.extension().unwrap_or_default() == "png"))
     ///     // .git directories should use the "web-github (U+E624)" icon.
-    ///     .set_file_icon("", |path| path.file_name().unwrap_or_default() == ".git");
+    ///     .set_file_icon("", Arc::new(|path| path.file_name().unwrap_or_default() == ".git"));
     /// ```
     pub fn set_file_icon(mut self, icon: &str, filter: Filter<std::path::Path>) -> Self {
         self.config = self.config.set_file_icon(icon, filter);

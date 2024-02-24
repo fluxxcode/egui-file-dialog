@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 /// Function that returns true if the specific item matches the filter.
-pub type Filter<T> = fn(&T) -> bool;
+pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
 
 /// Sets a specific icon for directory entries.
 #[derive(Clone)]
@@ -170,13 +171,14 @@ impl FileDialogConfig {
     /// # Examples
     ///
     /// ```
+    /// use std::sync::Arc;
     /// use egui_file_dialog::FileDialogConfig;
     ///
     /// let config = FileDialogConfig::default()
     ///     // .png files should use the "document with picture (U+1F5BB)" icon.
-    ///     .set_file_icon("🖻", |path| path.extension().unwrap_or_default() == "png")
+    ///     .set_file_icon("🖻", Arc::new(|path| path.extension().unwrap_or_default() == "png"))
     ///     // .git directories should use the "web-github (U+E624)" icon.
-    ///     .set_file_icon("", |path| path.file_name().unwrap_or_default() == ".git");
+    ///     .set_file_icon("", Arc::new(|path| path.file_name().unwrap_or_default() == ".git"));
     /// ```
     pub fn set_file_icon(mut self, icon: &str, filter: Filter<Path>) -> Self {
         self.file_icon_filters.push(IconFilter {
