@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Wrapper above the sysinfo::Disk struct.
@@ -14,7 +15,7 @@ impl Disk {
     /// Create a new Disk object based on the data of a sysinfo::Disk.
     pub fn from_sysinfo_disk(disk: &sysinfo::Disk) -> Self {
         Self {
-            mount_point: disk.mount_point().to_path_buf(),
+            mount_point: Self::canonicalize(disk.mount_point()),
             display_name: gen_display_name(disk),
             is_removable: disk.is_removable(),
         }
@@ -32,6 +33,15 @@ impl Disk {
 
     pub fn is_removable(&self) -> bool {
         self.is_removable
+    }
+
+    /// Canonicalizes the given path.
+    /// Returns the input path in case of an error.
+    fn canonicalize(path: &Path) -> PathBuf {
+        match fs::canonicalize(path) {
+            Ok(p) => p,
+            Err(_) => path.to_path_buf(),
+        }
     }
 }
 
@@ -72,7 +82,7 @@ fn gen_display_name(disk: &sysinfo::Disk) -> String {
         .to_str()
         .unwrap_or_default()
         .to_string()
-        .replace("\\", "");
+        .replace('\\', "");
 
     // Try using the mount point as the display name if the specified name
     // from sysinfo::Disk is empty or contains invalid characters

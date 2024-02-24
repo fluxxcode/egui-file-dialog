@@ -236,16 +236,6 @@ impl FileDialog {
     ) -> io::Result<()> {
         self.reset();
 
-        // Try to use the parent directory if the initial directory is a file.
-        // If the path then has no parent directory, the user will see an error that the path
-        // does not exist. However, using the user directories or disks, the user is still able
-        // to select an item or save a file.
-        if self.config.initial_directory.is_file() {
-            if let Some(parent) = self.config.initial_directory.parent() {
-                self.config.initial_directory = parent.to_path_buf();
-            }
-        }
-
         if mode == DialogMode::SelectFile {
             show_files = true;
         }
@@ -269,7 +259,7 @@ impl FileDialog {
             };
         }
 
-        self.load_directory(&self.config.initial_directory.clone())
+        self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
@@ -1413,6 +1403,22 @@ impl FileDialog {
         self.state = DialogState::Cancelled;
     }
 
+    /// This function generates the initial directory based on the configuration.
+    /// The function does the following things:
+    ///   - Canonicalize the path if enabled
+    ///   - Attempts to use the parent directory if the path is a file
+    fn gen_initial_directory(&self, path: &Path) -> PathBuf {
+        let mut path = fs::canonicalize(path).unwrap_or(path.to_path_buf());
+
+        if path.is_file() {
+            if let Some(parent) = path.parent() {
+                path = parent.to_path_buf();
+            }
+        }
+
+        path
+    }
+
     /// Gets the currently open directory.
     fn current_directory(&self) -> Option<&Path> {
         if let Some(x) = self.directory_stack.iter().nth_back(self.directory_offset) {
@@ -1546,18 +1552,10 @@ impl FileDialog {
     ///
     /// The function also sets the loaded directory as the selected item.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
-        let full_path = match fs::canonicalize(path) {
-            Ok(path) => path,
-            Err(err) => {
-                self.directory_error = Some(err.to_string());
-                return Err(err);
-            }
-        };
-
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
         if let Some(x) = self.current_directory() {
-            if x == full_path {
+            if x == path {
                 return Ok(());
             }
         }
@@ -1567,7 +1565,7 @@ impl FileDialog {
                 .drain(self.directory_stack.len() - self.directory_offset..);
         }
 
-        self.directory_stack.push(full_path);
+        self.directory_stack.push(path.to_path_buf());
         self.directory_offset = 0;
 
         self.load_directory_content(path)?;
