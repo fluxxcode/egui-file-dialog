@@ -88,7 +88,7 @@ impl CreateDirectoryDialog {
         let mut result = CreateDirectoryResponse::new_empty();
 
         ui.horizontal(|ui| {
-            ui.label(&config.folder_icon);
+            ui.label(&config.default_folder_icon);
 
             let response = ui.text_edit_singleline(&mut self.input);
 

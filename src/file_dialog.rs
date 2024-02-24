@@ -422,14 +422,14 @@ impl FileDialog {
     }
 
     /// Sets the default icon that is used to display files.
-    pub fn file_icon(mut self, icon: &str) -> Self {
-        self.config.file_icon = icon.to_string();
+    pub fn default_file_icon(mut self, icon: &str) -> Self {
+        self.config.default_file_icon = icon.to_string();
         self
     }
 
     /// Sets the default icon that is used to display folders.
-    pub fn folder_icon(mut self, icon: &str) -> Self {
-        self.config.folder_icon = icon.to_string();
+    pub fn default_folder_icon(mut self, icon: &str) -> Self {
+        self.config.default_folder_icon = icon.to_string();
         self
     }
 

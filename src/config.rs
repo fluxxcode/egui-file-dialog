@@ -49,9 +49,9 @@ pub struct FileDialogConfig {
     /// The icon that is used to display error messages.
     pub err_icon: String,
     /// The default icon used to display files.
-    pub file_icon: String,
+    pub default_file_icon: String,
     /// The default icon used to display folders.
-    pub folder_icon: String,
+    pub default_folder_icon: String,
 
     /// Sets custom icons for different files or folders.
     /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
@@ -124,8 +124,8 @@ impl Default for FileDialogConfig {
             directory_separator: String::from(">"),
 
             err_icon: String::from("⚠"),
-            file_icon: String::from("🗋"),
-            folder_icon: String::from("🗀"),
+            default_file_icon: String::from("🗋"),
+            default_folder_icon: String::from("🗀"),
 
             file_icon_filters: Vec::new(),
 

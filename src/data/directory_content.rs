@@ -177,7 +177,7 @@ fn gen_path_icon(config: &FileDialogConfig, path: &Path) -> String {
     }
 
     match path.is_dir() {
-        true => config.folder_icon.clone(),
-        false => config.file_icon.clone(),
+        true => config.default_folder_icon.clone(),
+        false => config.default_file_icon.clone(),
     }
 }
