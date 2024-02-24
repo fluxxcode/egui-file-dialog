@@ -236,16 +236,6 @@ impl FileDialog {
     ) -> io::Result<()> {
         self.reset();
 
-        // Try to use the parent directory if the initial directory is a file.
-        // If the path then has no parent directory, the user will see an error that the path
-        // does not exist. However, using the user directories or disks, the user is still able
-        // to select an item or save a file.
-        if self.config.initial_directory.is_file() {
-            if let Some(parent) = self.config.initial_directory.parent() {
-                self.config.initial_directory = parent.to_path_buf();
-            }
-        }
-
         if mode == DialogMode::SelectFile {
             show_files = true;
         }
@@ -269,10 +259,7 @@ impl FileDialog {
             };
         }
 
-        self.load_directory(
-            &fs::canonicalize(&self.config.initial_directory)
-                .unwrap_or(self.config.initial_directory.clone()),
-        )
+        self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
@@ -1414,6 +1401,22 @@ impl FileDialog {
     /// Cancels the dialog.
     fn cancel(&mut self) {
         self.state = DialogState::Cancelled;
+    }
+
+    /// This function generates the initial directory based on the configuration.
+    /// The function does the following things:
+    ///   - Canonicalize the path if enabled
+    ///   - Attempts to use the parent directory if the path is a file
+    fn gen_initial_directory(&self, path: &Path) -> PathBuf {
+        let mut path = fs::canonicalize(path).unwrap_or(path.to_path_buf());
+
+        if path.is_file() {
+            if let Some(parent) = path.parent() {
+                path = parent.to_path_buf();
+            }
+        }
+
+        path
     }
 
     /// Gets the currently open directory.
