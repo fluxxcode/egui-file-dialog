@@ -82,7 +82,7 @@ fn gen_display_name(disk: &sysinfo::Disk) -> String {
         .to_str()
         .unwrap_or_default()
         .to_string()
-        .replace("\\", "");
+        .replace('\\', "");
 
     // Try using the mount point as the display name if the specified name
     // from sysinfo::Disk is empty or contains invalid characters

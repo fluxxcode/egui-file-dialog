@@ -1540,7 +1540,7 @@ impl FileDialog {
     /// Otherwise, the result of the directory loading operation is returned.
     fn reload_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
-            return self.load_directory_content(&x.to_path_buf());
+            return self.load_directory_content(x.to_path_buf().as_path());
         }
 
         Ok(())
