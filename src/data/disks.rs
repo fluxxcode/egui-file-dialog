@@ -13,9 +13,9 @@ pub struct Disk {
 
 impl Disk {
     /// Create a new Disk object based on the data of a sysinfo::Disk.
-    pub fn from_sysinfo_disk(disk: &sysinfo::Disk) -> Self {
+    pub fn from_sysinfo_disk(disk: &sysinfo::Disk, canonicalize_paths: bool) -> Self {
         Self {
-            mount_point: Self::canonicalize(disk.mount_point()),
+            mount_point: Self::canonicalize(disk.mount_point(), canonicalize_paths),
             display_name: gen_display_name(disk),
             is_removable: disk.is_removable(),
         }
@@ -37,10 +37,10 @@ impl Disk {
 
     /// Canonicalizes the given path.
     /// Returns the input path in case of an error.
-    fn canonicalize(path: &Path) -> PathBuf {
-        match fs::canonicalize(path) {
-            Ok(p) => p,
-            Err(_) => path.to_path_buf(),
+    fn canonicalize(path: &Path, canonicalize: bool) -> PathBuf {
+        match canonicalize {
+            true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
+            false => path.to_path_buf(),
         }
     }
 }
@@ -53,12 +53,12 @@ pub struct Disks {
 
 impl Disks {
     /// Creates a new Disks object with a refreshed list of the system disks.
-    pub fn new_with_refreshed_list() -> Self {
+    pub fn new_with_refreshed_list(canonicalize_paths: bool) -> Self {
         let disks = sysinfo::Disks::new_with_refreshed_list();
 
         let mut result: Vec<Disk> = Vec::new();
         for disk in disks.iter() {
-            result.push(Disk::from_sysinfo_disk(disk));
+            result.push(Disk::from_sysinfo_disk(disk, canonicalize_paths));
         }
 
         Self { disks: result }

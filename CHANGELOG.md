@@ -13,6 +13,7 @@
 - Added `FileDialog::err_icon`, `FileDialog::default_folder_icon` and `FileDialog::default_file_icon` to customize the respective icons [#72](https://github.com/fluxxcode/egui-file-dialog/pull/72) Renamed with [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74)
 - Added `FileDialog::set_file_icon` and `FileDialogConfig::set_file_icon` to customize the icon for different types of files and directories [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74)
 - Added `FileDialog::device_icon` and `FileDialog::removable_device_icon` to overwrite the icon that is used to display devices in the left panel. [#75](https://github.com/fluxxcode/egui-file-dialog/pull/75)
+- Addded `FileDialog::canonicalize_paths` to set if the paths in the file dialog should be canonicalized before use [#77](https://github.com/fluxxcode/egui-file-dialog/pull/77)
 
 #### Methods for showing or hiding certain dialog areas and functions
 - Added `FileDialog::show_top_panel` to show or hide the top panel [#60](https://github.com/fluxxcode/egui-file-dialog/pull/60)
