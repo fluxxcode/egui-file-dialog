@@ -1118,7 +1118,11 @@ impl FileDialog {
     /// Updates a device entry of a device list like "Devices" or "Removable Devices".
     fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
         let label = match device.is_removable() {
-            true => format!("{}  {}", self.config.removable_device_icon, device.display_name()),
+            true => format!(
+                "{}  {}",
+                self.config.removable_device_icon,
+                device.display_name()
+            ),
             false => format!("{}  {}", self.config.device_icon, device.display_name()),
         };
 
