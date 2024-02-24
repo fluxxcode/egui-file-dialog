@@ -71,6 +71,10 @@ pub struct FileDialogConfig {
     pub default_file_icon: String,
     /// The default icon used to display folders.
     pub default_folder_icon: String,
+    /// The icon used to display devices in the left panel.
+    pub device_icon: String,
+    /// The icon used to display removable devices in the left panel.
+    pub removable_device_icon: String,
 
     /// Sets custom icons for different files or folders.
     /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
@@ -145,6 +149,8 @@ impl Default for FileDialogConfig {
             err_icon: String::from("⚠"),
             default_file_icon: String::from("🗋"),
             default_folder_icon: String::from("🗀"),
+            device_icon: String::from("🖴"),
+            removable_device_icon: String::from("💾"),
 
             file_icon_filters: Vec::new(),
 
