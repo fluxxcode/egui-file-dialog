@@ -9,7 +9,7 @@ enum Language {
     German,
 }
 
-fn gen_german_labels() -> FileDialogLabels {
+fn get_labels_german() -> FileDialogLabels {
     FileDialogLabels {
         title_select_directory: "📁 Ordner Öffnen".to_string(),
         title_select_file: "📂 Datei Öffnen".to_string(),
@@ -64,7 +64,7 @@ impl MyApp {
     fn update_labels(&mut self) {
         *self.file_dialog.labels_mut() = match self.language {
             Language::English => FileDialogLabels::default(),
-            Language::German => gen_german_labels(),
+            Language::German => get_labels_german(),
         };
     }
 }
