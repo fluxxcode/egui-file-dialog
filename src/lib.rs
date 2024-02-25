@@ -1,8 +1,10 @@
 //! # egui-file-dialog
 //!
-//! An easy-to-use file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui).
+//! An easy-to-use and customizable file dialog (a.k.a. file explorer, file picker) for
+//! [egui](https://github.com/emilk/egui).
 //!
-//! The project is currently in a very early version. Some planned features are still missing and some improvements still need to be made.
+//! The project is currently in a very early version. Some planned features are still missing
+//! and some improvements still need to be made.
 //!
 //! **Currently only tested on Linux and Windows!**
 //!
@@ -15,12 +17,16 @@
 //! - Navigation buttons to open the parent or previous directories
 //! - Search for items in a directory
 //! - Shortcut for user directories (Home, Documents, ...) and system disks
-//! - Resizable window
+//! - Customization:
+//!   - Customize which areas and functions of the dialog are visible
+//!   - Multilingual support: Customize the text labels that the dialog uses
+//!   - Customize file and folder icons
 //!
 //! ### A simple example
 //!
 //! The following example shows of how you can use the file dialog to let the user select a file. \
-//! See the full example at: <https://github.com/fluxxcode/egui-file-dialog/tree/master/examples/select_file>
+//! See the full example at
+//! <https://github.com/fluxxcode/egui-file-dialog/tree/master/examples/select_file>
 //!
 //! ```
 //! use egui_file_dialog::FileDialog;
