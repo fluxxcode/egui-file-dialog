@@ -6,15 +6,15 @@
 [![Total lines of code ](https://sloc.xyz/github/fluxxcode/egui-file-dialog/)](https://github.com/fluxxcode/egui-file-dialog/)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fluxxcode/egui-file-dialog/blob/master/LICENSE)
 
-This repository provides an easy-to-use file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui). This makes it possible to use a file dialog directly in the egui application without having to rely on the file explorer of the operating system.
+This repository provides an easy-to-use and customizable file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui).
+
+The file dialog is intended for use by desktop applications, thus allowing the use of a file dialog directly within the egui application without relying on the operating system's file explorer. This also ensures that the file dialog looks the same and has the same functionality on all platforms.
 
 <img src="media/demo.png">
 
-The goal for the future is that parts of the dialog can be dynamically adapted so that it can be used in different situations. One goal, for example, is that the labels can be dynamically adjusted to support different languages.
+The project is currently in a very early version. Some planned features are still missing and some improvements still need to be made. See the [Planned features](#Planned-features) section for some of the features to be implemented in the future.
 
-The project is currently in a very early version. Some planned features are still missing and some improvements still need to be made.
-
-Check out [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) in the develop branch to find the latest features included in the next release.
+The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
 **Currently only tested on Linux and Windows!**
 
@@ -25,14 +25,15 @@ Check out [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/deve
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Shortcut for user directories (Home, Documents, ...) and system disks
-- Resizable window
+- Customization:
+  - Customize which areas and functions of the dialog are visible
+  - Multiple language support: Customize the text labels that the dialog uses
+  - Customize file and folder icons
 
 ## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
-- Customize labels and enabled features
 - Selection of multiple directory items at once
-- Customizable file icons
-- Pinnable folders for quick access: [#42](https://github.com/fluxxcode/egui-file-dialog/issues/42)
+- Pinnable folders for quick access [#42](https://github.com/fluxxcode/egui-file-dialog/issues/42)
 - Only show files with a specific file extension (The user can already filter files by file extension using the search, but there is currently no backend method for this or a dropdown to be able to select from predefined file extensions.)
 - Keyboard input
 - Context menus, for example for renaming, deleting or copying files or directories.
