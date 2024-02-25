@@ -52,6 +52,46 @@
 //!     }
 //! }
 //! ```
+//!
+//! ### Multilingual support
+//! For desktop applications it is often necessary to offer different languages.
+//! While the dialog currently only offers English labels by default, the labels are
+//! fully customizable. This makes it possible to adapt the labels to different languages.
+//! 
+//! The following example shows how the labels can be changed to display the file dialog in
+//! English or German. Checkout `examples/multilingual` for the full example.
+//! 
+//! ```
+//! use egui_file_dialog::{FileDialog, FileDialogLabels};
+//! 
+//! enum Language {
+//!     English,
+//!     German,
+//! }
+//! 
+//! fn get_german_labels() -> FileDialogLabels {
+//!     FileDialogLabels {
+//!         title_select_directory: "📁 Ordner Öffnen".to_string(),
+//!         title_select_file: "📂 Datei Öffnen".to_string(),
+//!         title_save_file: "📥 Datei Speichern".to_string(),
+//! 
+//!         // ... See examples/multilingual for the other labels
+//!
+//!         ..Default::default()
+//!     }
+//! }
+//! 
+//! /// Updates the labels of the file dialog.
+//! /// Should be called every time the user selects a different language.
+//! fn update_labels(language: &Language, file_dialog: &mut FileDialog) {
+//!     *file_dialog.labels_mut() = match language {
+//!         // English labels are used by default
+//!         Language::English => FileDialogLabels::default(),
+//!         // Use custom labels for German
+//!         Language::German => get_german_labels(),
+//!     };
+//! }
+//! ```
 
 #![warn(missing_docs)] // Let's keep the public API well documented!
 
