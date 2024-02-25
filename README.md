@@ -121,12 +121,14 @@ fn get_german_labels() -> FileDialogLabels {
         title_save_file: "📥 Datei Speichern".to_string(),
 
         // ... See examples/multilingual for the other labels
+
+        ..Default::default()
     }
 }
 
 /// Updates the labels of the file dialog.
 /// Should be called every time the user selects a different language.
-fn update_labels(language: &Language, &mut file_dialog: FileDialog) {
+fn update_labels(language: &Language, file_dialog: &mut FileDialog) {
     *file_dialog.labels_mut() = match language {
         // English labels are used by default
         Language::English => FileDialogLabels::default(),
