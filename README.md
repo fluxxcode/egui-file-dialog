@@ -27,7 +27,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Shortcut for user directories (Home, Documents, ...) and system disks
 - Customization:
   - Customize which areas and functions of the dialog are visible
-  - Multiple language support: Customize the text labels that the dialog uses to support multiple languages
+  - Multiple language support: Customize the text labels that the dialog uses
   - Customize file and folder icons
 
 ## Planned features
