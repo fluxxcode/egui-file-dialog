@@ -114,7 +114,7 @@ enum Language {
     German,
 }
 
-fn get_german_labels() -> FileDialogLabels {
+fn get_labels_german() -> FileDialogLabels {
     FileDialogLabels {
         title_select_directory: "📁 Ordner Öffnen".to_string(),
         title_select_file: "📂 Datei Öffnen".to_string(),
@@ -133,7 +133,7 @@ fn update_labels(language: &Language, file_dialog: &mut FileDialog) {
         // English labels are used by default
         Language::English => FileDialogLabels::default(),
         // Use custom labels for German
-        Language::German => get_german_labels(),
+        Language::German => get_labels_german(),
     };
 }
 ```
