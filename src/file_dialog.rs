@@ -370,6 +370,11 @@ impl FileDialog {
         self
     }
 
+    /// Mutably borrow internal `config`.
+    pub fn config_mut(&mut self) -> &mut FileDialogConfig {
+        &mut self.config
+    }
+
     /// Sets the labels the file dialog uses.
     ///
     /// Used to enable multiple language support.
@@ -378,6 +383,11 @@ impl FileDialog {
     pub fn labels(mut self, labels: FileDialogLabels) -> Self {
         self.config.labels = labels;
         self
+    }
+
+    /// Mutably borrow internal `config.labels`.
+    pub fn labels_mut(&mut self) -> &mut FileDialogLabels {
+        &mut self.config.labels
     }
 
     /// Sets the first loaded directory when the dialog opens.
