@@ -25,10 +25,11 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Shortcut for user directories (Home, Documents, ...) and system disks
-- Customization:
+- Customization highlights:
   - Customize which areas and functions of the dialog are visible
   - Multilingual support: Customize the text labels that the dialog uses
   - Customize file and folder icons
+  - _More options can be found in the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/index.html)_
 
 ## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
@@ -99,6 +100,65 @@ fn main() -> eframe::Result<()> {
     )
 }
 ```
+
+## Customization
+Many things can be customized so that the dialog can be used in different situations. \
+A few highlights of the customization are listed below. For all possible customization options, see the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html). (More customization will be implemented in the future!)
+
+- Set which areas and functions of the dialog are visible using `FileDialog::show_*` methods
+- Update the text labels that the dialog uses. See [Multilingual support](#multilingual-support)
+- Customize file and folder icons using `FileDialog::set_file_icon` (Currently only unicode is supported)
+
+Since the dialog uses the egui style to look like the rest of the application, the appearance can be customized with `egui::Style`.
+
+The following example shows how a file dialog can be customized. If you need to configure multiple file dialog objects with the same or almost the same options, it is a good idea to use `FileDialogConfig` and `FileDialog::with_config` (See `FileDialogConfig` on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialogConfig.html)).
+```rust
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use egui_file_dialog::FileDialog;
+
+FileDialog::new()
+    .initial_directory(PathBuf::from("/path/to/app"))
+    .default_file_name("app.cfg")
+    .default_size([600.0, 400.0])
+    .resizable(false)
+    .show_new_folder_button(false)
+    .show_search(false)
+    // Markdown and text files should use the "document with text (U+1F5B9)" icon
+    .set_file_icon(
+        "🖹",
+        Arc::new(|path| {
+            match path
+                .extension()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+            {
+                "md" => true,
+                "txt" => true,
+                _ => false,
+            }
+        }),
+    )
+    // .gitignore files should use the "web-github (U+E624)" icon
+    .set_file_icon(
+        "",
+        Arc::new(|path| path.file_name().unwrap_or_default() == ".gitignore"),
+    );
+```
+With the options the dialog then looks like this:
+<img src="media/customization_demo.png">
+
+The smallest possible dialog can be generated with the following configuration:
+
+```rust
+FileDialog::new()
+    .title_bar(false)
+    .show_top_panel(false)
+    .show_left_panel(false)
+```
+<img src="media/customization_demo_2.png">
 
 ## Multilingual support
 For desktop applications it is often necessary to offer different languages. While the dialog currently only offers English labels by default, the labels are fully customizable. This makes it possible to adapt the labels to different languages.

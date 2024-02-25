@@ -35,6 +35,7 @@
 ### 📚 Documentation
 - Added downloads and total lines badge to `README.md` [#71](https://github.com/fluxxcode/egui-file-dialog/pull/71)
 - Updated project description, features and planned features in `README.md` [#78](https://github.com/fluxxcode/egui-file-dialog/pull/78)
+- Added customization example to `README.md` and `lib.rs` [#83](https://github.com/fluxxcode/egui-file-dialog/pull/83)
 - Added multilingual example to `README.md`, `lib.rs` and an interactive example in `examples/` [#81](https://github.com/fluxxcode/egui-file-dialog/pull/81)
 
 ## 2024-02-20 - v0.3.1 - Bug fixes
