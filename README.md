@@ -102,7 +102,7 @@ fn main() -> eframe::Result<()> {
 ```
 
 ## Customization
-Many things can be customized so that the dialog can be used in many different situations. \
+Many things can be customized so that the dialog can be used in different situations. \
 A few highlights of the customization are listed below. For all possible customization options, see the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html). (More customization will be implemented in the future!)
 
 - Set which areas and functions of the dialog are visible using `FileDialog::show_*` methods
@@ -145,7 +145,7 @@ FileDialog::new()
     .set_file_icon(
         "",
         Arc::new(|path| path.file_name().unwrap_or_default() == ".gitignore"),
-    )
+    );
 ```
 With the options the dialog then looks like this:
 <img src="media/customization_demo.png">
