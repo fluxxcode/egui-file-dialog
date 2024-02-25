@@ -25,13 +25,14 @@ Check out [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/deve
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Shortcut for user directories (Home, Documents, ...) and system disks
-- Resizable window
+- Customization:
+  - Customize which areas and functions of the dialog are visible
+  - Customize the text labels that the dialog uses to support multiple languages
+  - Customize file and folder icons
 
 ## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
-- Customize labels and enabled features
 - Selection of multiple directory items at once
-- Customizable file icons
 - Pinnable folders for quick access: [#42](https://github.com/fluxxcode/egui-file-dialog/issues/42)
 - Only show files with a specific file extension (The user can already filter files by file extension using the search, but there is currently no backend method for this or a dropdown to be able to select from predefined file extensions.)
 - Keyboard input
