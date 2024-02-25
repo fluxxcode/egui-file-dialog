@@ -64,12 +64,12 @@
 //! Many things can be customized so that the dialog can be used in different situations. \
 //! A few highlights of the customization are listed below.
 //! (More customization will be implemented in the future!)
-//! 
+//!
 //! - Set which areas and functions of the dialog are visible using `FileDialog::show_*` methods
 //! - Update the text labels that the dialog uses. See [Multilingual support](#multilingual-support)
 //! - Customize file and folder icons using `FileDialog::set_file_icon`
 //!   (Currently only unicode is supported)
-//! 
+//!
 //! Since the dialog uses the egui style to look like the rest of the application,
 //! the appearance can be customized with `egui::Style`.
 //!
@@ -80,9 +80,9 @@
 //! ```
 //! use std::path::PathBuf;
 //! use std::sync::Arc;
-//! 
+//!
 //! use egui_file_dialog::FileDialog;
-//! 
+//!
 //! FileDialog::new()
 //!     .initial_directory(PathBuf::from("/path/to/app"))
 //!     .default_file_name("app.cfg")
