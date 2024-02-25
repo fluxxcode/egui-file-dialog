@@ -98,10 +98,6 @@ pub struct FileDialog {
     /// This variable contains the error message if an error occurred while loading the directory.
     directory_error: Option<String>,
 
-    /// The currently used window title.
-    /// This changes depending on the mode the dialog is in.
-    window_title: String,
-
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
 
@@ -148,8 +144,6 @@ impl FileDialog {
             directory_offset: 0,
             directory_content: DirectoryContent::new(),
             directory_error: None,
-
-            window_title: String::from("Select directory"),
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -248,16 +242,6 @@ impl FileDialog {
         self.state = DialogState::Open;
         self.show_files = show_files;
         self.operation_id = operation_id.map(String::from);
-
-        if let Some(title) = &self.config.title {
-            self.window_title = title.clone();
-        } else {
-            self.window_title = match mode {
-                DialogMode::SelectDirectory => self.config.labels.title_select_directory.clone(),
-                DialogMode::SelectFile => self.config.labels.title_select_file.clone(),
-                DialogMode::SaveFile => self.config.labels.title_save_file.clone(),
-            };
-        }
 
         self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
     }
@@ -755,7 +739,16 @@ impl FileDialog {
 
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
-        let mut window = egui::Window::new(&self.window_title)
+        let window_title = match &self.config.title {
+            Some(title) => title,
+            None => match &self.mode {
+                DialogMode::SelectDirectory => &self.config.labels.title_select_directory,
+                DialogMode::SelectFile => &self.config.labels.title_select_file,
+                DialogMode::SaveFile => &self.config.labels.title_save_file,
+            },
+        };
+
+        let mut window = egui::Window::new(window_title)
             .open(is_open)
             .default_size(self.config.default_size)
             .min_size(self.config.min_size)
