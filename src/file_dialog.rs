@@ -607,6 +607,14 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the button to text edit the current path should be visible in the top panel.
+    ///
+    /// has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_path_text_edit_button(mut self, show_path_text_edit_button: bool) -> Self {
+        self.config.show_path_text_edit_button = show_path_text_edit_button;
+        self
+    }
+
     /// Sets whether the reload button should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
@@ -905,7 +913,11 @@ impl FileDialog {
         ui.style_mut().always_scroll_the_only_direction = true;
         ui.style_mut().spacing.scroll.bar_width = 8.0;
 
-        let max_width: f32 = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
+        let mut max_width: f32 = width;
+
+        if self.config.show_path_text_edit_button {
+            max_width = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
+        }
 
         egui::ScrollArea::horizontal()
             .auto_shrink([false, false])
@@ -960,6 +972,10 @@ impl FileDialog {
                     }
                 });
             });
+
+        if !self.config.show_path_text_edit_button {
+            return;
+        }
 
         if ui
             .add_sized(
