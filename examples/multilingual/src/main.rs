@@ -39,8 +39,6 @@ fn get_labels_german() -> FileDialogLabels {
         err_empty_file_name: "Der Dateiname darf nicht leer sein".to_string(),
         err_directory_exists: "Ein Ordner mit diesem Namen existiert bereits".to_string(),
         err_file_exists: "Eine Datei mit diesem Namen existiert bereits".to_string(),
-
-        ..Default::default()
     }
 }
 
@@ -79,8 +77,7 @@ impl eframe::App for MyApp {
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut self.language, Language::English, "English");
                     ui.selectable_value(&mut self.language, Language::German, "German");
-                })
-                .inner;
+                });
 
             if language_before != self.language {
                 self.update_labels();

@@ -31,6 +31,7 @@
 ### 🔧 Changes
 - Cleanup and restructure `FileDialog` UI methods [#56](https://github.com/fluxxcode/egui-file-dialog/pull/56)
 - Changed so the window title is evaluated when updating the dialog [#80](https://github.com/fluxxcode/egui-file-dialog/pull/80)
+- Added Rust cache to CI and updated CI to also check the examples [#84](https://github.com/fluxxcode/egui-file-dialog/pull/84)
 
 ### 📚 Documentation
 - Added downloads and total lines badge to `README.md` [#71](https://github.com/fluxxcode/egui-file-dialog/pull/71)
