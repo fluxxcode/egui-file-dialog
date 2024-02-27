@@ -1467,6 +1467,15 @@ impl FileDialog {
 
 /// Implementation
 impl FileDialog {
+    /// Canonicalizes the specified path if canonicalization is enabled.
+    /// Returns the input path if an error occurs or canonicalization is disabled.
+    fn canonicalize_path(&self, path: &Path) -> PathBuf {
+        match self.config.canonicalize_paths {
+            true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
+            false => path.to_path_buf(),
+        }
+    }
+
     /// Resets the dialog to use default values.
     /// Configuration variables such as `initial_directory` are retained.
     fn reset(&mut self) {
@@ -1516,10 +1525,7 @@ impl FileDialog {
     ///   - Canonicalize the path if enabled
     ///   - Attempts to use the parent directory if the path is a file
     fn gen_initial_directory(&self, path: &Path) -> PathBuf {
-        let mut path = match self.config.canonicalize_paths {
-            true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
-            false => path.to_path_buf(),
-        };
+        let mut path = self.canonicalize_path(path);
 
         if path.is_file() {
             if let Some(parent) = path.parent() {
@@ -1612,13 +1618,7 @@ impl FileDialog {
             self.path_edit_visible = false;
         }
 
-        let path = match self.config.canonicalize_paths {
-            true => fs::canonicalize(&self.path_edit_value)
-                .unwrap_or(PathBuf::from(&self.path_edit_value)),
-            false => PathBuf::from(&self.path_edit_value),
-        };
-
-        let _ = self.load_directory(&path);
+        let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
     }
 
     /// Loads the next directory in the directory_stack.
