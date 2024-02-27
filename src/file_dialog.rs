@@ -989,12 +989,7 @@ impl FileDialog {
     }
 
     /// Updates the view when the user currently wants to text edit the current path.
-    fn ui_update_path_edit(
-        &mut self,
-        ui: &mut egui::Ui,
-        width: f32,
-        edit_button_size: egui::Vec2,
-    ) {
+    fn ui_update_path_edit(&mut self, ui: &mut egui::Ui, width: f32, edit_button_size: egui::Vec2) {
         let desired_width: f32 = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
 
         let response = egui::TextEdit::singleline(&mut self.path_edit_value)
