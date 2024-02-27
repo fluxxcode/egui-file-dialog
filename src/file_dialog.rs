@@ -102,11 +102,11 @@ pub struct FileDialog {
     create_directory_dialog: CreateDirectoryDialog,
 
     /// Whether the text edit is open for editing the current path.
-    path_text_edit_visible: bool,
+    path_edit_visible: bool,
     /// Buffer holding the text when the user edits the current path.
-    path_text_edit_value: String,
+    path_edit_value: String,
     /// If the text edit of the path should request focus in the next frame.
-    path_text_edit_request_focus: bool,
+    path_edit_request_focus: bool,
 
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
@@ -154,9 +154,9 @@ impl FileDialog {
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
-            path_text_edit_visible: false,
-            path_text_edit_value: String::new(),
-            path_text_edit_request_focus: false,
+            path_edit_visible: false,
+            path_edit_value: String::new(),
+            path_edit_request_focus: false,
 
             selected_item: None,
             file_name_input: String::new(),
@@ -610,8 +610,8 @@ impl FileDialog {
     /// Sets whether the button to text edit the current path should be visible in the top panel.
     ///
     /// has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_path_text_edit_button(mut self, show_path_text_edit_button: bool) -> Self {
-        self.config.show_path_text_edit_button = show_path_text_edit_button;
+    pub fn show_path_edit_button(mut self, show_path_edit_button: bool) -> Self {
+        self.config.show_path_edit_button = show_path_edit_button;
         self
     }
 
@@ -896,8 +896,8 @@ impl FileDialog {
             .show(ui, |ui| {
                 const EDIT_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(21.0, 20.0);
 
-                match self.path_text_edit_visible {
-                    true => self.ui_update_path_text_edit(ui, width, EDIT_BUTTON_SIZE),
+                match self.path_edit_visible {
+                    true => self.ui_update_path_edit(ui, width, EDIT_BUTTON_SIZE),
                     false => self.ui_update_current_path_display(ui, width, EDIT_BUTTON_SIZE),
                 }
             });
@@ -915,7 +915,7 @@ impl FileDialog {
 
         let mut max_width: f32 = width;
 
-        if self.config.show_path_text_edit_button {
+        if self.config.show_path_edit_button {
             max_width = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
         }
 
@@ -973,7 +973,7 @@ impl FileDialog {
                 });
             });
 
-        if !self.config.show_path_text_edit_button {
+        if !self.config.show_path_edit_button {
             return;
         }
 
@@ -984,12 +984,12 @@ impl FileDialog {
             )
             .clicked()
         {
-            self.open_path_text_edit();
+            self.open_path_edit();
         }
     }
 
     /// Updates the view when the user currently wants to text edit the current path.
-    fn ui_update_path_text_edit(
+    fn ui_update_path_edit(
         &mut self,
         ui: &mut egui::Ui,
         width: f32,
@@ -997,28 +997,28 @@ impl FileDialog {
     ) {
         let desired_width: f32 = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
 
-        let response = egui::TextEdit::singleline(&mut self.path_text_edit_value)
+        let response = egui::TextEdit::singleline(&mut self.path_edit_value)
             .desired_width(desired_width)
             .show(ui)
             .response;
 
-        if self.path_text_edit_request_focus {
+        if self.path_edit_request_focus {
             response.request_focus();
-            self.path_text_edit_request_focus = false;
+            self.path_edit_request_focus = false;
         }
 
         if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
-            self.path_text_edit_request_focus = true;
-            self.load_path_text_edit_directory(false);
+            self.path_edit_request_focus = true;
+            self.load_path_edit_directory(false);
         } else if response.lost_focus() {
-            self.path_text_edit_visible = false;
+            self.path_edit_visible = false;
         }
 
         if ui
             .add_sized(edit_button_size, egui::Button::new("✔"))
             .clicked()
         {
-            self.load_path_text_edit_directory(true);
+            self.load_path_edit_directory(true);
         }
     }
 
@@ -1600,24 +1600,24 @@ impl FileDialog {
     }
 
     /// Opens the text field in the top panel to text edit the current path.
-    fn open_path_text_edit(&mut self) {
+    fn open_path_edit(&mut self) {
         let path = match self.current_directory() {
             Some(path) => path.to_str().unwrap_or_default().to_string(),
             None => String::new(),
         };
 
-        self.path_text_edit_value = path;
-        self.path_text_edit_request_focus = true;
-        self.path_text_edit_visible = true;
+        self.path_edit_value = path;
+        self.path_edit_request_focus = true;
+        self.path_edit_visible = true;
     }
 
     /// Loads the directory from the path text edit.
-    fn load_path_text_edit_directory(&mut self, close_text_edit: bool) {
+    fn load_path_edit_directory(&mut self, close_text_edit: bool) {
         if close_text_edit {
-            self.path_text_edit_visible = false;
+            self.path_edit_visible = false;
         }
 
-        let _ = self.load_directory(&PathBuf::from(&self.path_text_edit_value));
+        let _ = self.load_directory(&PathBuf::from(&self.path_edit_value));
     }
 
     /// Loads the next directory in the directory_stack.
