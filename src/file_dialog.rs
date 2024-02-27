@@ -101,6 +101,13 @@ pub struct FileDialog {
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
 
+    /// Whether the text edit is open for editing the current path.
+    path_edit_visible: bool,
+    /// Buffer holding the text when the user edits the current path.
+    path_edit_value: String,
+    /// If the text edit of the path should request focus in the next frame.
+    path_edit_request_focus: bool,
+
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
     selected_item: Option<DirectoryEntry>,
@@ -146,6 +153,10 @@ impl FileDialog {
             directory_error: None,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
+
+            path_edit_visible: false,
+            path_edit_value: String::new(),
+            path_edit_request_focus: false,
 
             selected_item: None,
             file_name_input: String::new(),
@@ -596,6 +607,14 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the button to text edit the current path should be visible in the top panel.
+    ///
+    /// has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_path_edit_button(mut self, show_path_edit_button: bool) -> Self {
+        self.config.show_path_edit_button = show_path_edit_button;
+        self
+    }
+
     /// Sets whether the reload button should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
@@ -800,7 +819,7 @@ impl FileDialog {
             }
 
             if self.config.show_current_path {
-                self.ui_update_current_path_display(ui, path_display_width);
+                self.ui_update_current_path(ui, path_display_width);
             }
 
             // Reload button
@@ -863,78 +882,139 @@ impl FileDialog {
         }
     }
 
-    /// Updates the view to display the currently open path
-    fn ui_update_current_path_display(&mut self, ui: &mut egui::Ui, width: f32) {
+    /// Updates the view to display the current path.
+    /// This could be the view for displaying the current path and the individual sections,
+    /// as well as the view for text editing of the current path.
+    fn ui_update_current_path(&mut self, ui: &mut egui::Ui, width: f32) {
         egui::Frame::default()
             .stroke(egui::Stroke::new(
                 1.0,
                 ui.ctx().style().visuals.window_stroke.color,
             ))
-            .inner_margin(egui::Margin {
-                left: 4.0,
-                right: 8.0,
-                top: 4.0,
-                bottom: 4.0,
-            })
+            .inner_margin(egui::Margin::from(4.0))
             .rounding(egui::Rounding::from(4.0))
             .show(ui, |ui| {
-                ui.style_mut().always_scroll_the_only_direction = true;
-                ui.style_mut().spacing.scroll.bar_width = 8.0;
+                const EDIT_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(21.0, 20.0);
 
-                egui::ScrollArea::horizontal()
-                    .auto_shrink([false, false])
-                    .stick_to_right(true)
-                    .max_width(width)
-                    .show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.style_mut().spacing.item_spacing.x /= 2.5;
+                match self.path_edit_visible {
+                    true => self.ui_update_path_edit(ui, width, EDIT_BUTTON_SIZE),
+                    false => self.ui_update_path_display(ui, width, EDIT_BUTTON_SIZE),
+                }
+            });
+    }
 
-                            let mut path = PathBuf::new();
+    /// Updates the view when the currently open path with the individual sections is displayed.
+    fn ui_update_path_display(
+        &mut self,
+        ui: &mut egui::Ui,
+        width: f32,
+        edit_button_size: egui::Vec2,
+    ) {
+        ui.style_mut().always_scroll_the_only_direction = true;
+        ui.style_mut().spacing.scroll.bar_width = 8.0;
 
-                            if let Some(data) = self.current_directory() {
-                                #[cfg(windows)]
-                                let mut drive_letter = String::from("\\");
+        let mut max_width: f32 = width;
 
-                                for (i, segment) in data.iter().enumerate() {
-                                    path.push(segment);
+        if self.config.show_path_edit_button {
+            max_width = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
+        }
 
-                                    #[cfg(windows)]
-                                    let mut file_name = segment.to_str().unwrap_or("<ERR>");
+        egui::ScrollArea::horizontal()
+            .auto_shrink([false, false])
+            .stick_to_right(true)
+            .max_width(max_width)
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.style_mut().spacing.item_spacing.x /= 2.5;
 
-                                    #[cfg(windows)]
-                                    {
-                                        // Skip the path namespace prefix generated by
-                                        // fs::canonicalize() on Windows
-                                        if i == 0 {
-                                            drive_letter = file_name.replace(r"\\?\", "");
-                                            continue;
-                                        }
+                    let mut path = PathBuf::new();
 
-                                        // Replace the root segment with the disk letter
-                                        if i == 1 && segment == "\\" {
-                                            file_name = drive_letter.as_str();
-                                        } else if i != 0 {
-                                            ui.label(self.config.directory_separator.as_str());
-                                        }
-                                    }
+                    if let Some(data) = self.current_directory() {
+                        #[cfg(windows)]
+                        let mut drive_letter = String::from("\\");
 
-                                    #[cfg(not(windows))]
-                                    let file_name = segment.to_str().unwrap_or("<ERR>");
+                        for (i, segment) in data.iter().enumerate() {
+                            path.push(segment);
 
-                                    #[cfg(not(windows))]
-                                    if i != 0 {
-                                        ui.label(self.config.directory_separator.as_str());
-                                    }
+                            #[cfg(windows)]
+                            let mut file_name = segment.to_str().unwrap_or("<ERR>");
 
-                                    if ui.button(file_name).clicked() {
-                                        let _ = self.load_directory(path.as_path());
-                                        return;
-                                    }
+                            #[cfg(windows)]
+                            {
+                                // Skip the path namespace prefix generated by
+                                // fs::canonicalize() on Windows
+                                if i == 0 {
+                                    drive_letter = file_name.replace(r"\\?\", "");
+                                    continue;
+                                }
+
+                                // Replace the root segment with the disk letter
+                                if i == 1 && segment == "\\" {
+                                    file_name = drive_letter.as_str();
+                                } else if i != 0 {
+                                    ui.label(self.config.directory_separator.as_str());
                                 }
                             }
-                        });
-                    });
+
+                            #[cfg(not(windows))]
+                            let file_name = segment.to_str().unwrap_or("<ERR>");
+
+                            #[cfg(not(windows))]
+                            if i != 0 {
+                                ui.label(self.config.directory_separator.as_str());
+                            }
+
+                            if ui.button(file_name).clicked() {
+                                let _ = self.load_directory(path.as_path());
+                                return;
+                            }
+                        }
+                    }
+                });
             });
+
+        if !self.config.show_path_edit_button {
+            return;
+        }
+
+        if ui
+            .add_sized(
+                edit_button_size,
+                egui::Button::new("🖊").fill(egui::Color32::TRANSPARENT),
+            )
+            .clicked()
+        {
+            self.open_path_edit();
+        }
+    }
+
+    /// Updates the view when the user currently wants to text edit the current path.
+    fn ui_update_path_edit(&mut self, ui: &mut egui::Ui, width: f32, edit_button_size: egui::Vec2) {
+        let desired_width: f32 = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
+
+        let response = egui::TextEdit::singleline(&mut self.path_edit_value)
+            .desired_width(desired_width)
+            .show(ui)
+            .response;
+
+        if self.path_edit_request_focus {
+            response.request_focus();
+            self.path_edit_request_focus = false;
+        }
+
+        if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
+            self.path_edit_request_focus = true;
+            self.load_path_edit_directory(false);
+        } else if !response.has_focus() {
+            self.path_edit_visible = false;
+        }
+
+        if ui
+            .add_sized(edit_button_size, egui::Button::new("✔"))
+            .clicked()
+        {
+            self.load_path_edit_directory(true);
+        }
     }
 
     /// Updates the search input
@@ -1387,6 +1467,15 @@ impl FileDialog {
 
 /// Implementation
 impl FileDialog {
+    /// Canonicalizes the specified path if canonicalization is enabled.
+    /// Returns the input path if an error occurs or canonicalization is disabled.
+    fn canonicalize_path(&self, path: &Path) -> PathBuf {
+        match self.config.canonicalize_paths {
+            true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
+            false => path.to_path_buf(),
+        }
+    }
+
     /// Resets the dialog to use default values.
     /// Configuration variables such as `initial_directory` are retained.
     fn reset(&mut self) {
@@ -1436,10 +1525,7 @@ impl FileDialog {
     ///   - Canonicalize the path if enabled
     ///   - Attempts to use the parent directory if the path is a file
     fn gen_initial_directory(&self, path: &Path) -> PathBuf {
-        let mut path = match self.config.canonicalize_paths {
-            true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
-            false => path.to_path_buf(),
-        };
+        let mut path = self.canonicalize_path(path);
 
         if path.is_file() {
             if let Some(parent) = path.parent() {
@@ -1512,6 +1598,27 @@ impl FileDialog {
             self.file_name_input = dir_entry.file_name().to_string();
             self.file_name_input_error = self.validate_file_name_input();
         }
+    }
+
+    /// Opens the text field in the top panel to text edit the current path.
+    fn open_path_edit(&mut self) {
+        let path = match self.current_directory() {
+            Some(path) => path.to_str().unwrap_or_default().to_string(),
+            None => String::new(),
+        };
+
+        self.path_edit_value = path;
+        self.path_edit_request_focus = true;
+        self.path_edit_visible = true;
+    }
+
+    /// Loads the directory from the path text edit.
+    fn load_path_edit_directory(&mut self, close_text_edit: bool) {
+        if close_text_edit {
+            self.path_edit_visible = false;
+        }
+
+        let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
     }
 
     /// Loads the next directory in the directory_stack.

@@ -4,6 +4,9 @@
 ### 🖥 UI
 - Changed default file icon from `🖹 (document with text U+1F5B9)` to `🗋 (empty document U+1F5CB)` [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74) \
   ![preview](media/changelog/v0.4.0/default_file_icon.png)
+- You can now text edit the path using the new edit button next to the current path 🖊 [#85](https://github.com/fluxxcode/egui-file-dialog/pull/85) \
+  ![preview](media/changelog/v0.4.0/path_edit_0.png) \
+  ![preview](media/changelog/v0.4.0/path_edit_1.png)
 
 ### ✨ Features
 - Added `FileDialog::take_selected` as an alternative to `FileDialog::selected` [#52](https://github.com/fluxxcode/egui-file-dialog/pull/52)
@@ -13,13 +16,14 @@
 - Added `FileDialog::err_icon`, `FileDialog::default_folder_icon` and `FileDialog::default_file_icon` to customize the respective icons [#72](https://github.com/fluxxcode/egui-file-dialog/pull/72) Renamed with [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74)
 - Added `FileDialog::set_file_icon` and `FileDialogConfig::set_file_icon` to customize the icon for different types of files and directories [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74)
 - Added `FileDialog::device_icon` and `FileDialog::removable_device_icon` to overwrite the icon that is used to display devices in the left panel. [#75](https://github.com/fluxxcode/egui-file-dialog/pull/75)
-- Addded `FileDialog::canonicalize_paths` to set if the paths in the file dialog should be canonicalized before use [#77](https://github.com/fluxxcode/egui-file-dialog/pull/77)
+- Added `FileDialog::canonicalize_paths` to set if the paths in the file dialog should be canonicalized before use [#77](https://github.com/fluxxcode/egui-file-dialog/pull/77)
 
 #### Methods for showing or hiding certain dialog areas and functions
 - Added `FileDialog::show_top_panel` to show or hide the top panel [#60](https://github.com/fluxxcode/egui-file-dialog/pull/60)
 - Added `FileDialog::show_parent_button`, `FileDialog::show_back_button` and `FileDialog::show_forward_button` to show or hide the individual navigation buttons in the top panel. [#61](https://github.com/fluxxcode/egui-file-dialog/pull/61)
 - Added `FileDialog::show_new_folder_button` to show or hide the button to create a new folder [#62](https://github.com/fluxxcode/egui-file-dialog/pull/62)
 - Added `FileDialog::show_current_path` to show or hide the current path in the top panel [#63](https://github.com/fluxxcode/egui-file-dialog/pull/63)
+- Added `FileDialog::show_path_edit_button` to show or hide the button to text edit the current path [#85](https://github.com/fluxxcode/egui-file-dialog/pull/85)
 - Added `FileDialog::show_reload_button` to show or hide the reload button in the top panel [#64](https://github.com/fluxxcode/egui-file-dialog/pull/64)
 - Added `FileDialog::show_search` to show or hide the search in the top panel [#65](https://github.com/fluxxcode/egui-file-dialog/pull/65)
 - Added `FileDialog::show_left_panel` to show or hide the left panel  [#54](https://github.com/fluxxcode/egui-file-dialog/pull/54)

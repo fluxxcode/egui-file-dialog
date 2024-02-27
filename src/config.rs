@@ -123,6 +123,8 @@ pub struct FileDialogConfig {
     pub show_new_folder_button: bool,
     /// If the current path display in the top panel should be visible.
     pub show_current_path: bool,
+    /// If the button to text edit the current path should be visible.
+    pub show_path_edit_button: bool,
     /// If the reload button in the top panel should be visible.
     pub show_reload_button: bool,
     /// If the search input in the top panel should be visible.
@@ -175,6 +177,7 @@ impl Default for FileDialogConfig {
             show_forward_button: true,
             show_new_folder_button: true,
             show_current_path: true,
+            show_path_edit_button: true,
             show_reload_button: true,
             show_search: true,
 
