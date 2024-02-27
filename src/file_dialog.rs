@@ -1612,7 +1612,13 @@ impl FileDialog {
             self.path_edit_visible = false;
         }
 
-        let _ = self.load_directory(&PathBuf::from(&self.path_edit_value));
+        let path = match self.config.canonicalize_paths {
+            true => fs::canonicalize(&self.path_edit_value)
+                .unwrap_or(PathBuf::from(&self.path_edit_value)),
+            false => PathBuf::from(&self.path_edit_value),
+        };
+
+        let _ = self.load_directory(&path);
     }
 
     /// Loads the next directory in the directory_stack.
