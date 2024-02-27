@@ -1010,7 +1010,7 @@ impl FileDialog {
         if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
             self.path_edit_request_focus = true;
             self.load_path_edit_directory(false);
-        } else if response.lost_focus() {
+        } else if !response.has_focus() {
             self.path_edit_visible = false;
         }
 
