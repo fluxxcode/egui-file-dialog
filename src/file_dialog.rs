@@ -898,13 +898,13 @@ impl FileDialog {
 
                 match self.path_edit_visible {
                     true => self.ui_update_path_edit(ui, width, EDIT_BUTTON_SIZE),
-                    false => self.ui_update_current_path_display(ui, width, EDIT_BUTTON_SIZE),
+                    false => self.ui_update_path_display(ui, width, EDIT_BUTTON_SIZE),
                 }
             });
     }
 
     /// Updates the view when the currently open path with the individual sections is displayed.
-    fn ui_update_current_path_display(
+    fn ui_update_path_display(
         &mut self,
         ui: &mut egui::Ui,
         width: f32,
