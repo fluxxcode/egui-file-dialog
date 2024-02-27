@@ -25,6 +25,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Shortcut for user directories (Home, Documents, ...) and system disks
+- Manually edit the path via text
 - Customization highlights:
   - Customize which areas and functions of the dialog are visible
   - Multilingual support: Customize the text labels that the dialog uses
