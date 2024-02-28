@@ -894,7 +894,7 @@ impl FileDialog {
             .inner_margin(egui::Margin::from(4.0))
             .rounding(egui::Rounding::from(4.0))
             .show(ui, |ui| {
-                const EDIT_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(21.0, 20.0);
+                const EDIT_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(22.0, 20.0);
 
                 match self.path_edit_visible {
                     true => self.ui_update_path_edit(ui, width, EDIT_BUTTON_SIZE),
@@ -916,7 +916,7 @@ impl FileDialog {
         let mut max_width: f32 = width;
 
         if self.config.show_path_edit_button {
-            max_width = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
+            max_width = width - edit_button_size.x - ui.style().spacing.item_spacing.x * 2.0;
         }
 
         egui::ScrollArea::horizontal()
@@ -990,7 +990,7 @@ impl FileDialog {
 
     /// Updates the view when the user currently wants to text edit the current path.
     fn ui_update_path_edit(&mut self, ui: &mut egui::Ui, width: f32, edit_button_size: egui::Vec2) {
-        let desired_width: f32 = width - edit_button_size.x - ui.style().spacing.item_spacing.x;
+        let desired_width: f32 = width - edit_button_size.x - ui.style().spacing.item_spacing.x * 2.0;
 
         let response = egui::TextEdit::singleline(&mut self.path_edit_value)
             .desired_width(desired_width)
