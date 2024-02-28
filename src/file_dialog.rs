@@ -1,6 +1,8 @@
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
+use egui::text::{CCursor, CCursorRange};
+
 use crate::config::{FileDialogConfig, FileDialogLabels, Filter};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
@@ -1031,10 +1033,47 @@ impl FileDialog {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                     ui.add_space(ui.ctx().style().spacing.item_spacing.y);
                     ui.label("🔍");
-                    ui.add_sized(
+                    let re = ui.add_sized(
                         egui::Vec2::new(ui.available_width(), 0.0),
                         egui::TextEdit::singleline(&mut self.search_value),
                     );
+                    // Trigger entry filter input when typing is detected and nothing else is focused
+                    let mut focused = re.has_focus();
+                    ui.memory(|mem| {
+                        if let Some(_) = mem.focus() {
+                            focused = true;
+                        }
+                    });
+                    if !focused && !self.path_edit_visible {
+                        let mut focus = false;
+                        ui.input(|inp| {
+                            if inp.modifiers.any() && !inp.modifiers.shift_only() {
+                                return;
+                            }
+
+                            for text in inp.events.iter().filter_map(|ev| match ev {
+                                egui::Event::Text(t) => Some(t),
+                                _ => None,
+                            }) {
+                                if text.starts_with("/") {
+                                    self.path_edit_visible = true;
+                                    self.path_edit_request_focus = true;
+                                } else {
+                                    self.search_value.push_str(text);
+                                    focus = true;
+                                }
+                            }
+                        });
+                        if focus {
+                            re.request_focus();
+                            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
+                                state
+                                    .cursor
+                                    .set_char_range(Some(CCursorRange::one(CCursor::new(self.search_value.len()))));
+                                state.store(ui.ctx(), re.id);
+                            }
+                        }
+                    }
                 });
             });
     }
@@ -1713,6 +1752,10 @@ impl FileDialog {
 
         let dir_entry = DirectoryEntry::from_path(&self.config, path);
         self.select_item(&dir_entry);
+
+        // Clear the entry filter buffer.
+        // It's unlikely the user wants to keep the current filter when entering a new directory.
+        self.search_value.clear();
 
         Ok(())
     }
