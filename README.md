@@ -126,6 +126,7 @@ FileDialog::new()
     .resizable(false)
     .show_new_folder_button(false)
     .show_search(false)
+    .show_path_edit_button(false)
     // Markdown and text files should use the "document with text (U+1F5B9)" icon
     .set_file_icon(
         "🖹",
