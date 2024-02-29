@@ -36,6 +36,7 @@
 - Cleanup and restructure `FileDialog` UI methods [#56](https://github.com/fluxxcode/egui-file-dialog/pull/56)
 - Changed so the window title is evaluated when updating the dialog [#80](https://github.com/fluxxcode/egui-file-dialog/pull/80)
 - Added Rust cache to CI and updated CI to also check the examples [#84](https://github.com/fluxxcode/egui-file-dialog/pull/84)
+- Search input is now reset when a new directory is opened [#88](https://github.com/fluxxcode/egui-file-dialog/pull/88) (thanks [@aymey](https://github.com/aymey)!)
 
 ### 📚 Documentation
 - Added downloads and total lines badge to `README.md` [#71](https://github.com/fluxxcode/egui-file-dialog/pull/71)
