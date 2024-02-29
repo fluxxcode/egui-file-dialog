@@ -8,7 +8,7 @@
 
 This repository provides an easy-to-use and customizable file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui).
 
-The file dialog is intended for use by desktop applications, thus allowing the use of a file dialog directly within the egui application without relying on the operating system's file explorer. This also ensures that the file dialog looks the same and has the same functionality on all platforms.
+The file dialog is intended for use by desktop applications, allowing the use of a file dialog directly within the egui application without relying on the operating system's file explorer. This also ensures that the file dialog looks the same and provides the same functionality on all platforms.
 
 <img src="media/demo.png">
 
@@ -28,17 +28,16 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Manually edit the path via text
 - Customization highlights:
   - Customize which areas and functions of the dialog are visible
-  - Multilingual support: Customize the text labels that the dialog uses
+  - Customize the text labels used by the dialog to enable multilingual support
   - Customize file and folder icons
-  - _More options can be found in the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/index.html)_
 
 ## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
 - Selection of multiple directory items at once
 - Pinnable folders for quick access [#42](https://github.com/fluxxcode/egui-file-dialog/issues/42)
 - Only show files with a specific file extension (The user can already filter files by file extension using the search, but there is currently no backend method for this or a dropdown to be able to select from predefined file extensions.)
-- Keyboard input
-- Context menus, for example for renaming, deleting or copying files or directories.
+- Keyboard input [#70](https://github.com/fluxxcode/egui-file-dialog/issues/70)
+- Context menus, for example for renaming, deleting or copying files or directories
 - Option to show or hide hidden files and folders
 
 ## Example
@@ -50,7 +49,7 @@ Cargo.toml:
 ```toml
 [dependencies]
 eframe = "0.26.0"
-egui-file-dialog = "0.3.1"
+egui-file-dialog = "0.4.0"
 ```
 
 main.rs:
@@ -104,15 +103,16 @@ fn main() -> eframe::Result<()> {
 
 ## Customization
 Many things can be customized so that the dialog can be used in different situations. \
-A few highlights of the customization are listed below. For all possible customization options, see the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html). (More customization will be implemented in the future!)
+A few highlights of the customization are listed below. For all possible customization options, see the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html).
 
 - Set which areas and functions of the dialog are visible using `FileDialog::show_*` methods
 - Update the text labels that the dialog uses. See [Multilingual support](#multilingual-support)
 - Customize file and folder icons using `FileDialog::set_file_icon` (Currently only unicode is supported)
 
-Since the dialog uses the egui style to look like the rest of the application, the appearance can be customized with `egui::Style`.
+Since the dialog uses the egui style to look like the rest of the application, the appearance can be customized with `egui::Style` and `egui::Context::set_style`.
 
-The following example shows how a file dialog can be customized. If you need to configure multiple file dialog objects with the same or almost the same options, it is a good idea to use `FileDialogConfig` and `FileDialog::with_config` (See `FileDialogConfig` on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialogConfig.html)).
+The following example shows how a single file dialog can be customized. \
+If you need to configure multiple file dialog objects with the same or almost the same options, it is a good idea to use `FileDialogConfig` and `FileDialog::with_config` (See `FileDialogConfig` on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialogConfig.html)).
 ```rust
 use std::path::PathBuf;
 use std::sync::Arc;
