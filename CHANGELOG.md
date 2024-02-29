@@ -1,6 +1,6 @@
 # egui-file-dialog changelog
 
-## [Unreleased] - v0.4.0 - Customization
+## 2024-02-29 - v0.4.0 - Customization
 ### 🖥 UI
 - Changed default file icon from `🖹 (document with text U+1F5B9)` to `🗋 (empty document U+1F5CB)` [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74) \
   ![preview](media/changelog/v0.4.0/default_file_icon.png)
@@ -11,7 +11,7 @@
 ### ✨ Features
 - Added `FileDialog::take_selected` as an alternative to `FileDialog::selected` [#52](https://github.com/fluxxcode/egui-file-dialog/pull/52)
 - Added `FileDialogConfig`, `FileDialog::with_config`, `FileDialog::overwrite_config` and `FileDialog::config_mut` to set and override the configuration of a file dialog. This is useful if you want to configure multiple `FileDialog` objects with the same options. [#58](https://github.com/fluxxcode/egui-file-dialog/pull/58), [#67](https://github.com/fluxxcode/egui-file-dialog/pull/67) and [#79](https://github.com/fluxxcode/egui-file-dialog/pull/79)
-- Added `FileDialogLabels`, `FileDialog::labels` and `FileDialog::labels_mut` to enable multiple language support [#69](https://github.com/fluxxcode/egui-file-dialog/pull/69) and [#79](https://github.com/fluxxcode/egui-file-dialog/pull/79)
+- Added `FileDialogLabels`, `FileDialog::labels` and `FileDialog::labels_mut` to customize the labels used by the dialog and enable multilingual support [#69](https://github.com/fluxxcode/egui-file-dialog/pull/69) and [#79](https://github.com/fluxxcode/egui-file-dialog/pull/79)
 - Added `FileDialog::directory_separator` to overwrite the directory separator that is used when displaying the current path [#68](https://github.com/fluxxcode/egui-file-dialog/pull/68)
 - Added `FileDialog::err_icon`, `FileDialog::default_folder_icon` and `FileDialog::default_file_icon` to customize the respective icons [#72](https://github.com/fluxxcode/egui-file-dialog/pull/72) Renamed with [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74)
 - Added `FileDialog::set_file_icon` and `FileDialogConfig::set_file_icon` to customize the icon for different types of files and directories [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74)
@@ -36,6 +36,7 @@
 - Cleanup and restructure `FileDialog` UI methods [#56](https://github.com/fluxxcode/egui-file-dialog/pull/56)
 - Changed so the window title is evaluated when updating the dialog [#80](https://github.com/fluxxcode/egui-file-dialog/pull/80)
 - Added Rust cache to CI and updated CI to also check the examples [#84](https://github.com/fluxxcode/egui-file-dialog/pull/84)
+- Search input is now reset when a new directory is opened [#88](https://github.com/fluxxcode/egui-file-dialog/pull/88) (thanks [@aymey](https://github.com/aymey)!)
 
 ### 📚 Documentation
 - Added downloads and total lines badge to `README.md` [#71](https://github.com/fluxxcode/egui-file-dialog/pull/71)
