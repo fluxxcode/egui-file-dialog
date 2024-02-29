@@ -52,7 +52,7 @@ pub enum DialogState {
 ///         if ui.button("Select a file").clicked() {
 ///             self.file_dialog.select_file();
 ///         }
-///         
+///
 ///         if let Some(path) = self.file_dialog.update(ctx).selected() {
 ///             println!("Selected file: {:?}", path);
 ///         }
@@ -1691,6 +1691,8 @@ impl FileDialog {
     ///
     /// The function also sets the loaded directory as the selected item.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
+        self.search_value.clear();
+
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
         if let Some(x) = self.current_directory() {
