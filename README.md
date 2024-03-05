@@ -127,6 +127,12 @@ FileDialog::new()
     .show_new_folder_button(false)
     .show_search(false)
     .show_path_edit_button(false)
+    // Add a new quick access section to the left sidebar
+    .add_quick_access("Project", |s| {
+        s.add_path("☆  Examples", "examples");
+        s.add_path("📷  Media", "media");
+        s.add_path("📂  Source", "src");
+    })
     // Markdown and text files should use the "document with text (U+1F5B9)" icon
     .set_file_icon(
         "🖹",

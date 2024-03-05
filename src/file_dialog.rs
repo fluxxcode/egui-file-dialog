@@ -1112,8 +1112,18 @@ impl FileDialog {
                 .show(ui, |ui| {
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
 
-                    self.ui_update_quick_accesses(ui);
+                    // Update custom quick access sections
+                    let quick_accesses = std::mem::take(&mut self.config.quick_accesses);
 
+                    for quick_access in &quick_accesses {
+                        ui.add_space(spacing);
+                        self.ui_update_quick_access(ui, quick_access);
+                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                    }
+
+                    self.config.quick_accesses = quick_accesses;
+
+                    // Update native quick access sections
                     if self.config.show_places && self.ui_update_user_directories(ui, spacing) {
                         spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
                     }
@@ -1134,17 +1144,6 @@ impl FileDialog {
                     self.system_disks = disks;
                 });
         });
-    }
-
-    fn ui_update_quick_accesses(&mut self, ui: &mut egui::Ui) {
-        let quick_accesses = std::mem::take(&mut self.config.quick_accesses);
-
-        // TODO: Update spacing
-        for quick_access in &quick_accesses {
-            self.ui_update_quick_access(ui, quick_access);
-        }
-
-        self.config.quick_accesses = quick_accesses;
     }
 
     /// Updates a custom quick access section added to the left panel.

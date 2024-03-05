@@ -38,7 +38,10 @@ pub struct QuickAccess {
 }
 
 impl QuickAccess {
-    /// Adds a new path to this quick access area.
+    /// Adds a new path to the quick access.
+    ///
+    /// Since `fs::canonicalize` is used, both absolute paths and relative paths are allowed.
+    /// See `FileDialog::canonicalize_paths` for more information.
     ///
     /// See `FileDialogConfig::add_quick_access` for an example.
     pub fn add_path(&mut self, display_name: &str, path: impl Into<PathBuf>) {

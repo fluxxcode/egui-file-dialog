@@ -14,7 +14,13 @@ struct MyApp {
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
-            file_dialog: FileDialog::new().id("egui_file_dialog"),
+            file_dialog: FileDialog::new()
+                .add_quick_access("Project", |s| {
+                    s.add_path("☆  Examples", "examples");
+                    s.add_path("📷  Media", "media");
+                    s.add_path("📂  Source", "src");
+                })
+                .id("egui_file_dialog"),
 
             selected_directory: None,
             selected_file: None,
