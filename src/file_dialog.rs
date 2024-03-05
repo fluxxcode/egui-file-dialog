@@ -1759,6 +1759,10 @@ impl FileDialog {
         let dir_entry = DirectoryEntry::from_path(&self.config, path);
         self.select_item(&dir_entry);
 
+        // Clear the entry filter buffer.
+        // It's unlikely the user wants to keep the current filter when entering a new directory.
+        self.search_value.clear();
+
         Ok(())
     }
 
