@@ -1037,42 +1037,50 @@ impl FileDialog {
                         egui::Vec2::new(ui.available_width(), 0.0),
                         egui::TextEdit::singleline(&mut self.search_value),
                     );
-                    // Trigger entry filter input when typing is detected and nothing else is focused
-                    let mut focused = re.has_focus();
-                    ui.memory(|mem| {
-                        if mem.focus().is_some() {
-                            focused = true;
-                        }
-                    });
-                    if !focused && !self.path_edit_visible {
-                        let mut focus = false;
-                        ui.input(|inp| {
-                            if inp.modifiers.any() && !inp.modifiers.shift_only() {
-                                return;
-                            }
-
-                            for text in inp.events.iter().filter_map(|ev| match ev {
-                                egui::Event::Text(t) => Some(t),
-                                _ => None,
-                            }) {
-                                self.search_value.push_str(text);
-                                focus = true;
-                            }
-                        });
-                        if focus {
-                            re.request_focus();
-                            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
-                                state
-                                    .cursor
-                                    .set_char_range(Some(CCursorRange::one(CCursor::new(
-                                        self.search_value.len(),
-                                    ))));
-                                state.store(ui.ctx(), re.id);
-                            }
-                        }
-                    }
+                    self.edit_filter_on_text_input(ui, re);
                 });
             });
+    }
+    /// Focuses and types into the filter input, if text input without
+    /// shortcut modifiers is detected, and no other inputs are focused.
+    ///
+    /// # Arguments
+    ///
+    /// - `re`: The [`egui::Response`] returned by the filter text edit widget
+    fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
+        let mut focused = re.has_focus();
+        ui.memory(|mem| {
+            if mem.focus().is_some() {
+                focused = true;
+            }
+        });
+        if !focused && !self.path_edit_visible {
+            let mut focus = false;
+            ui.input(|inp| {
+                if inp.modifiers.any() && !inp.modifiers.shift_only() {
+                    return;
+                }
+
+                for text in inp.events.iter().filter_map(|ev| match ev {
+                    egui::Event::Text(t) => Some(t),
+                    _ => None,
+                }) {
+                    self.search_value.push_str(text);
+                    focus = true;
+                }
+            });
+            if focus {
+                re.request_focus();
+                if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
+                    state
+                        .cursor
+                        .set_char_range(Some(CCursorRange::one(CCursor::new(
+                            self.search_value.len(),
+                        ))));
+                    state.store(ui.ctx(), re.id);
+                }
+            }
+        }
     }
 
     /// Updates the left panel of the dialog. Including the list of the user directories (Places)
