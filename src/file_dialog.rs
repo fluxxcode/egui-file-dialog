@@ -1052,7 +1052,8 @@ impl FileDialog {
         if any_focused {
             return;
         }
-        let mut focus = false;
+        // Whether to activate the text input widget
+        let mut activate = false;
         ui.input(|inp| {
             if inp.modifiers.any() && !inp.modifiers.shift_only() {
                 return;
@@ -1063,10 +1064,10 @@ impl FileDialog {
                 _ => None,
             }) {
                 self.search_value.push_str(text);
-                focus = true;
+                activate = true;
             }
         });
-        if focus {
+        if activate {
             re.request_focus();
             if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
                 state
