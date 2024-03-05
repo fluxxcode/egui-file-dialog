@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use crate::config::{FileDialogConfig, FileDialogLabels, Filter};
+use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 
@@ -476,7 +476,7 @@ impl FileDialog {
     /// use std::sync::Arc;
     /// use egui_file_dialog::FileDialog;
     ///
-    /// let config = FileDialog::new()
+    /// FileDialog::new()
     ///     // .png files should use the "document with picture (U+1F5BB)" icon.
     ///     .set_file_icon("🖻", Arc::new(|path| path.extension().unwrap_or_default() == "png"))
     ///     // .git directories should use the "web-github (U+E624)" icon.
@@ -484,6 +484,25 @@ impl FileDialog {
     /// ```
     pub fn set_file_icon(mut self, icon: &str, filter: Filter<std::path::Path>) -> Self {
         self.config = self.config.set_file_icon(icon, filter);
+        self
+    }
+
+    /// Adds a new custom quick access section to the left panel.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// FileDialog::new()
+    ///     .add_quick_access("My App", |s| {
+    ///         s.add_path("Config", "/app/config");
+    ///         s.add_path("Themes", "/app/themes");
+    ///         s.add_path("Languages", "/app/languages");
+    ///     });
+    /// ```
+    pub fn add_quick_access(mut self, heading: &str, builder: fn(&mut QuickAccess)) -> Self {
+        self.config = self.config.add_quick_access(heading, builder);
         self
     }
 
@@ -1048,6 +1067,8 @@ impl FileDialog {
                 .show(ui, |ui| {
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
 
+                    self.ui_update_quick_accesses(ui);
+
                     if self.config.show_places && self.ui_update_user_directories(ui, spacing) {
                         spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
                     }
@@ -1068,6 +1089,34 @@ impl FileDialog {
                     self.system_disks = disks;
                 });
         });
+    }
+
+    fn ui_update_quick_accesses(&mut self, ui: &mut egui::Ui) {
+        let quick_accesses = std::mem::take(&mut self.config.quick_accesses);
+
+        // TODO: Update spacing
+        for quick_access in &quick_accesses {
+            self.ui_update_quick_access(ui, quick_access);
+        }
+
+        self.config.quick_accesses = quick_accesses;
+    }
+
+    /// Updates a custom quick access section added to the left panel.
+    fn ui_update_quick_access(&mut self, ui: &mut egui::Ui, quick_access: &QuickAccess) {
+        ui.label(&quick_access.heading);
+
+        for entry in &quick_access.paths {
+            if ui
+                .selectable_label(
+                    self.current_directory() == Some(&entry.path),
+                    &entry.display_name,
+                )
+                .clicked()
+            {
+                let _ = self.load_directory(&entry.path);
+            }
+        }
     }
 
     /// Updates the list of the user directories (Places).
