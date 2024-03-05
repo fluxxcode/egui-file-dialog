@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## [Unreleased] - v0.5.0 - [TODO]
+### 🔧 Changes
+- Automatically edit filter string when user is typing [#93](https://github.com/fluxxcode/egui-file-dialog/pull/93) (thanks [@crumblingstatue](https://github.com/crumblingstatue) and [@aymey](https://github.com/aymey)!)
+
 ## 2024-02-29 - v0.4.0 - Customization
 ### 🖥 UI
 - Changed default file icon from `🖹 (document with text U+1F5B9)` to `🗋 (empty document U+1F5CB)` [#74](https://github.com/fluxxcode/egui-file-dialog/pull/74) \
