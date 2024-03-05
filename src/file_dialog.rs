@@ -1,6 +1,8 @@
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
+use egui::text::{CCursor, CCursorRange};
+
 use crate::config::{FileDialogConfig, FileDialogLabels, Filter};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
@@ -1031,12 +1033,55 @@ impl FileDialog {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                     ui.add_space(ui.ctx().style().spacing.item_spacing.y);
                     ui.label("🔍");
-                    ui.add_sized(
+                    let re = ui.add_sized(
                         egui::Vec2::new(ui.available_width(), 0.0),
                         egui::TextEdit::singleline(&mut self.search_value),
                     );
+                    self.edit_filter_on_text_input(ui, re);
                 });
             });
+    }
+    /// Focuses and types into the filter input, if text input without
+    /// shortcut modifiers is detected, and no other inputs are focused.
+    ///
+    /// # Arguments
+    ///
+    /// - `re`: The [`egui::Response`] returned by the filter text edit widget
+    fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
+        let any_focused = ui.memory(|mem| mem.focus().is_some());
+        if any_focused {
+            return;
+        }
+        // Whether to activate the text input widget
+        let mut activate = false;
+        ui.input(|inp| {
+            // We stop if any modifier is active besides only shift
+            if inp.modifiers.any() && !inp.modifiers.shift_only() {
+                return;
+            }
+            // If we find any text input event, we append it to the filter string
+            // and allow proceeding to activating the filter input widget.
+            for text in inp.events.iter().filter_map(|ev| match ev {
+                egui::Event::Text(t) => Some(t),
+                _ => None,
+            }) {
+                self.search_value.push_str(text);
+                activate = true;
+            }
+        });
+        if activate {
+            // Focus the filter input widget
+            re.request_focus();
+            // Set the cursor to the end of the filter input string
+            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
+                state
+                    .cursor
+                    .set_char_range(Some(CCursorRange::one(CCursor::new(
+                        self.search_value.len(),
+                    ))));
+                state.store(ui.ctx(), re.id);
+            }
+        }
     }
 
     /// Updates the left panel of the dialog. Including the list of the user directories (Places)
@@ -1691,8 +1736,6 @@ impl FileDialog {
     ///
     /// The function also sets the loaded directory as the selected item.
     fn load_directory(&mut self, path: &Path) -> io::Result<()> {
-        self.search_value.clear();
-
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
         if let Some(x) = self.current_directory() {
@@ -1713,6 +1756,10 @@ impl FileDialog {
 
         let dir_entry = DirectoryEntry::from_path(&self.config, path);
         self.select_item(&dir_entry);
+
+        // Clear the entry filter buffer.
+        // It's unlikely the user wants to keep the current filter when entering a new directory.
+        self.search_value.clear();
 
         Ok(())
     }
