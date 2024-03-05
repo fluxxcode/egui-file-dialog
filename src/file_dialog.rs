@@ -1048,37 +1048,33 @@ impl FileDialog {
     ///
     /// - `re`: The [`egui::Response`] returned by the filter text edit widget
     fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
-        let mut focused = re.has_focus();
-        ui.memory(|mem| {
-            if mem.focus().is_some() {
-                focused = true;
+        let any_focused = ui.memory(|mem| mem.focus().is_some());
+        if any_focused {
+            return;
+        }
+        let mut focus = false;
+        ui.input(|inp| {
+            if inp.modifiers.any() && !inp.modifiers.shift_only() {
+                return;
+            }
+
+            for text in inp.events.iter().filter_map(|ev| match ev {
+                egui::Event::Text(t) => Some(t),
+                _ => None,
+            }) {
+                self.search_value.push_str(text);
+                focus = true;
             }
         });
-        if !focused && !self.path_edit_visible {
-            let mut focus = false;
-            ui.input(|inp| {
-                if inp.modifiers.any() && !inp.modifiers.shift_only() {
-                    return;
-                }
-
-                for text in inp.events.iter().filter_map(|ev| match ev {
-                    egui::Event::Text(t) => Some(t),
-                    _ => None,
-                }) {
-                    self.search_value.push_str(text);
-                    focus = true;
-                }
-            });
-            if focus {
-                re.request_focus();
-                if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
-                    state
-                        .cursor
-                        .set_char_range(Some(CCursorRange::one(CCursor::new(
-                            self.search_value.len(),
-                        ))));
-                    state.store(ui.ctx(), re.id);
-                }
+        if focus {
+            re.request_focus();
+            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
+                state
+                    .cursor
+                    .set_char_range(Some(CCursorRange::one(CCursor::new(
+                        self.search_value.len(),
+                    ))));
+                state.store(ui.ctx(), re.id);
             }
         }
     }
