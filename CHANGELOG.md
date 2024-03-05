@@ -1,6 +1,9 @@
 # egui-file-dialog changelog
 
 ## [Unreleased] - v0.5.0 - [TODO]
+### ✨ Features
+- Added `FileDialog::add_quick_access` and `FileDialogConfig::add_quick_access` to add your own quick access sections to the left sidebar [#95](https://github.com/fluxxcode/egui-file-dialog/pull/95)
+
 ### 🔧 Changes
 - Automatically edit filter string when user is typing [#93](https://github.com/fluxxcode/egui-file-dialog/pull/93) (thanks [@crumblingstatue](https://github.com/crumblingstatue) and [@aymey](https://github.com/aymey)!)
 
