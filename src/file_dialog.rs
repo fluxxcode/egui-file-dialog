@@ -1055,13 +1055,8 @@ impl FileDialog {
                                 egui::Event::Text(t) => Some(t),
                                 _ => None,
                             }) {
-                                if text.starts_with("/") {
-                                    self.path_edit_visible = true;
-                                    self.path_edit_request_focus = true;
-                                } else {
-                                    self.search_value.push_str(text);
-                                    focus = true;
-                                }
+                                self.search_value.push_str(text);
+                                focus = true;
                             }
                         });
                         if focus {
@@ -1069,7 +1064,9 @@ impl FileDialog {
                             if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
                                 state
                                     .cursor
-                                    .set_char_range(Some(CCursorRange::one(CCursor::new(self.search_value.len()))));
+                                    .set_char_range(Some(CCursorRange::one(CCursor::new(
+                                        self.search_value.len(),
+                                    ))));
                                 state.store(ui.ctx(), re.id);
                             }
                         }
