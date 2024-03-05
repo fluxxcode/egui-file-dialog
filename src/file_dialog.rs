@@ -1040,7 +1040,7 @@ impl FileDialog {
                     // Trigger entry filter input when typing is detected and nothing else is focused
                     let mut focused = re.has_focus();
                     ui.memory(|mem| {
-                        if let Some(_) = mem.focus() {
+                        if mem.focus().is_some() {
                             focused = true;
                         }
                     });
