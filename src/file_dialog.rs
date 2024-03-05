@@ -1055,10 +1055,12 @@ impl FileDialog {
         // Whether to activate the text input widget
         let mut activate = false;
         ui.input(|inp| {
+            // We stop if any modifier is active besides only shift
             if inp.modifiers.any() && !inp.modifiers.shift_only() {
                 return;
             }
-
+            // If we find any text input event, we append it to the filter string
+            // and allow proceeding to activating the filter input widget.
             for text in inp.events.iter().filter_map(|ev| match ev {
                 egui::Event::Text(t) => Some(t),
                 _ => None,
@@ -1068,7 +1070,9 @@ impl FileDialog {
             }
         });
         if activate {
+            // Focus the filter input widget
             re.request_focus();
+            // Set the cursor to the end of the filter input string
             if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
                 state
                     .cursor
