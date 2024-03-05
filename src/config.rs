@@ -49,7 +49,7 @@ impl QuickAccess {
 
         let canonicalized_path = match self.canonicalize_paths {
             true => fs::canonicalize(&path).unwrap_or(path),
-            false => path.into(),
+            false => path,
         };
 
         self.paths.push(QuickAccessPath {
