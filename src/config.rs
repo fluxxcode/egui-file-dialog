@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -18,6 +19,43 @@ impl std::fmt::Debug for IconFilter {
         f.debug_struct("IconFilter")
             .field("icon", &self.icon)
             .finish()
+    }
+}
+
+/// Stores the display name and the actual path of a quick access link.
+#[derive(Debug, Clone)]
+pub struct QuickAccessPath {
+    pub display_name: String,
+    pub path: PathBuf,
+}
+
+/// Stores a custom quick access section of the file dialog.
+#[derive(Debug, Clone)]
+pub struct QuickAccess {
+    pub canonicalize_paths: bool,
+    pub heading: String,
+    pub paths: Vec<QuickAccessPath>,
+}
+
+impl QuickAccess {
+    /// Adds a new path to the quick access.
+    ///
+    /// Since `fs::canonicalize` is used, both absolute paths and relative paths are allowed.
+    /// See `FileDialog::canonicalize_paths` for more information.
+    ///
+    /// See `FileDialogConfig::add_quick_access` for an example.
+    pub fn add_path(&mut self, display_name: &str, path: impl Into<PathBuf>) {
+        let path = path.into();
+
+        let canonicalized_path = match self.canonicalize_paths {
+            true => fs::canonicalize(&path).unwrap_or(path),
+            false => path,
+        };
+
+        self.paths.push(QuickAccessPath {
+            display_name: display_name.to_string(),
+            path: canonicalized_path,
+        });
     }
 }
 
@@ -81,6 +119,10 @@ pub struct FileDialogConfig {
     /// Sets custom icons for different files or folders.
     /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
     pub file_icon_filters: Vec<IconFilter>,
+
+    /// Custom sections added to the left sidebar for quick access.
+    /// Use `FileDialogConfig::add_quick_access` to add a new section to this list.
+    pub quick_accesses: Vec<QuickAccess>,
 
     // ------------------------------------------------------------------------
     // Window options:
@@ -159,6 +201,8 @@ impl Default for FileDialogConfig {
 
             file_icon_filters: Vec::new(),
 
+            quick_accesses: Vec::new(),
+
             title: None,
             id: None,
             default_pos: None,
@@ -216,6 +260,35 @@ impl FileDialogConfig {
             filter,
         });
 
+        self
+    }
+
+    /// Adds a new custom quick access section to the left panel of the file dialog.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use egui_file_dialog::FileDialogConfig;
+    ///
+    /// FileDialogConfig::default()
+    ///     .add_quick_access("My App", |s| {
+    ///         s.add_path("Config", "/app/config");
+    ///         s.add_path("Themes", "/app/themes");
+    ///         s.add_path("Languages", "/app/languages");
+    ///     });
+    /// ```
+    pub fn add_quick_access(
+        mut self,
+        heading: &str,
+        builder: impl FnOnce(&mut QuickAccess),
+    ) -> Self {
+        let mut obj = QuickAccess {
+            canonicalize_paths: self.canonicalize_paths,
+            heading: heading.to_string(),
+            paths: Vec::new(),
+        };
+        builder(&mut obj);
+        self.quick_accesses.push(obj);
         self
     }
 }
