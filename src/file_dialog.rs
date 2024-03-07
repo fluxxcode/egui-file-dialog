@@ -503,7 +503,12 @@ impl FileDialog {
     ///         s.add_path("Languages", "/app/languages");
     ///     });
     /// ```
-    pub fn add_quick_access(mut self, heading: &str, builder: fn(&mut QuickAccess)) -> Self {
+    // pub fn add_quick_access(mut self, heading: &str, builder: &fn(&mut QuickAccess)) -> Self {
+    pub fn add_quick_access(
+        mut self,
+        heading: &str,
+        builder: impl FnOnce(&mut QuickAccess),
+    ) -> Self {
         self.config = self.config.add_quick_access(heading, builder);
         self
     }

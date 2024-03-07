@@ -277,7 +277,11 @@ impl FileDialogConfig {
     ///         s.add_path("Languages", "/app/languages");
     ///     });
     /// ```
-    pub fn add_quick_access(mut self, heading: &str, builder: fn(&mut QuickAccess)) -> Self {
+    pub fn add_quick_access(
+        mut self,
+        heading: &str,
+        builder: impl FnOnce(&mut QuickAccess),
+    ) -> Self {
         let mut obj = QuickAccess {
             canonicalize_paths: self.canonicalize_paths,
             heading: heading.to_string(),
