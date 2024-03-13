@@ -175,6 +175,9 @@ pub struct FileDialogConfig {
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub show_left_panel: bool,
+    /// If pinned folders should be listed in the left sidebar.
+    /// Disabling this will also disable the functionality to pin a folder.
+    pub show_pinned_folders: bool,
     /// If the Places section in the left sidebar should be visible.
     pub show_places: bool,
     /// If the Devices section in the left sidebar should be visible.
@@ -226,6 +229,7 @@ impl Default for FileDialogConfig {
             show_search: true,
 
             show_left_panel: true,
+            show_pinned_folders: true,
             show_places: true,
             show_devices: true,
             show_removable_devices: true,

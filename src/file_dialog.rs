@@ -664,6 +664,13 @@ impl FileDialog {
         self
     }
 
+    /// Sets if pinned folders should be listed in the left sidebar.
+    /// Disabling this will also disable the functionality to pin a folder.
+    pub fn show_pinned_folders(mut self, show_pinned_folders: bool) -> Self {
+        self.config.show_pinned_folders = show_pinned_folders;
+        self
+    }
+
     /// Sets if the "Places" section should be visible in the left sidebar.
     /// The Places section contains the user directories such as Home or Documents.
     ///
