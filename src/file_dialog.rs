@@ -1158,115 +1158,72 @@ impl FileDialog {
         });
     }
 
+    /// Updates a path entry in the left panel.
+    fn ui_update_left_panel_entry(&mut self, ui: &mut egui::Ui, display_name: &str, path: &Path) {
+        if ui
+            .selectable_label(self.current_directory() == Some(path), display_name)
+            .clicked()
+        {
+            let _ = self.load_directory(path);
+        }
+    }
+
     /// Updates a custom quick access section added to the left panel.
     fn ui_update_quick_access(&mut self, ui: &mut egui::Ui, quick_access: &QuickAccess) {
         ui.label(&quick_access.heading);
 
         for entry in &quick_access.paths {
-            if ui
-                .selectable_label(
-                    self.current_directory() == Some(&entry.path),
-                    &entry.display_name,
-                )
-                .clicked()
-            {
-                let _ = self.load_directory(&entry.path);
-            }
+            self.ui_update_left_panel_entry(ui, &entry.display_name, &entry.path);
         }
     }
 
-    /// Updates the list of the user directories (Places).
+    /// Updates the list of user directories (Places).
     ///
     /// Returns true if at least one directory was included in the list and the
     /// heading is visible. If no directory was listed, false is returned.
     fn ui_update_user_directories(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
-        if let Some(dirs) = self.user_directories.clone() {
+        // Take temporary ownership of the user directories and configuration.
+        // This is done so that we don't have to clone the user directories and
+        // configured display names.
+        let user_directories = std::mem::take(&mut self.user_directories);
+        let config = std::mem::take(&mut self.config);
+
+        let mut visible = false;
+
+        if let Some(dirs) = &user_directories {
             ui.add_space(spacing);
             ui.label(self.config.labels.heading_places.as_str());
 
             if let Some(path) = dirs.home_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.home_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.home_dir, path);
             }
 
             if let Some(path) = dirs.desktop_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.desktop_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.desktop_dir, path);
             }
             if let Some(path) = dirs.document_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.documents_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.documents_dir, path);
             }
             if let Some(path) = dirs.download_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.downloads_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.downloads_dir, path);
             }
             if let Some(path) = dirs.audio_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.audio_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.audio_dir, path);
             }
             if let Some(path) = dirs.picture_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.pictures_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.pictures_dir, path);
             }
             if let Some(path) = dirs.video_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.videos_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.videos_dir, path);
             }
 
-            return true;
+            visible = true;
         }
 
-        false
+        self.user_directories = user_directories;
+        self.config = config;
+
+        visible
     }
 
     /// Updates the list of devices like system disks
@@ -1290,7 +1247,7 @@ impl FileDialog {
         visible
     }
 
-    /// Updates the list of removable devices like USB drives
+    /// Updates the list of removable devices like USB drives.
     ///
     /// Returns true if at least one device was included in the list and the
     /// heading is visible. If no device was listed, false is returned.
@@ -1327,9 +1284,7 @@ impl FileDialog {
             false => format!("{}  {}", self.config.device_icon, device.display_name()),
         };
 
-        if ui.selectable_label(false, label).clicked() {
-            let _ = self.load_directory(device.mount_point());
-        }
+        self.ui_update_left_panel_entry(ui, &label, device.mount_point());
     }
 
     /// Updates the bottom panel showing the selected item and main action buttons.
