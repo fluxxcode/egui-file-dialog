@@ -1,6 +1,9 @@
 # egui-file-dialog changelog
 
 ## [Unreleased] - v0.5.0 - [TODO]
+### 🚨 Breaking Changes
+- Updated `egui` from version `0.26.0` to version `0.27.1` [#97](https://github.com/fluxxcode/egui-file-dialog/pull/97)
+
 ### ✨ Features
 - Added `FileDialog::add_quick_access` and `FileDialogConfig::add_quick_access` to add your own quick access sections to the left sidebar [#95](https://github.com/fluxxcode/egui-file-dialog/pull/95)
 
