@@ -30,6 +30,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
   - Customize which areas and functions of the dialog are visible
   - Customize the text labels used by the dialog to enable multilingual support
   - Customize file and folder icons
+  - Add custom quick access sections to the left sidebar
 
 ## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
@@ -49,7 +50,7 @@ Cargo.toml:
 ```toml
 [dependencies]
 eframe = "0.27.1"
-egui-file-dialog = "0.4.0"
+egui-file-dialog = "0.5.0"
 ```
 
 main.rs:
