@@ -1447,6 +1447,12 @@ impl FileDialog {
                         let response =
                             ui.selectable_label(selected, format!("{} {}", path.icon(), file_name));
 
+                        if path.is_dir() {
+                            response.context_menu(|ui| {
+                                ui.label("Pin folder");
+                            });
+                        }
+
                         if selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
                         }
