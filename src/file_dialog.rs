@@ -1065,6 +1065,7 @@ impl FileDialog {
                 });
             });
     }
+
     /// Focuses and types into the filter input, if text input without
     /// shortcut modifiers is detected, and no other inputs are focused.
     ///
@@ -1072,7 +1073,7 @@ impl FileDialog {
     ///
     /// - `re`: The [`egui::Response`] returned by the filter text edit widget
     fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
-        let any_focused = ui.memory(|mem| mem.focus().is_some());
+        let any_focused = ui.memory(|mem| mem.focused().is_some());
         if any_focused {
             return;
         }
