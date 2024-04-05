@@ -30,6 +30,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
   - Customize which areas and functions of the dialog are visible
   - Customize the text labels used by the dialog to enable multilingual support
   - Customize file and folder icons
+  - Add custom quick access sections to the left sidebar
 
 ## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
@@ -48,8 +49,8 @@ The following example shows the basic use of the file dialog with [eframe](https
 Cargo.toml:
 ```toml
 [dependencies]
-eframe = "0.26.0"
-egui-file-dialog = "0.4.0"
+eframe = "0.27.1"
+egui-file-dialog = "0.5.0"
 ```
 
 main.rs:
