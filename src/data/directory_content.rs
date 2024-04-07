@@ -50,6 +50,11 @@ impl DirectoryEntry {
     }
 
     /// Returns the path of the directory item.
+    pub fn as_path(&self) -> &Path {
+        &self.path
+    }
+
+    /// Clones the path of the directory item.
     pub fn to_path_buf(&self) -> PathBuf {
         self.path.clone()
     }

@@ -79,6 +79,8 @@ pub struct FileDialog {
     /// This ID is not used internally.
     operation_id: Option<String>,
 
+    /// The folders the user pinned to the left sidebar.
+    pinned_folders: Vec<DirectoryEntry>,
     /// The user directories like Home or Documents.
     /// These are loaded once when the dialog is created or when the refresh() method is called.
     user_directories: Option<UserDirectories>,
@@ -146,6 +148,7 @@ impl FileDialog {
             show_files: true,
             operation_id: None,
 
+            pinned_folders: Vec::new(),
             user_directories: UserDirectories::new(true),
             system_disks: Disks::new_with_refreshed_list(true),
 
@@ -1123,7 +1126,16 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
+                    // Spacing for the first section in the left sidebar
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
+
+                    // Spacing multiplier used between sections in the left sidebar
+                    const SPACING_MULTIPLIER: f32 = 4.0;
+
+                    // Update paths pinned to the left sidebar by the user
+                    if self.ui_update_pinned_paths(ui, spacing) {
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
+                    }
 
                     // Update custom quick access sections
                     let quick_accesses = std::mem::take(&mut self.config.quick_accesses);
@@ -1131,27 +1143,27 @@ impl FileDialog {
                     for quick_access in &quick_accesses {
                         ui.add_space(spacing);
                         self.ui_update_quick_access(ui, quick_access);
-                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     self.config.quick_accesses = quick_accesses;
 
                     // Update native quick access sections
                     if self.config.show_places && self.ui_update_user_directories(ui, spacing) {
-                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     let disks = std::mem::take(&mut self.system_disks);
 
                     if self.config.show_devices && self.ui_update_devices(ui, spacing, &disks) {
-                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     if self.config.show_removable_devices
                         && self.ui_update_removable_devices(ui, spacing, &disks)
                     {
                         // Add this when we add a new section after removable devices
-                        // spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        // spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     self.system_disks = disks;
@@ -1176,6 +1188,35 @@ impl FileDialog {
         for entry in &quick_access.paths {
             self.ui_update_left_panel_entry(ui, &entry.display_name, &entry.path);
         }
+    }
+
+    /// Updates the list of pinned folders.
+    ///
+    /// Returns true if at least one directory item was included in the list and the
+    /// heading is visible. If no item was listed, false is returned.
+    fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
+        let mut visible = false;
+
+        let pinned_folders = std::mem::take(&mut self.pinned_folders);
+
+        for (i, path) in pinned_folders.iter().enumerate() {
+            if i == 0 {
+                ui.add_space(spacing);
+                ui.label(self.config.labels.heading_pinned.as_str());
+
+                visible = true;
+            }
+
+            self.ui_update_left_panel_entry(
+                ui,
+                &format!("{}  {}", self.config.pinned_icon, path.file_name()),
+                path.as_path(),
+            );
+        }
+
+        self.pinned_folders = pinned_folders;
+
+        visible
     }
 
     /// Updates the list of user directories (Places).
@@ -1450,7 +1491,19 @@ impl FileDialog {
 
                         if path.is_dir() {
                             response.context_menu(|ui| {
-                                ui.label("Pin folder");
+                                if self.is_pinned(path) {
+                                    if ui.button(&self.config.labels.pin_folder).clicked() {
+                                        self.pin_path(path.clone());
+                                        ui.close_menu();
+                                    }
+                                } else {
+                                    if ui.button(&self.config.labels.unpin_folder).clicked() {
+                                        self.unpin_path(path);
+                                        ui.close_menu();
+                                    }
+                                }
+
+                                self.select_item(path);
                             });
                         }
 
@@ -1542,6 +1595,21 @@ impl FileDialog {
             true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
             false => path.to_path_buf(),
         }
+    }
+
+    /// Pins a path to the left sidebar.
+    fn pin_path(&mut self, path: DirectoryEntry) {
+        self.pinned_folders.push(path);
+    }
+
+    /// Unpins a path from the left sidebar.
+    fn unpin_path(&mut self, path: &DirectoryEntry) {
+        self.pinned_folders.retain(|p| p != path);
+    }
+
+    /// Checks if the path is pinned to the left sidebar.
+    fn is_pinned(&self, path: &DirectoryEntry) -> bool {
+        !self.pinned_folders.iter().any(|p| path == p)
     }
 
     /// Resets the dialog to use default values.
