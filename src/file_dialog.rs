@@ -1205,9 +1205,7 @@ impl FileDialog {
     fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
-        let pinned_folders = std::mem::take(&mut self.pinned_folders);
-
-        for (i, path) in pinned_folders.iter().enumerate() {
+        for (i, path) in self.pinned_folders.clone().iter().enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label(self.config.labels.heading_pinned.as_str());
@@ -1221,27 +1219,8 @@ impl FileDialog {
                 path.as_path(),
             );
 
-            let mut exit = false;
-
-            response.context_menu(|ui| {
-                if ui.button(&self.config.labels.unpin_folder).clicked() {
-                    self.pinned_folders = pinned_folders.clone();
-
-                    self.unpin_path(path);
-                    ui.close_menu();
-
-                    // We need to return so we don't overwrite the pinned folders
-                    // with `self.pinned_folders = pinned_folders` after the for loop.
-                    exit = true;
-                }
-            });
-
-            if exit {
-                return true;
-            }
+            self.ui_update_path_context_menu(&response, path);
         }
-
-        self.pinned_folders = pinned_folders;
 
         visible
     }
@@ -1524,21 +1503,11 @@ impl FileDialog {
                         let response = ui.selectable_label(selected, label);
 
                         if path.is_dir() {
-                            response.context_menu(|ui| {
-                                if pinned {
-                                    if ui.button(&self.config.labels.unpin_folder).clicked() {
-                                        self.unpin_path(path);
-                                        ui.close_menu();
-                                    }
-                                } else {
-                                    if ui.button(&self.config.labels.pin_folder).clicked() {
-                                        self.pin_path(path.clone());
-                                        ui.close_menu();
-                                    }
-                                }
+                            self.ui_update_path_context_menu(&response, path);
 
+                            if response.context_menu_opened() {
                                 self.select_item(path);
-                            });
+                            }
                         }
 
                         if selected && self.scroll_to_selection {
@@ -1617,6 +1586,36 @@ impl FileDialog {
         });
 
         clicked
+    }
+
+    /// Updates the context menu of a path.
+    ///
+    /// # Arguments
+    ///
+    /// * `item_response` - The response of the egui item for which the context menu should
+    ///                     be opened.
+    /// * `path` - The path for which the context menu should be opened.
+    fn ui_update_path_context_menu(
+        &mut self,
+        item_response: &egui::Response,
+        path: &DirectoryEntry,
+    ) {
+        item_response.context_menu(|ui| {
+            // TODO: We definitely want to save the pinned status in the DirectoryEntry object!
+            let pinned = self.is_pinned(path);
+
+            if pinned {
+                if ui.button(&self.config.labels.unpin_folder).clicked() {
+                    self.unpin_path(path);
+                    ui.close_menu();
+                }
+            } else {
+                if ui.button(&self.config.labels.pin_folder).clicked() {
+                    self.pin_path(path.clone());
+                    ui.close_menu();
+                }
+            }
+        });
     }
 }
 
