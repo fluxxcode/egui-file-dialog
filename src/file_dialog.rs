@@ -1172,13 +1172,21 @@ impl FileDialog {
     }
 
     /// Updates a path entry in the left panel.
-    fn ui_update_left_panel_entry(&mut self, ui: &mut egui::Ui, display_name: &str, path: &Path) {
-        if ui
-            .selectable_label(self.current_directory() == Some(path), display_name)
-            .clicked()
-        {
+    ///
+    /// Returns the response of the selectable label.
+    fn ui_update_left_panel_entry(
+        &mut self,
+        ui: &mut egui::Ui,
+        display_name: &str,
+        path: &Path,
+    ) -> egui::Response {
+        let response = ui.selectable_label(self.current_directory() == Some(path), display_name);
+
+        if response.clicked() {
             let _ = self.load_directory(path);
         }
+
+        response
     }
 
     /// Updates a custom quick access section added to the left panel.
@@ -1207,11 +1215,30 @@ impl FileDialog {
                 visible = true;
             }
 
-            self.ui_update_left_panel_entry(
+            let response = self.ui_update_left_panel_entry(
                 ui,
                 &format!("{}  {}", self.config.pinned_icon, path.file_name()),
                 path.as_path(),
             );
+
+            let mut exit = false;
+
+            response.context_menu(|ui| {
+                if ui.button(&self.config.labels.unpin_folder).clicked() {
+                    self.pinned_folders = pinned_folders.clone();
+
+                    self.unpin_path(path);
+                    ui.close_menu();
+
+                    // We need to return so we don't overwrite the pinned folders
+                    // with `self.pinned_folders = pinned_folders` after the for loop.
+                    exit = true;
+                }
+            });
+
+            if exit {
+                return true;
+            }
         }
 
         self.pinned_folders = pinned_folders;
