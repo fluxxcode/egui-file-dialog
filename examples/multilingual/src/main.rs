@@ -15,6 +15,7 @@ fn get_labels_german() -> FileDialogLabels {
         title_select_file: "📂 Datei Öffnen".to_string(),
         title_save_file: "📥 Datei Speichern".to_string(),
 
+        heading_pinned: "Angeheftet".to_string(),
         heading_places: "Orte".to_string(),
         heading_devices: "Medien".to_string(),
         heading_removable_devices: "Wechselmedien".to_string(),
@@ -26,6 +27,9 @@ fn get_labels_german() -> FileDialogLabels {
         audio_dir: "🎵  Audio".to_string(),
         pictures_dir: "🖼  Fotos".to_string(),
         videos_dir: "🎞  Videos".to_string(),
+
+        pin_folder: "📌 Ordner anheften".to_string(),
+        unpin_folder: "✖ Ordner loslösen".to_string(),
 
         selected_directory: "Ausgewählter Ordner:".to_string(),
         selected_file: "Ausgewählte Datei:".to_string(),
