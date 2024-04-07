@@ -1513,19 +1513,26 @@ impl FileDialog {
                             selected = x == path;
                         }
 
-                        let response =
-                            ui.selectable_label(selected, format!("{} {}", path.icon(), file_name));
+                        let pinned = self.is_pinned(path);
+                        let label = match pinned {
+                            true => {
+                                format!("{} {} {}", path.icon(), self.config.pinned_icon, file_name)
+                            }
+                            false => format!("{} {}", path.icon(), file_name),
+                        };
+
+                        let response = ui.selectable_label(selected, label);
 
                         if path.is_dir() {
                             response.context_menu(|ui| {
-                                if self.is_pinned(path) {
-                                    if ui.button(&self.config.labels.pin_folder).clicked() {
-                                        self.pin_path(path.clone());
+                                if pinned {
+                                    if ui.button(&self.config.labels.unpin_folder).clicked() {
+                                        self.unpin_path(path);
                                         ui.close_menu();
                                     }
                                 } else {
-                                    if ui.button(&self.config.labels.unpin_folder).clicked() {
-                                        self.unpin_path(path);
+                                    if ui.button(&self.config.labels.pin_folder).clicked() {
+                                        self.pin_path(path.clone());
                                         ui.close_menu();
                                     }
                                 }
@@ -1636,7 +1643,7 @@ impl FileDialog {
 
     /// Checks if the path is pinned to the left sidebar.
     fn is_pinned(&self, path: &DirectoryEntry) -> bool {
-        !self.pinned_folders.iter().any(|p| path == p)
+        self.pinned_folders.iter().any(|p| path == p)
     }
 
     /// Resets the dialog to use default values.
