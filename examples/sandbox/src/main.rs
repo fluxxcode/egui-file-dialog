@@ -12,7 +12,7 @@ struct MyApp {
 }
 
 impl MyApp {
-    pub fn new(_cc: &eframe::CreationContext) -> Self {
+    pub fn new(cc: &eframe::CreationContext) -> Self {
         let mut file_dialog = FileDialog::new()
             .add_quick_access("Project", |s| {
                 s.add_path("☆  Examples", "examples");
@@ -21,7 +21,7 @@ impl MyApp {
             })
             .id("egui_file_dialog");
 
-        if let Some(storage) = _cc.storage {
+        if let Some(storage) = cc.storage {
             *file_dialog.storage_mut() =
                 eframe::get_value(storage, "file_dialog_storage").unwrap_or_default()
         }
