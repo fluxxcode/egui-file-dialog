@@ -1132,7 +1132,7 @@ impl FileDialog {
                     const SPACING_MULTIPLIER: f32 = 4.0;
 
                     // Update paths pinned to the left sidebar by the user
-                    if self.ui_update_pinned_paths(ui, spacing) {
+                    if self.config.show_pinned_folders && self.ui_update_pinned_paths(ui, spacing) {
                         spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
@@ -1599,6 +1599,11 @@ impl FileDialog {
         item_response: &egui::Response,
         path: &DirectoryEntry,
     ) {
+        // Path context menus are currently only used for pinned folders.
+        if !self.config.show_pinned_folders {
+            return;
+        }
+
         item_response.context_menu(|ui| {
             // TODO: We definitely want to save the pinned status in the DirectoryEntry object!
             let pinned = self.is_pinned(path);
