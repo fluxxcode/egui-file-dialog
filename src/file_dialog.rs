@@ -1029,18 +1029,17 @@ impl FileDialog {
             self.path_edit_request_focus = false;
         }
 
+        let btn_response = ui.add_sized(edit_button_size, egui::Button::new("✔"));
+
+        if btn_response.clicked() {
+            self.load_path_edit_directory(true);
+        }
+
         if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
             self.path_edit_request_focus = true;
             self.load_path_edit_directory(false);
-        } else if !response.has_focus() {
+        } else if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
-        }
-
-        if ui
-            .add_sized(edit_button_size, egui::Button::new("✔"))
-            .clicked()
-        {
-            self.load_path_edit_directory(true);
         }
     }
 
