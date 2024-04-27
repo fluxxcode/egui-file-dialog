@@ -1620,7 +1620,6 @@ impl FileDialog {
         }
 
         item_response.context_menu(|ui| {
-            // TODO: We definitely want to save the pinned status in the DirectoryEntry object!
             let pinned = self.is_pinned(path);
 
             if pinned {
