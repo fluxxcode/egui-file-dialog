@@ -37,7 +37,8 @@ pub enum DialogState {
 }
 
 /// Contains data of the FileDialog that should be stored persistently.
-struct FileDialogStorage {
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
     pub pinned_folders: Vec<DirectoryEntry>,
 }
@@ -50,6 +51,18 @@ impl Default for FileDialogStorage {
         }
     }
 }
+
+// TODO: Either implement or remove before merge!
+
+// impl FileDialogStorage {
+//     pub fn load(ctx: &egui::Context, id: egui::Id) -> Self {
+//         ctx.data_mut(|d| d.get_persisted::<FileDialogStorage>(id).unwrap_or_default())
+//     }
+
+//     pub fn save(&self, ctx: &egui::Context, id: egui::Id) {
+//         ctx.data_mut(|d| d.insert_persisted(id, self.clone()));
+//     }
+// }
 
 /// Represents a file dialog instance.
 ///
@@ -323,6 +336,11 @@ impl FileDialog {
 
     // -------------------------------------------------
     // Setter:
+
+    /// Mutably borrow internal storage.
+    pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
+        &mut self.storage
+    }
 
     /// Overwrites the configuration of the file dialog.
     ///

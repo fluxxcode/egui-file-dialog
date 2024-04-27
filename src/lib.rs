@@ -161,4 +161,4 @@ mod data;
 mod file_dialog;
 
 pub use config::{FileDialogConfig, FileDialogLabels};
-pub use file_dialog::{DialogMode, DialogState, FileDialog};
+pub use file_dialog::{DialogMode, DialogState, FileDialog, FileDialogStorage};
