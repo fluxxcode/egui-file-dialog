@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## Unreleased - v0.6.0
+### 🐛 Bug Fixes
+- Fixed the size of the path edit input box and fixed an issue where the path edit would not close when clicking the apply button [#102](https://github.com/fluxxcode/egui-file-dialog/pull/102)
+
 ## 2024-03-30 - v0.5.0 - egui update and QoL changes
 ### 🚨 Breaking Changes
 - Updated `egui` from version `0.26.0` to version `0.27.1` [#97](https://github.com/fluxxcode/egui-file-dialog/pull/97)
