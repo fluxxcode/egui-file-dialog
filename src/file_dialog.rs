@@ -1608,11 +1608,9 @@ impl FileDialog {
                     self.unpin_path(path);
                     ui.close_menu();
                 }
-            } else {
-                if ui.button(&self.config.labels.pin_folder).clicked() {
-                    self.pin_path(path.clone());
-                    ui.close_menu();
-                }
+            } else if ui.button(&self.config.labels.pin_folder).clicked() {
+                self.pin_path(path.clone());
+                ui.close_menu();
             }
         });
     }
