@@ -27,7 +27,7 @@ impl MyApp {
         }
 
         Self {
-            file_dialog: file_dialog,
+            file_dialog,
 
             selected_directory: None,
             selected_file: None,
