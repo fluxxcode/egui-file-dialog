@@ -38,7 +38,11 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, "file_dialog_storage", self.file_dialog.storage_mut());
+        eframe::set_value(
+            storage,
+            "file_dialog_storage",
+            self.file_dialog.storage_mut(),
+        );
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
