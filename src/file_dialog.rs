@@ -36,6 +36,21 @@ pub enum DialogState {
     Cancelled,
 }
 
+/// Contains data of the FileDialog that should be stored persistently.
+struct FileDialogStorage {
+    /// The folders the user pinned to the left sidebar.
+    pub pinned_folders: Vec<DirectoryEntry>,
+}
+
+impl Default for FileDialogStorage {
+    /// Creates a new object with default values
+    fn default() -> Self {
+        Self {
+            pinned_folders: Vec::new(),
+        }
+    }
+}
+
 /// Represents a file dialog instance.
 ///
 /// The `FileDialog` instance can be used multiple times and for different actions.
@@ -64,6 +79,8 @@ pub enum DialogState {
 pub struct FileDialog {
     /// The configuration of the file dialog
     config: FileDialogConfig,
+    /// Persistent data of the file dialog
+    storage: FileDialogStorage,
 
     /// The mode the dialog is currently in
     mode: DialogMode,
@@ -140,6 +157,7 @@ impl FileDialog {
     pub fn new() -> Self {
         Self {
             config: FileDialogConfig::default(),
+            storage: FileDialogStorage::default(),
 
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
@@ -664,6 +682,13 @@ impl FileDialog {
         self
     }
 
+    /// Sets if pinned folders should be listed in the left sidebar.
+    /// Disabling this will also disable the functionality to pin a folder.
+    pub fn show_pinned_folders(mut self, show_pinned_folders: bool) -> Self {
+        self.config.show_pinned_folders = show_pinned_folders;
+        self
+    }
+
     /// Sets if the "Places" section should be visible in the left sidebar.
     /// The Places section contains the user directories such as Home or Documents.
     ///
@@ -1115,7 +1140,16 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
+                    // Spacing for the first section in the left sidebar
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
+
+                    // Spacing multiplier used between sections in the left sidebar
+                    const SPACING_MULTIPLIER: f32 = 4.0;
+
+                    // Update paths pinned to the left sidebar by the user
+                    if self.config.show_pinned_folders && self.ui_update_pinned_paths(ui, spacing) {
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
+                    }
 
                     // Update custom quick access sections
                     let quick_accesses = std::mem::take(&mut self.config.quick_accesses);
@@ -1123,27 +1157,27 @@ impl FileDialog {
                     for quick_access in &quick_accesses {
                         ui.add_space(spacing);
                         self.ui_update_quick_access(ui, quick_access);
-                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     self.config.quick_accesses = quick_accesses;
 
                     // Update native quick access sections
                     if self.config.show_places && self.ui_update_user_directories(ui, spacing) {
-                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     let disks = std::mem::take(&mut self.system_disks);
 
                     if self.config.show_devices && self.ui_update_devices(ui, spacing, &disks) {
-                        spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     if self.config.show_removable_devices
                         && self.ui_update_removable_devices(ui, spacing, &disks)
                     {
                         // Add this when we add a new section after removable devices
-                        // spacing = ui.ctx().style().spacing.item_spacing.y * 4.0;
+                        // spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
                     self.system_disks = disks;
@@ -1151,115 +1185,107 @@ impl FileDialog {
         });
     }
 
+    /// Updates a path entry in the left panel.
+    ///
+    /// Returns the response of the selectable label.
+    fn ui_update_left_panel_entry(
+        &mut self,
+        ui: &mut egui::Ui,
+        display_name: &str,
+        path: &Path,
+    ) -> egui::Response {
+        let response = ui.selectable_label(self.current_directory() == Some(path), display_name);
+
+        if response.clicked() {
+            let _ = self.load_directory(path);
+        }
+
+        response
+    }
+
     /// Updates a custom quick access section added to the left panel.
     fn ui_update_quick_access(&mut self, ui: &mut egui::Ui, quick_access: &QuickAccess) {
         ui.label(&quick_access.heading);
 
         for entry in &quick_access.paths {
-            if ui
-                .selectable_label(
-                    self.current_directory() == Some(&entry.path),
-                    &entry.display_name,
-                )
-                .clicked()
-            {
-                let _ = self.load_directory(&entry.path);
-            }
+            self.ui_update_left_panel_entry(ui, &entry.display_name, &entry.path);
         }
     }
 
-    /// Updates the list of the user directories (Places).
+    /// Updates the list of pinned folders.
+    ///
+    /// Returns true if at least one directory item was included in the list and the
+    /// heading is visible. If no item was listed, false is returned.
+    fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
+        let mut visible = false;
+
+        for (i, path) in self.storage.pinned_folders.clone().iter().enumerate() {
+            if i == 0 {
+                ui.add_space(spacing);
+                ui.label(self.config.labels.heading_pinned.as_str());
+
+                visible = true;
+            }
+
+            let response = self.ui_update_left_panel_entry(
+                ui,
+                &format!("{}  {}", self.config.pinned_icon, path.file_name()),
+                path.as_path(),
+            );
+
+            self.ui_update_path_context_menu(&response, path);
+        }
+
+        visible
+    }
+
+    /// Updates the list of user directories (Places).
     ///
     /// Returns true if at least one directory was included in the list and the
     /// heading is visible. If no directory was listed, false is returned.
     fn ui_update_user_directories(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
-        if let Some(dirs) = self.user_directories.clone() {
+        // Take temporary ownership of the user directories and configuration.
+        // This is done so that we don't have to clone the user directories and
+        // configured display names.
+        let user_directories = std::mem::take(&mut self.user_directories);
+        let config = std::mem::take(&mut self.config);
+
+        let mut visible = false;
+
+        if let Some(dirs) = &user_directories {
             ui.add_space(spacing);
             ui.label(self.config.labels.heading_places.as_str());
 
             if let Some(path) = dirs.home_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.home_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.home_dir, path);
             }
 
             if let Some(path) = dirs.desktop_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.desktop_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.desktop_dir, path);
             }
             if let Some(path) = dirs.document_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.documents_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.documents_dir, path);
             }
             if let Some(path) = dirs.download_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.downloads_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.downloads_dir, path);
             }
             if let Some(path) = dirs.audio_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.audio_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.audio_dir, path);
             }
             if let Some(path) = dirs.picture_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.pictures_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.pictures_dir, path);
             }
             if let Some(path) = dirs.video_dir() {
-                if ui
-                    .selectable_label(
-                        self.current_directory() == Some(path),
-                        self.config.labels.videos_dir.as_str(),
-                    )
-                    .clicked()
-                {
-                    let _ = self.load_directory(path);
-                }
+                self.ui_update_left_panel_entry(ui, &config.labels.videos_dir, path);
             }
 
-            return true;
+            visible = true;
         }
 
-        false
+        self.user_directories = user_directories;
+        self.config = config;
+
+        visible
     }
 
     /// Updates the list of devices like system disks
@@ -1283,7 +1309,7 @@ impl FileDialog {
         visible
     }
 
-    /// Updates the list of removable devices like USB drives
+    /// Updates the list of removable devices like USB drives.
     ///
     /// Returns true if at least one device was included in the list and the
     /// heading is visible. If no device was listed, false is returned.
@@ -1320,9 +1346,7 @@ impl FileDialog {
             false => format!("{}  {}", self.config.device_icon, device.display_name()),
         };
 
-        if ui.selectable_label(false, label).clicked() {
-            let _ = self.load_directory(device.mount_point());
-        }
+        self.ui_update_left_panel_entry(ui, &label, device.mount_point());
     }
 
     /// Updates the bottom panel showing the selected item and main action buttons.
@@ -1482,8 +1506,23 @@ impl FileDialog {
                             selected = x == path;
                         }
 
-                        let response =
-                            ui.selectable_label(selected, format!("{} {}", path.icon(), file_name));
+                        let pinned = self.is_pinned(path);
+                        let label = match pinned {
+                            true => {
+                                format!("{} {} {}", path.icon(), self.config.pinned_icon, file_name)
+                            }
+                            false => format!("{} {}", path.icon(), file_name),
+                        };
+
+                        let response = ui.selectable_label(selected, label);
+
+                        if path.is_dir() {
+                            self.ui_update_path_context_menu(&response, path);
+
+                            if response.context_menu_opened() {
+                                self.select_item(path);
+                            }
+                        }
 
                         if selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
@@ -1562,6 +1601,38 @@ impl FileDialog {
 
         clicked
     }
+
+    /// Updates the context menu of a path.
+    ///
+    /// # Arguments
+    ///
+    /// * `item_response` - The response of the egui item for which the context menu should
+    ///                     be opened.
+    /// * `path` - The path for which the context menu should be opened.
+    fn ui_update_path_context_menu(
+        &mut self,
+        item_response: &egui::Response,
+        path: &DirectoryEntry,
+    ) {
+        // Path context menus are currently only used for pinned folders.
+        if !self.config.show_pinned_folders {
+            return;
+        }
+
+        item_response.context_menu(|ui| {
+            let pinned = self.is_pinned(path);
+
+            if pinned {
+                if ui.button(&self.config.labels.unpin_folder).clicked() {
+                    self.unpin_path(path);
+                    ui.close_menu();
+                }
+            } else if ui.button(&self.config.labels.pin_folder).clicked() {
+                self.pin_path(path.clone());
+                ui.close_menu();
+            }
+        });
+    }
 }
 
 /// Implementation
@@ -1573,6 +1644,21 @@ impl FileDialog {
             true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
             false => path.to_path_buf(),
         }
+    }
+
+    /// Pins a path to the left sidebar.
+    fn pin_path(&mut self, path: DirectoryEntry) {
+        self.storage.pinned_folders.push(path);
+    }
+
+    /// Unpins a path from the left sidebar.
+    fn unpin_path(&mut self, path: &DirectoryEntry) {
+        self.storage.pinned_folders.retain(|p| p != path);
+    }
+
+    /// Checks if the path is pinned to the left sidebar.
+    fn is_pinned(&self, path: &DirectoryEntry) -> bool {
+        self.storage.pinned_folders.iter().any(|p| path == p)
     }
 
     /// Resets the dialog to use default values.

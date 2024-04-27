@@ -111,6 +111,8 @@ pub struct FileDialogConfig {
     pub default_file_icon: String,
     /// The default icon used to display folders.
     pub default_folder_icon: String,
+    /// The icon used to display pinned paths in the left panel.
+    pub pinned_icon: String,
     /// The icon used to display devices in the left panel.
     pub device_icon: String,
     /// The icon used to display removable devices in the left panel.
@@ -175,6 +177,9 @@ pub struct FileDialogConfig {
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub show_left_panel: bool,
+    /// If pinned folders should be listed in the left sidebar.
+    /// Disabling this will also disable the functionality to pin a folder.
+    pub show_pinned_folders: bool,
     /// If the Places section in the left sidebar should be visible.
     pub show_places: bool,
     /// If the Devices section in the left sidebar should be visible.
@@ -196,6 +201,7 @@ impl Default for FileDialogConfig {
             err_icon: String::from("⚠"),
             default_file_icon: String::from("🗋"),
             default_folder_icon: String::from("🗀"),
+            pinned_icon: String::from("📌"),
             device_icon: String::from("🖴"),
             removable_device_icon: String::from("💾"),
 
@@ -226,6 +232,7 @@ impl Default for FileDialogConfig {
             show_search: true,
 
             show_left_panel: true,
+            show_pinned_folders: true,
             show_places: true,
             show_devices: true,
             show_removable_devices: true,
@@ -327,6 +334,8 @@ pub struct FileDialogLabels {
 
     // ------------------------------------------------------------------------
     // Left panel:
+    /// Heading of the "Pinned" sections in the left panel
+    pub heading_pinned: String,
     /// Heading of the "Places" section in the left panel
     pub heading_places: String,
     /// Heading of the "Devices" section in the left panel
@@ -348,6 +357,13 @@ pub struct FileDialogLabels {
     pub pictures_dir: String,
     /// Name of the videos directory
     pub videos_dir: String,
+
+    // ------------------------------------------------------------------------
+    // Central panel:
+    /// Text used for the option to pin a folder.
+    pub pin_folder: String,
+    /// Text used for the option to unpin a folder.
+    pub unpin_folder: String,
 
     // ------------------------------------------------------------------------
     // Bottom panel:
@@ -385,6 +401,7 @@ impl Default for FileDialogLabels {
             title_select_file: "📂 Open File".to_string(),
             title_save_file: "📥 Save File".to_string(),
 
+            heading_pinned: "Pinned".to_string(),
             heading_places: "Places".to_string(),
             heading_devices: "Devices".to_string(),
             heading_removable_devices: "Removable Devices".to_string(),
@@ -396,6 +413,9 @@ impl Default for FileDialogLabels {
             audio_dir: "🎵  Audio".to_string(),
             pictures_dir: "🖼  Pictures".to_string(),
             videos_dir: "🎞  Videos".to_string(),
+
+            pin_folder: "📌 Pin folder".to_string(),
+            unpin_folder: "✖ Unpin folder".to_string(),
 
             selected_directory: "Selected directory:".to_string(),
             selected_file: "Selected file:".to_string(),
