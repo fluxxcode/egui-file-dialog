@@ -4,6 +4,9 @@
 ### ✨ Features
 - Added the ability to pin folders to the left sidebar and enable or disable the feature with `FileDialog::show_pinned_folders` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100)
 
+### ☢️ Deprecated
+- Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)
+
 ### 🐛 Bug Fixes
 - Fixed the size of the path edit input box and fixed an issue where the path edit would not close when clicking the apply button [#102](https://github.com/fluxxcode/egui-file-dialog/pull/102)
 
