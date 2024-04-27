@@ -61,8 +61,7 @@ impl QuickAccess {
 
 /// Contains configuration values of a file dialog.
 ///
-/// The configuration of a file dialog can be set using
-/// `FileDialog::with_config` or `FileDialog::overwrite_config`.
+/// The configuration of a file dialog can be set using `FileDialog::with_config`.
 ///
 /// If you only need to configure a single file dialog, you don't need to
 /// manually use a `FileDialogConfig` object. `FileDialog` provides setter methods for

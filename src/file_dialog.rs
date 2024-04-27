@@ -189,7 +189,9 @@ impl FileDialog {
 
     /// Creates a new file dialog object and initializes it with the specified configuration.
     pub fn with_config(config: FileDialogConfig) -> Self {
-        Self::new().overwrite_config(config)
+        let mut obj = Self::new();
+        *obj.config_mut() = config;
+        obj
     }
 
     // -------------------------------------------------
@@ -380,6 +382,10 @@ impl FileDialog {
     ///     }
     /// }
     /// ```
+    #[deprecated(
+        since = "0.6.0",
+        note = "use `FileDialog::with_config` and `FileDialog::config_mut` instead"
+    )]
     pub fn overwrite_config(mut self, config: FileDialogConfig) -> Self {
         self.config = config;
         self
