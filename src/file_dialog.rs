@@ -37,12 +37,12 @@ pub enum DialogState {
 }
 
 /// Contains data of the FileDialog that should be stored persistently.
-struct FileDialogPersistentData {
+struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
     pub pinned_folders: Vec<DirectoryEntry>,
 }
 
-impl Default for FileDialogPersistentData {
+impl Default for FileDialogStorage {
     /// Creates a new object with default values
     fn default() -> Self {
         Self {
@@ -80,7 +80,7 @@ pub struct FileDialog {
     /// The configuration of the file dialog
     config: FileDialogConfig,
     /// Persistent data of the file dialog
-    persistent_data: FileDialogPersistentData,
+    storage: FileDialogStorage,
 
     /// The mode the dialog is currently in
     mode: DialogMode,
@@ -157,7 +157,7 @@ impl FileDialog {
     pub fn new() -> Self {
         Self {
             config: FileDialogConfig::default(),
-            persistent_data: FileDialogPersistentData::default(),
+            storage: FileDialogStorage::default(),
 
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
@@ -1219,13 +1219,7 @@ impl FileDialog {
     fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
-        for (i, path) in self
-            .persistent_data
-            .pinned_folders
-            .clone()
-            .iter()
-            .enumerate()
-        {
+        for (i, path) in self.storage.pinned_folders.clone().iter().enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label(self.config.labels.heading_pinned.as_str());
@@ -1655,20 +1649,17 @@ impl FileDialog {
 
     /// Pins a path to the left sidebar.
     fn pin_path(&mut self, path: DirectoryEntry) {
-        self.persistent_data.pinned_folders.push(path);
+        self.storage.pinned_folders.push(path);
     }
 
     /// Unpins a path from the left sidebar.
     fn unpin_path(&mut self, path: &DirectoryEntry) {
-        self.persistent_data.pinned_folders.retain(|p| p != path);
+        self.storage.pinned_folders.retain(|p| p != path);
     }
 
     /// Checks if the path is pinned to the left sidebar.
     fn is_pinned(&self, path: &DirectoryEntry) -> bool {
-        self.persistent_data
-            .pinned_folders
-            .iter()
-            .any(|p| path == p)
+        self.storage.pinned_folders.iter().any(|p| path == p)
     }
 
     /// Resets the dialog to use default values.
