@@ -37,7 +37,8 @@ pub enum DialogState {
 }
 
 /// Contains data of the FileDialog that should be stored persistently.
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Clone)]
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
     pub pinned_folders: Vec<DirectoryEntry>,

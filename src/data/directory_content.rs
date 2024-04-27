@@ -6,7 +6,8 @@ use crate::FileDialogConfig;
 /// Contains the metadata of a directory item.
 /// This struct is mainly there so that the metadata can be loaded once and not that
 /// a request has to be sent to the OS every frame using, for example, `path.is_file()`.
-#[derive(Debug, Default, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DirectoryEntry {
     path: PathBuf,
     is_directory: bool,
