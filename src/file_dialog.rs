@@ -6,6 +6,7 @@ use egui::text::{CCursor, CCursorRange};
 use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
+use crate::modals::{FileDialogModal, OverwriteFileModal};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -84,6 +85,10 @@ pub struct FileDialog {
     /// Persistent data of the file dialog
     storage: FileDialogStorage,
 
+    /// Stack of modal windows to be displayed.
+    /// The top element is what is currently being rendered.
+    modals: Vec<Box<dyn FileDialogModal>>,
+
     /// The mode the dialog is currently in
     mode: DialogMode,
     /// The state the dialog is currently in
@@ -161,6 +166,8 @@ impl FileDialog {
             config: FileDialogConfig::default(),
             storage: FileDialogStorage::default(),
 
+            modals: Vec::new(),
+
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
             show_files: true,
@@ -169,7 +176,7 @@ impl FileDialog {
             user_directories: UserDirectories::new(true),
             system_disks: Disks::new_with_refreshed_list(true),
 
-            directory_stack: vec![],
+            directory_stack: Vec::new(),
             directory_offset: 0,
             directory_content: DirectoryContent::new(),
             directory_error: None,
@@ -785,6 +792,11 @@ impl FileDialog {
         let mut is_open = true;
 
         self.create_window(&mut is_open).show(ctx, |ui| {
+            if let Some(modal) = self.modals.last_mut() {
+                modal.update(ui);
+                return;
+            }
+
             if self.config.show_top_panel {
                 egui::TopBottomPanel::top("fe_top_panel")
                     .resizable(false)
@@ -1458,6 +1470,11 @@ impl FileDialog {
                             let mut full_path = path.to_path_buf();
                             full_path.push(&self.file_name_input);
 
+                            if full_path.exists() {
+                                self.open_modal(Box::new(OverwriteFileModal::new()));
+                                return;
+                            }
+
                             self.finish(full_path);
                         }
                     }
@@ -1650,6 +1667,11 @@ impl FileDialog {
 
 /// Implementation
 impl FileDialog {
+    /// Opens a new modal window.
+    fn open_modal(&mut self, modal: Box<dyn FileDialogModal>) {
+        self.modals.push(modal);
+    }
+
     /// Canonicalizes the specified path if canonicalization is enabled.
     /// Returns the input path if an error occurs or canonicalization is disabled.
     fn canonicalize_path(&self, path: &Path) -> PathBuf {
@@ -1708,7 +1730,7 @@ impl FileDialog {
     }
 
     /// Finishes the dialog.
-    /// `selected_item`` is the item that was selected by the user.
+    /// `selected_item` is the item that was selected by the user.
     fn finish(&mut self, selected_item: PathBuf) {
         self.state = DialogState::Selected(selected_item);
     }
@@ -1775,9 +1797,6 @@ impl FileDialog {
 
             if full_path.is_dir() {
                 return Some(self.config.labels.err_directory_exists.clone());
-            }
-            if full_path.is_file() {
-                return Some(self.config.labels.err_file_exists.clone());
             }
         } else {
             // There is most likely a bug in the code if we get this error message!

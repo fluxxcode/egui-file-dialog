@@ -159,6 +159,7 @@ mod config;
 mod create_directory_dialog;
 mod data;
 mod file_dialog;
+mod modals;
 
 pub use config::{FileDialogConfig, FileDialogLabels};
 pub use file_dialog::{DialogMode, DialogState, FileDialog, FileDialogStorage};
