@@ -3,6 +3,7 @@
 ## Unreleased - v0.6.0
 ### ✨ Features
 - Added the ability to pin folders to the left sidebar and enable or disable the feature with `FileDialog::show_pinned_folders` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100)
+- Added `FileDialog::storage_mut` to be able to save and load the pinned folders [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104)
 
 ### ☢️ Deprecated
 - Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)

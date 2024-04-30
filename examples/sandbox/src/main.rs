@@ -12,15 +12,22 @@ struct MyApp {
 }
 
 impl MyApp {
-    pub fn new(_cc: &eframe::CreationContext) -> Self {
+    pub fn new(cc: &eframe::CreationContext) -> Self {
+        let mut file_dialog = FileDialog::new()
+            .add_quick_access("Project", |s| {
+                s.add_path("☆  Examples", "examples");
+                s.add_path("📷  Media", "media");
+                s.add_path("📂  Source", "src");
+            })
+            .id("egui_file_dialog");
+
+        if let Some(storage) = cc.storage {
+            *file_dialog.storage_mut() =
+                eframe::get_value(storage, "file_dialog_storage").unwrap_or_default()
+        }
+
         Self {
-            file_dialog: FileDialog::new()
-                .add_quick_access("Project", |s| {
-                    s.add_path("☆  Examples", "examples");
-                    s.add_path("📷  Media", "media");
-                    s.add_path("📂  Source", "src");
-                })
-                .id("egui_file_dialog"),
+            file_dialog,
 
             selected_directory: None,
             selected_file: None,
@@ -30,6 +37,14 @@ impl MyApp {
 }
 
 impl eframe::App for MyApp {
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(
+            storage,
+            "file_dialog_storage",
+            self.file_dialog.storage_mut(),
+        );
+    }
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("My egui application");

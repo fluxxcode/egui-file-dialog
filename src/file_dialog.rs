@@ -37,7 +37,9 @@ pub enum DialogState {
 }
 
 /// Contains data of the FileDialog that should be stored persistently.
-struct FileDialogStorage {
+#[derive(Clone)]
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
     pub pinned_folders: Vec<DirectoryEntry>,
 }
@@ -323,6 +325,11 @@ impl FileDialog {
 
     // -------------------------------------------------
     // Setter:
+
+    /// Mutably borrow internal storage.
+    pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
+        &mut self.storage
+    }
 
     /// Overwrites the configuration of the file dialog.
     ///
