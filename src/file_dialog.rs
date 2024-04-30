@@ -53,18 +53,6 @@ impl Default for FileDialogStorage {
     }
 }
 
-// TODO: Either implement or remove before merge!
-
-// impl FileDialogStorage {
-//     pub fn load(ctx: &egui::Context, id: egui::Id) -> Self {
-//         ctx.data_mut(|d| d.get_persisted::<FileDialogStorage>(id).unwrap_or_default())
-//     }
-
-//     pub fn save(&self, ctx: &egui::Context, id: egui::Id) {
-//         ctx.data_mut(|d| d.insert_persisted(id, self.clone()));
-//     }
-// }
-
 /// Represents a file dialog instance.
 ///
 /// The `FileDialog` instance can be used multiple times and for different actions.
