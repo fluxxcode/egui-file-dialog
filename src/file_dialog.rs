@@ -6,7 +6,7 @@ use egui::text::{CCursor, CCursorRange};
 use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
-use crate::modals::{FileDialogModal, OverwriteFileModal};
+use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -796,8 +796,16 @@ impl FileDialog {
         let mut is_open = true;
 
         self.create_window(&mut is_open).show(ctx, |ui| {
+            // Update modals windows
             if let Some(modal) = self.modals.last_mut() {
-                modal.update(ui);
+                match modal.update(ui) {
+                    ModalState::Close(action) => {
+                        self.exec_modal_action(action);
+                        self.modals.pop();
+                    },
+                    _ => {},
+                }
+
                 return;
             }
 
@@ -1482,7 +1490,7 @@ impl FileDialog {
                             full_path.push(&self.file_name_input);
 
                             if full_path.exists() {
-                                self.open_modal(Box::new(OverwriteFileModal::new()));
+                                self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
                                 return;
                             }
 
@@ -1681,6 +1689,14 @@ impl FileDialog {
     /// Opens a new modal window.
     fn open_modal(&mut self, modal: Box<dyn FileDialogModal>) {
         self.modals.push(modal);
+    }
+
+    /// Executes the given modal action.
+    fn exec_modal_action(&mut self, action: ModalAction) {
+        match action {
+            ModalAction::None => {},
+            ModalAction::SaveFile(path) => self.finish(path),
+        };
     }
 
     /// Canonicalizes the specified path if canonicalization is enabled.
