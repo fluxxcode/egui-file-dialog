@@ -1236,7 +1236,14 @@ impl FileDialog {
     fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
-        for (i, path) in self.config.storage.pinned_folders.clone().iter().enumerate() {
+        for (i, path) in self
+            .config
+            .storage
+            .pinned_folders
+            .clone()
+            .iter()
+            .enumerate()
+        {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label(self.config.labels.heading_pinned.as_str());
