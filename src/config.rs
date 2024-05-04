@@ -2,6 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use crate::FileDialogStorage;
+
 /// Function that returns true if the specific item matches the filter.
 pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
 
@@ -90,6 +92,11 @@ impl QuickAccess {
 /// ```
 #[derive(Debug, Clone)]
 pub struct FileDialogConfig {
+    // ------------------------------------------------------------------------
+    // Core:
+    /// Persistent data of the file dialog.
+    pub storage: FileDialogStorage,
+
     // ------------------------------------------------------------------------
     // General options:
     /// The labels that the dialog uses.
@@ -191,6 +198,8 @@ impl Default for FileDialogConfig {
     /// Creates a new configuration with default values
     fn default() -> Self {
         Self {
+            storage: FileDialogStorage::default(),
+
             labels: FileDialogLabels::default(),
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
@@ -240,6 +249,14 @@ impl Default for FileDialogConfig {
 }
 
 impl FileDialogConfig {
+    /// Sets the storage used by the file dialog.
+    /// Storage includes all data that is persistently stored between multiple
+    /// file dialog instances.
+    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
+        self.storage = storage;
+        self
+    }
+
     /// Sets a new icon for specific files or folders.
     ///
     /// # Arguments
