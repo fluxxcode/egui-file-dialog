@@ -37,7 +37,7 @@ pub enum DialogState {
 }
 
 /// Contains data of the FileDialog that should be stored persistently.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
@@ -81,8 +81,6 @@ impl Default for FileDialogStorage {
 pub struct FileDialog {
     /// The configuration of the file dialog
     config: FileDialogConfig,
-    /// Persistent data of the file dialog
-    storage: FileDialogStorage,
 
     /// The mode the dialog is currently in
     mode: DialogMode,
@@ -159,7 +157,6 @@ impl FileDialog {
     pub fn new() -> Self {
         Self {
             config: FileDialogConfig::default(),
-            storage: FileDialogStorage::default(),
 
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
@@ -325,10 +322,17 @@ impl FileDialog {
 
     // -------------------------------------------------
     // Setter:
+    /// Sets the storage used by the file dialog.
+    /// Storage includes all data that is persistently stored between multiple
+    /// file dialog instances.
+    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
+        self.config.storage = storage;
+        self
+    }
 
     /// Mutably borrow internal storage.
     pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
-        &mut self.storage
+        &mut self.config.storage
     }
 
     /// Overwrites the configuration of the file dialog.
@@ -1232,7 +1236,14 @@ impl FileDialog {
     fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
-        for (i, path) in self.storage.pinned_folders.clone().iter().enumerate() {
+        for (i, path) in self
+            .config
+            .storage
+            .pinned_folders
+            .clone()
+            .iter()
+            .enumerate()
+        {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label(self.config.labels.heading_pinned.as_str());
@@ -1661,17 +1672,17 @@ impl FileDialog {
 
     /// Pins a path to the left sidebar.
     fn pin_path(&mut self, path: DirectoryEntry) {
-        self.storage.pinned_folders.push(path);
+        self.config.storage.pinned_folders.push(path);
     }
 
     /// Unpins a path from the left sidebar.
     fn unpin_path(&mut self, path: &DirectoryEntry) {
-        self.storage.pinned_folders.retain(|p| p != path);
+        self.config.storage.pinned_folders.retain(|p| p != path);
     }
 
     /// Checks if the path is pinned to the left sidebar.
     fn is_pinned(&self, path: &DirectoryEntry) -> bool {
-        self.storage.pinned_folders.iter().any(|p| path == p)
+        self.config.storage.pinned_folders.iter().any(|p| path == p)
     }
 
     /// Resets the dialog to use default values.
