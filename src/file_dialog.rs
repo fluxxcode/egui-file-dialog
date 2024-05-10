@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use egui::text::{CCursor, CCursorRange};
+use egui::Area;
 
 use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
 use crate::create_directory_dialog::CreateDirectoryDialog;
@@ -796,16 +797,8 @@ impl FileDialog {
         let mut is_open = true;
 
         self.create_window(&mut is_open).show(ctx, |ui| {
-            // Update modals windows
-            if let Some(modal) = self.modals.last_mut() {
-                match modal.update(ui) {
-                    ModalState::Close(action) => {
-                        self.exec_modal_action(action);
-                        self.modals.pop();
-                    },
-                    _ => {},
-                }
-
+            if !self.modals.is_empty() {
+                self.ui_update_modals(ui);
                 return;
             }
 
@@ -842,6 +835,31 @@ impl FileDialog {
         if !is_open {
             self.cancel();
         }
+    }
+
+    fn ui_update_modals(&mut self, ui: &mut egui::Ui) {
+        // Currently, a rendering error occurs when only a single central panel is rendered
+        // inside a window. Therefore, when rendering a modal, we render an invisible bottom panel,
+        // which prevents the error.
+        // This is currently a bit hacky and should be adjusted again in the future.
+        egui::TopBottomPanel::bottom("fe_modal_bottom_panel")
+            .resizable(false)
+            .show_separator_line(false)
+            .show_inside(ui, |_| { });
+
+        // We need to use a central panel for the modals so that the
+        // window doesn't resize to the size of the modal.
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            if let Some(modal) = self.modals.last_mut() {
+                match modal.update(ui) {
+                    ModalState::Close(action) => {
+                        self.exec_modal_action(action);
+                        self.modals.pop();
+                    },
+                    _ => {},
+                }
+            }
+        });
     }
 
     /// Creates a new egui window with the configured options.
