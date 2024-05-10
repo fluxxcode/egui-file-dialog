@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use egui::text::{CCursor, CCursorRange};
-use egui::Area;
 
 use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
 use crate::create_directory_dialog::CreateDirectoryDialog;
