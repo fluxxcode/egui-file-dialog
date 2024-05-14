@@ -850,6 +850,7 @@ impl FileDialog {
         // window doesn't resize to the size of the modal.
         egui::CentralPanel::default().show_inside(ui, |ui| {
             if let Some(modal) = self.modals.last_mut() {
+                #[allow(clippy::single_match)]
                 match modal.update(&self.config, ui) {
                     ModalState::Close(action) => {
                         self.exec_modal_action(action);
