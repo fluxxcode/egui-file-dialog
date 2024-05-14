@@ -844,18 +844,18 @@ impl FileDialog {
         egui::TopBottomPanel::bottom("fe_modal_bottom_panel")
             .resizable(false)
             .show_separator_line(false)
-            .show_inside(ui, |_| { });
+            .show_inside(ui, |_| {});
 
         // We need to use a central panel for the modals so that the
         // window doesn't resize to the size of the modal.
         egui::CentralPanel::default().show_inside(ui, |ui| {
             if let Some(modal) = self.modals.last_mut() {
-                match modal.update(ui) {
+                match modal.update(&self.config, ui) {
                     ModalState::Close(action) => {
                         self.exec_modal_action(action);
                         self.modals.pop();
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 }
             }
         });
@@ -1508,6 +1508,7 @@ impl FileDialog {
 
                             if full_path.exists() {
                                 self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
+
                                 return;
                             }
 
@@ -1711,7 +1712,7 @@ impl FileDialog {
     /// Executes the given modal action.
     fn exec_modal_action(&mut self, action: ModalAction) {
         match action {
-            ModalAction::None => {},
+            ModalAction::None => {}
             ModalAction::SaveFile(path) => self.finish(path),
         };
     }

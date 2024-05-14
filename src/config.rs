@@ -113,6 +113,8 @@ pub struct FileDialogConfig {
 
     /// The icon that is used to display error messages.
     pub err_icon: String,
+    /// The icon that is used to display warning messages.
+    pub warn_icon: String,
     /// The default icon used to display files.
     pub default_file_icon: String,
     /// The default icon used to display folders.
@@ -207,6 +209,7 @@ impl Default for FileDialogConfig {
             canonicalize_paths: true,
 
             err_icon: String::from("⚠"),
+            warn_icon: String::from("⚠"),
             default_file_icon: String::from("🗋"),
             default_folder_icon: String::from("🗀"),
             pinned_icon: String::from("📌"),
@@ -348,6 +351,11 @@ pub struct FileDialogLabels {
     /// The default window title used when the dialog is in `DialogMode::SaveFile` mode.
     pub title_save_file: String,
 
+    /// Text displayed in the buttons to abort the current action.
+    pub abort: String,
+    /// Text displayed in the buttons to overwrite something, such as a file.
+    pub overwrite: String,
+
     // ------------------------------------------------------------------------
     // Left panel:
     /// Heading of the "Pinned" sections in the left panel
@@ -398,6 +406,11 @@ pub struct FileDialogLabels {
     pub cancel_button: String,
 
     // ------------------------------------------------------------------------
+    // Modal windows:
+    /// Text displayed after the path within the modal to overwrite the selected file.
+    pub overwrite_file_modal_text: String,
+
+    // ------------------------------------------------------------------------
     // Error message:
     /// Error if no folder name was specified.
     pub err_empty_folder_name: String,
@@ -416,6 +429,9 @@ impl Default for FileDialogLabels {
             title_select_directory: "📁 Select Folder".to_string(),
             title_select_file: "📂 Open File".to_string(),
             title_save_file: "📥 Save File".to_string(),
+
+            abort: "Abort".to_string(),
+            overwrite: "Overwrite".to_string(),
 
             heading_pinned: "Pinned".to_string(),
             heading_places: "Places".to_string(),
@@ -440,6 +456,8 @@ impl Default for FileDialogLabels {
             open_button: "🗀  Open".to_string(),
             save_button: "📥  Save".to_string(),
             cancel_button: "🚫 Cancel".to_string(),
+
+            overwrite_file_modal_text: "already exists. Do you want to overwrite it?".to_string(),
 
             err_empty_folder_name: "Name of the folder cannot be empty".to_string(),
             err_empty_file_name: "The file name cannot be empty".to_string(),

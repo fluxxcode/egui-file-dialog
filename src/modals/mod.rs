@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
-mod overwrite_file_modal;
+use crate::FileDialogConfig;
 
+mod overwrite_file_modal;
 pub use overwrite_file_modal::OverwriteFileModal;
 
 /// Contains actions that are executed by the file dialog when closing a modal.
@@ -23,5 +24,5 @@ pub enum ModalState {
 pub trait FileDialogModal {
     /// Main update method of the modal.
     /// Should be called every time the modal should be visible.
-    fn update(&mut self, ui: &mut egui::Ui) -> ModalState;
+    fn update(&mut self, config: &FileDialogConfig, ui: &mut egui::Ui) -> ModalState;
 }
