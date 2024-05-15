@@ -448,6 +448,16 @@ impl FileDialog {
         self
     }
 
+    /// Sets if the user is allowed to select an already existing file when the dialog is in
+    /// `DialogMode::SaveFile` mode.
+    ///
+    /// If this is enabled, the user will receive a modal asking whether the user really
+    /// wants to overwrite an existing file.
+    pub fn allow_file_overwrite(mut self, allow_file_overwrite: bool) -> Self {
+        self.config.allow_file_overwrite = allow_file_overwrite;
+        self
+    }
+
     /// Sets the separator of the directories when displaying a path.
     /// Currently only used when the current path is displayed in the top panel.
     pub fn directory_separator(mut self, separator: &str) -> Self {
@@ -1843,6 +1853,10 @@ impl FileDialog {
 
             if full_path.is_dir() {
                 return Some(self.config.labels.err_directory_exists.clone());
+            }
+
+            if !self.config.allow_file_overwrite && full_path.is_file() {
+                return Some(self.config.labels.err_file_exists.clone());
             }
         } else {
             // There is most likely a bug in the code if we get this error message!
