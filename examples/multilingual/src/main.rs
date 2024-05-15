@@ -15,7 +15,7 @@ fn get_labels_german() -> FileDialogLabels {
         title_select_file: "📂 Datei Öffnen".to_string(),
         title_save_file: "📥 Datei Speichern".to_string(),
 
-        abort: "Abbrechen".to_string(),
+        cancel: "Abbrechen".to_string(),
         overwrite: "Überschreiben".to_string(),
 
         heading_pinned: "Angeheftet".to_string(),

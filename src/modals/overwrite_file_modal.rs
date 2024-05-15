@@ -62,7 +62,7 @@ impl FileDialogModal for OverwriteFileModal {
                 ui.add_space(padding);
 
                 if ui
-                    .add_sized(BUTTON_SIZE, egui::Button::new(&config.labels.abort))
+                    .add_sized(BUTTON_SIZE, egui::Button::new(&config.labels.cancel))
                     .clicked()
                 {
                     return_val = ModalState::Close(ModalAction::None);

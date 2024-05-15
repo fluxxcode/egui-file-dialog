@@ -351,8 +351,8 @@ pub struct FileDialogLabels {
     /// The default window title used when the dialog is in `DialogMode::SaveFile` mode.
     pub title_save_file: String,
 
-    /// Text displayed in the buttons to abort the current action.
-    pub abort: String,
+    /// Text displayed in the buttons to cancel the current action.
+    pub cancel: String,
     /// Text displayed in the buttons to overwrite something, such as a file.
     pub overwrite: String,
 
@@ -430,7 +430,7 @@ impl Default for FileDialogLabels {
             title_select_file: "📂 Open File".to_string(),
             title_save_file: "📥 Save File".to_string(),
 
-            abort: "Abort".to_string(),
+            cancel: "Cancel".to_string(),
             overwrite: "Overwrite".to_string(),
 
             heading_pinned: "Pinned".to_string(),
