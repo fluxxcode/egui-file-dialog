@@ -4,6 +4,7 @@
 ### ✨ Features
 - Added the ability to pin folders to the left sidebar and enable or disable the feature with `FileDialog::show_pinned_folders` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100)
 - Added `FileDialogConfig::storage`, `FileDialog::storage` and `FileDialog::storage_mut` to be able to save and load the pinned folders [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104) and [#105](https://github.com/fluxxcode/egui-file-dialog/pull/105)
+- Added new modal and option `FileDialog::allow_file_overwrite` to allow overwriting an already existing file when the dialog is in DialogMode::SaveFile mode [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106)
 
 ### ☢️ Deprecated
 - Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)

@@ -6,6 +6,7 @@ use egui::text::{CCursor, CCursorRange};
 use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
+use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -81,6 +82,10 @@ impl Default for FileDialogStorage {
 pub struct FileDialog {
     /// The configuration of the file dialog
     config: FileDialogConfig,
+
+    /// Stack of modal windows to be displayed.
+    /// The top element is what is currently being rendered.
+    modals: Vec<Box<dyn FileDialogModal>>,
 
     /// The mode the dialog is currently in
     mode: DialogMode,
@@ -158,6 +163,8 @@ impl FileDialog {
         Self {
             config: FileDialogConfig::default(),
 
+            modals: Vec::new(),
+
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
             show_files: true,
@@ -166,7 +173,7 @@ impl FileDialog {
             user_directories: UserDirectories::new(true),
             system_disks: Disks::new_with_refreshed_list(true),
 
-            directory_stack: vec![],
+            directory_stack: Vec::new(),
             directory_offset: 0,
             directory_content: DirectoryContent::new(),
             directory_error: None,
@@ -438,6 +445,16 @@ impl FileDialog {
     /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
         self.config.default_file_name = name.to_string();
+        self
+    }
+
+    /// Sets if the user is allowed to select an already existing file when the dialog is in
+    /// `DialogMode::SaveFile` mode.
+    ///
+    /// If this is enabled, the user will receive a modal asking whether the user really
+    /// wants to overwrite an existing file.
+    pub fn allow_file_overwrite(mut self, allow_file_overwrite: bool) -> Self {
+        self.config.allow_file_overwrite = allow_file_overwrite;
         self
     }
 
@@ -789,6 +806,11 @@ impl FileDialog {
         let mut is_open = true;
 
         self.create_window(&mut is_open).show(ctx, |ui| {
+            if !self.modals.is_empty() {
+                self.ui_update_modals(ui);
+                return;
+            }
+
             if self.config.show_top_panel {
                 egui::TopBottomPanel::top("fe_top_panel")
                     .resizable(false)
@@ -822,6 +844,32 @@ impl FileDialog {
         if !is_open {
             self.cancel();
         }
+    }
+
+    fn ui_update_modals(&mut self, ui: &mut egui::Ui) {
+        // Currently, a rendering error occurs when only a single central panel is rendered
+        // inside a window. Therefore, when rendering a modal, we render an invisible bottom panel,
+        // which prevents the error.
+        // This is currently a bit hacky and should be adjusted again in the future.
+        egui::TopBottomPanel::bottom("fe_modal_bottom_panel")
+            .resizable(false)
+            .show_separator_line(false)
+            .show_inside(ui, |_| {});
+
+        // We need to use a central panel for the modals so that the
+        // window doesn't resize to the size of the modal.
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            if let Some(modal) = self.modals.last_mut() {
+                #[allow(clippy::single_match)]
+                match modal.update(&self.config, ui) {
+                    ModalState::Close(action) => {
+                        self.exec_modal_action(action);
+                        self.modals.pop();
+                    }
+                    _ => {}
+                }
+            }
+        });
     }
 
     /// Creates a new egui window with the configured options.
@@ -1469,6 +1517,12 @@ impl FileDialog {
                             let mut full_path = path.to_path_buf();
                             full_path.push(&self.file_name_input);
 
+                            if full_path.exists() {
+                                self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
+
+                                return;
+                            }
+
                             self.finish(full_path);
                         }
                     }
@@ -1661,6 +1715,19 @@ impl FileDialog {
 
 /// Implementation
 impl FileDialog {
+    /// Opens a new modal window.
+    fn open_modal(&mut self, modal: Box<dyn FileDialogModal>) {
+        self.modals.push(modal);
+    }
+
+    /// Executes the given modal action.
+    fn exec_modal_action(&mut self, action: ModalAction) {
+        match action {
+            ModalAction::None => {}
+            ModalAction::SaveFile(path) => self.finish(path),
+        };
+    }
+
     /// Canonicalizes the specified path if canonicalization is enabled.
     /// Returns the input path if an error occurs or canonicalization is disabled.
     fn canonicalize_path(&self, path: &Path) -> PathBuf {
@@ -1719,7 +1786,7 @@ impl FileDialog {
     }
 
     /// Finishes the dialog.
-    /// `selected_item`` is the item that was selected by the user.
+    /// `selected_item` is the item that was selected by the user.
     fn finish(&mut self, selected_item: PathBuf) {
         self.state = DialogState::Selected(selected_item);
     }
@@ -1787,7 +1854,8 @@ impl FileDialog {
             if full_path.is_dir() {
                 return Some(self.config.labels.err_directory_exists.clone());
             }
-            if full_path.is_file() {
+
+            if !self.config.allow_file_overwrite && full_path.is_file() {
                 return Some(self.config.labels.err_file_exists.clone());
             }
         } else {
