@@ -145,4 +145,3 @@ impl Default for FileDialogLabels {
         }
     }
 }
-
