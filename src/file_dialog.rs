@@ -274,7 +274,7 @@ impl FileDialog {
         }
 
         if mode == DialogMode::SaveFile {
-            self.file_name_input = self.config.default_file_name.clone();
+            self.file_name_input.clone_from(&self.config.default_file_name);
         }
 
         self.mode = mode;
@@ -438,7 +438,7 @@ impl FileDialog {
     /// Since `fs::canonicalize` is used, both absolute paths and relative paths are allowed.
     /// See `FileDialog::canonicalize_paths` for more information.
     pub fn initial_directory(mut self, directory: PathBuf) -> Self {
-        self.config.initial_directory = directory.clone();
+        self.config.initial_directory.clone_from(&directory);
         self
     }
 
