@@ -274,7 +274,8 @@ impl FileDialog {
         }
 
         if mode == DialogMode::SaveFile {
-            self.file_name_input.clone_from(&self.config.default_file_name);
+            self.file_name_input
+                .clone_from(&self.config.default_file_name);
         }
 
         self.mode = mode;
