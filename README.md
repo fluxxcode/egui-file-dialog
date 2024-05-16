@@ -7,9 +7,8 @@
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fluxxcode/egui-file-dialog/blob/master/LICENSE)
 
 <details>
-    <summary>Table of contents</summary>
+<summary>Table of contents</summary>
 
-1. [Description](#egui-file-dialog)
 1. [Features](#features)
 1. [Planned Features](#planned-features)
 1. [Example](#example)
