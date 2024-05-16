@@ -1,65 +1,11 @@
+mod labels;
+pub use labels::FileDialogLabels;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::FileDialogStorage;
-
-/// Function that returns true if the specific item matches the filter.
-pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
-
-/// Sets a specific icon for directory entries.
-#[derive(Clone)]
-pub struct IconFilter {
-    /// The icon that should be used.
-    pub icon: String,
-    /// Sets a filter function that checks whether a given Path matches the criteria for this icon.
-    pub filter: Filter<Path>,
-}
-
-impl std::fmt::Debug for IconFilter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("IconFilter")
-            .field("icon", &self.icon)
-            .finish()
-    }
-}
-
-/// Stores the display name and the actual path of a quick access link.
-#[derive(Debug, Clone)]
-pub struct QuickAccessPath {
-    pub display_name: String,
-    pub path: PathBuf,
-}
-
-/// Stores a custom quick access section of the file dialog.
-#[derive(Debug, Clone)]
-pub struct QuickAccess {
-    pub canonicalize_paths: bool,
-    pub heading: String,
-    pub paths: Vec<QuickAccessPath>,
-}
-
-impl QuickAccess {
-    /// Adds a new path to the quick access.
-    ///
-    /// Since `fs::canonicalize` is used, both absolute paths and relative paths are allowed.
-    /// See `FileDialog::canonicalize_paths` for more information.
-    ///
-    /// See `FileDialogConfig::add_quick_access` for an example.
-    pub fn add_path(&mut self, display_name: &str, path: impl Into<PathBuf>) {
-        let path = path.into();
-
-        let canonicalized_path = match self.canonicalize_paths {
-            true => fs::canonicalize(&path).unwrap_or(path),
-            false => path,
-        };
-
-        self.paths.push(QuickAccessPath {
-            display_name: display_name.to_string(),
-            path: canonicalized_path,
-        });
-    }
-}
 
 /// Contains configuration values of a file dialog.
 ///
@@ -323,150 +269,60 @@ impl FileDialogConfig {
     }
 }
 
-/// Contains the text labels that the file dialog uses.
-///
-/// This is used to enable multiple language support.
-///
-/// # Example
-///
-/// The following example shows how the default title of the dialog can be displayed
-/// in German instead of English.
-///
-/// ```
-/// use egui_file_dialog::{FileDialog, FileDialogLabels};
-///
-/// let labels_german = FileDialogLabels {
-///     title_select_directory: "📁 Ordner Öffnen".to_string(),
-///     title_select_file: "📂 Datei Öffnen".to_string(),
-///     title_save_file: "📥 Datei Speichern".to_string(),
-///     ..Default::default()
-/// };
-///
-/// let file_dialog = FileDialog::new().labels(labels_german);
-/// ```
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct FileDialogLabels {
-    // ------------------------------------------------------------------------
-    // General:
-    /// The default window title used when the dialog is in `DialogMode::SelectDirectory` mode.
-    pub title_select_directory: String,
-    /// The default window title used when the dialog is in `DialogMode::SelectFile` mode.
-    pub title_select_file: String,
-    /// The default window title used when the dialog is in `DialogMode::SaveFile` mode.
-    pub title_save_file: String,
+/// Function that returns true if the specific item matches the filter.
+pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
 
-    /// Text displayed in the buttons to cancel the current action.
-    pub cancel: String,
-    /// Text displayed in the buttons to overwrite something, such as a file.
-    pub overwrite: String,
-
-    // ------------------------------------------------------------------------
-    // Left panel:
-    /// Heading of the "Pinned" sections in the left panel
-    pub heading_pinned: String,
-    /// Heading of the "Places" section in the left panel
-    pub heading_places: String,
-    /// Heading of the "Devices" section in the left panel
-    pub heading_devices: String,
-    /// Heading of the "Removable Devices" section in the left panel
-    pub heading_removable_devices: String,
-
-    /// Name of the home directory
-    pub home_dir: String,
-    /// Name of the desktop directory
-    pub desktop_dir: String,
-    /// Name of the documents directory
-    pub documents_dir: String,
-    /// Name of the downloads directory
-    pub downloads_dir: String,
-    /// Name of the audio directory
-    pub audio_dir: String,
-    /// Name of the pictures directory
-    pub pictures_dir: String,
-    /// Name of the videos directory
-    pub videos_dir: String,
-
-    // ------------------------------------------------------------------------
-    // Central panel:
-    /// Text used for the option to pin a folder.
-    pub pin_folder: String,
-    /// Text used for the option to unpin a folder.
-    pub unpin_folder: String,
-
-    // ------------------------------------------------------------------------
-    // Bottom panel:
-    /// Text that appears in front of the selected folder preview in the bottom panel.
-    pub selected_directory: String,
-    /// Text that appears in front of the selected file preview in the bottom panel.
-    pub selected_file: String,
-    /// Text that appears in front of the file name input in the bottom panel.
-    pub file_name: String,
-
-    /// Button text to open the selected item.
-    pub open_button: String,
-    /// Button text to save the file.
-    pub save_button: String,
-    /// Button text to cancel the dialog.
-    pub cancel_button: String,
-
-    // ------------------------------------------------------------------------
-    // Modal windows:
-    /// Text displayed after the path within the modal to overwrite the selected file.
-    pub overwrite_file_modal_text: String,
-
-    // ------------------------------------------------------------------------
-    // Error message:
-    /// Error if no folder name was specified.
-    pub err_empty_folder_name: String,
-    /// Error if no file name was specified.
-    pub err_empty_file_name: String,
-    /// Error if the directory already exists.
-    pub err_directory_exists: String,
-    /// Error if the file already exists.
-    pub err_file_exists: String,
+/// Sets a specific icon for directory entries.
+#[derive(Clone)]
+pub struct IconFilter {
+    /// The icon that should be used.
+    pub icon: String,
+    /// Sets a filter function that checks whether a given Path matches the criteria for this icon.
+    pub filter: Filter<Path>,
 }
 
-impl Default for FileDialogLabels {
-    /// Creates a new object with the default english labels.
-    fn default() -> Self {
-        Self {
-            title_select_directory: "📁 Select Folder".to_string(),
-            title_select_file: "📂 Open File".to_string(),
-            title_save_file: "📥 Save File".to_string(),
-
-            cancel: "Cancel".to_string(),
-            overwrite: "Overwrite".to_string(),
-
-            heading_pinned: "Pinned".to_string(),
-            heading_places: "Places".to_string(),
-            heading_devices: "Devices".to_string(),
-            heading_removable_devices: "Removable Devices".to_string(),
-
-            home_dir: "🏠  Home".to_string(),
-            desktop_dir: "🖵  Desktop".to_string(),
-            documents_dir: "🗐  Documents".to_string(),
-            downloads_dir: "📥  Downloads".to_string(),
-            audio_dir: "🎵  Audio".to_string(),
-            pictures_dir: "🖼  Pictures".to_string(),
-            videos_dir: "🎞  Videos".to_string(),
-
-            pin_folder: "📌 Pin folder".to_string(),
-            unpin_folder: "✖ Unpin folder".to_string(),
-
-            selected_directory: "Selected directory:".to_string(),
-            selected_file: "Selected file:".to_string(),
-            file_name: "File name:".to_string(),
-
-            open_button: "🗀  Open".to_string(),
-            save_button: "📥  Save".to_string(),
-            cancel_button: "🚫 Cancel".to_string(),
-
-            overwrite_file_modal_text: "already exists. Do you want to overwrite it?".to_string(),
-
-            err_empty_folder_name: "Name of the folder cannot be empty".to_string(),
-            err_empty_file_name: "The file name cannot be empty".to_string(),
-            err_directory_exists: "A directory with the name already exists".to_string(),
-            err_file_exists: "A file with the name already exists".to_string(),
-        }
+impl std::fmt::Debug for IconFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("IconFilter")
+            .field("icon", &self.icon)
+            .finish()
     }
 }
+
+/// Stores the display name and the actual path of a quick access link.
+#[derive(Debug, Clone)]
+pub struct QuickAccessPath {
+    pub display_name: String,
+    pub path: PathBuf,
+}
+
+/// Stores a custom quick access section of the file dialog.
+#[derive(Debug, Clone)]
+pub struct QuickAccess {
+    pub canonicalize_paths: bool,
+    pub heading: String,
+    pub paths: Vec<QuickAccessPath>,
+}
+
+impl QuickAccess {
+    /// Adds a new path to the quick access.
+    ///
+    /// Since `fs::canonicalize` is used, both absolute paths and relative paths are allowed.
+    /// See `FileDialog::canonicalize_paths` for more information.
+    ///
+    /// See `FileDialogConfig::add_quick_access` for an example.
+    pub fn add_path(&mut self, display_name: &str, path: impl Into<PathBuf>) {
+        let path = path.into();
+
+        let canonicalized_path = match self.canonicalize_paths {
+            true => fs::canonicalize(&path).unwrap_or(path),
+            false => path,
+        };
+
+        self.paths.push(QuickAccessPath {
+            display_name: display_name.to_string(),
+            path: canonicalized_path,
+        });
+    }
+}
+
