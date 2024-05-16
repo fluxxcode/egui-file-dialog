@@ -9,16 +9,14 @@
 <details>
     <summary>Table of contents</summary>
 
-    1. [Description](#egui-file-dialog)
-    1. [Features](#features)
-    1. [Planned Features](#planned-features)
-    1. [Example](#example)
-    1. [Customization](#customization)
-    1. [Multilingual support](#multilingual-support)
+1. [Description](#egui-file-dialog)
+1. [Features](#features)
+1. [Planned Features](#planned-features)
+1. [Example](#example)
+1. [Customization](#customization)
+1. [Multilingual support](#multilingual-support)
 
 </details>
-
-</br>
 
 This repository provides an easy-to-use and customizable file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui).
 
