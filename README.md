@@ -14,6 +14,7 @@
 1. [Example](#example)
 1. [Customization](#customization)
 1. [Multilingual support](#multilingual-support)
+1. [Persistent data](#persistent-data)
 
 </details>
 
@@ -215,5 +216,54 @@ fn update_labels(language: &Language, file_dialog: &mut FileDialog) {
         // Use custom labels for German
         Language::German => get_labels_german(),
     };
+}
+```
+
+## Persistent data
+The file dialog currently requires the following persistent data to be stored across multiple file dialog objects:
+
+- Folders the user pinned to the left sidebar (`FileDialog::show_pinned_folders`)
+
+If one of the above feature is activated, the data should be saved by the application. Otherwise, frustrating situations could arise for the user and the features would not offer much added value.
+
+All data that needs to be stored permanently is contained in the `FileDialogStorage` struct. This struct can be accessed using `FileDialog::storage` or `FileDialog::storage_mut` to save or load the persistent data. \
+By default the feature `persistence` is enabled, which implements `serde::Serialize` and `serde::Deserialize` for the objects to be saved. However, the objects can also be accessed without the feature enabled.
+
+The following example shows how the data can be saved with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) and the persistence feature enabled. \
+Checkout `examples/persistence` for the full example.
+
+```rust
+use egui_file_dialog::FileDialog;
+
+struct MyApp {
+    file_dialog: FileDialog,
+}
+
+impl MyApp {
+    pub fn new(cc: &eframe::CreationContext) -> Self {
+        let mut file_dialog = FileDialog::default();
+
+        // Load the persistent data of the file dialog.
+        // Alternatively, you can also use the `FileDialog::storage` builder method.
+        if let Some(storage) = cc.storage {
+            *file_dialog.storage_mut() =
+                eframe::get_value(storage, "file_dialog_storage").unwrap_or_default()
+        }
+
+        Self {
+            file_dialog,
+        }
+    }
+}
+
+impl eframe::App for MyApp {
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        // Save the persistent data of the file dialog
+        eframe::set_value(
+            storage,
+            "file_dialog_storage",
+            self.file_dialog.storage_mut(),
+        );
+    }
 }
 ```
