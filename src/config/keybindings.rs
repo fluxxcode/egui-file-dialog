@@ -13,7 +13,7 @@ impl KeyBinding {
         Self::PointerButton(pointer_button)
     }
 
-    /// Creates a new keybinding where a pointer button is used.
+    /// Creates a new keybinding where a keyboard shortcut is used.
     pub fn keyboard_shortcut(modifiers: egui::Modifiers, logical_key: egui::Key) -> Self {
         Self::KeyboardShortcut(egui::KeyboardShortcut {
             modifiers,
