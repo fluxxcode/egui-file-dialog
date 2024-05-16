@@ -3,7 +3,9 @@ use std::{fs, io};
 
 use egui::text::{CCursor, CCursorRange};
 
-use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
+use crate::config::{
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, Filter, QuickAccess,
+};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
@@ -323,6 +325,7 @@ impl FileDialog {
             return self;
         }
 
+        self.update_keyboard_input(ctx);
         self.update_ui(ctx);
 
         self
@@ -993,9 +996,7 @@ impl FileDialog {
                 None,
             )
         {
-            if let Some(x) = self.current_directory() {
-                self.create_directory_dialog.open(x.to_path_buf());
-            }
+            self.open_new_folder_dialog();
         }
     }
 
@@ -1716,6 +1717,38 @@ impl FileDialog {
 
 /// Implementation
 impl FileDialog {
+    /// Checks whether certain keybindings have been pressed and executes the corresponding actions.
+    fn update_keyboard_input(&mut self, ctx: &egui::Context) {
+        let keybindings = std::mem::take(&mut self.config.keybindings);
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.open_previous_directory)
+            && self.config.show_back_button
+        {
+            let _ = self.load_previous_directory();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.open_next_directory)
+            && self.config.show_forward_button
+        {
+            let _ = self.load_next_directory();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.create_new_folder)
+            && self.config.show_new_folder_button
+        {
+            self.open_new_folder_dialog();
+        }
+
+        self.config.keybindings = keybindings;
+    }
+
+    /// Opens the dialog to create a new folder.
+    fn open_new_folder_dialog(&mut self) {
+        if let Some(x) = self.current_directory() {
+            self.create_directory_dialog.open(x.to_path_buf());
+        }
+    }
+
     /// Opens a new modal window.
     fn open_modal(&mut self, modal: Box<dyn FileDialogModal>) {
         self.modals.push(modal);

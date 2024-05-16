@@ -8,10 +8,12 @@ pub enum KeyBinding {
 }
 
 impl KeyBinding {
+    /// Creates a new keybinding where a pointer button is used.
     pub fn pointer_button(pointer_button: egui::PointerButton) -> Self {
         Self::PointerButton(pointer_button)
     }
 
+    /// Creates a new keybinding where a pointer button is used.
     pub fn keyboard_shortcut(modifiers: egui::Modifiers, logical_key: egui::Key) -> Self {
         Self::KeyboardShortcut(egui::KeyboardShortcut {
             modifiers,
@@ -19,55 +21,52 @@ impl KeyBinding {
         })
     }
 
+    /// Create a new keybinding where a single key is used.
     pub fn key(logical_key: egui::Key) -> Self {
         Self::KeyboardShortcut(egui::KeyboardShortcut {
             modifiers: egui::Modifiers::NONE,
             logical_key,
         })
     }
+
+    /// Checks if the keybinding was pressed by the user.
+    pub fn pressed(&self, ctx: &egui::Context) -> bool {
+        match self {
+            KeyBinding::PointerButton(b) => ctx.input(|i| i.pointer.button_clicked(*b)),
+            KeyBinding::KeyboardShortcut(s) => ctx.input_mut(|i| i.consume_shortcut(s)),
+        }
+    }
 }
 
 /// Stores the keybindings used for the file dialog.
 #[derive(Debug, Clone)]
-pub struct KeyBindings {
+pub struct FileDialogKeyBindings {
     pub open_previous_directory: Vec<KeyBinding>,
-    pub search: Vec<KeyBinding>,
+    pub open_next_directory: Vec<KeyBinding>,
+    pub create_new_folder: Vec<KeyBinding>,
 }
 
-impl Default for KeyBindings {
+impl FileDialogKeyBindings {
+    /// Checks wether any of the given keybindings is pressed.
+    pub fn any_pressed(ctx: &egui::Context, keybindings: &Vec<KeyBinding>) -> bool {
+        for keybinding in keybindings {
+            if keybinding.pressed(ctx) {
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
+impl Default for FileDialogKeyBindings {
     fn default() -> Self {
-        use egui::{Key, PointerButton};
+        use egui::{Key, Modifiers, PointerButton};
 
         Self {
             open_previous_directory: vec![KeyBinding::pointer_button(PointerButton::Extra1)],
-            search: vec![
-                KeyBinding::key(Key::A),
-                KeyBinding::key(Key::B),
-                KeyBinding::key(Key::C),
-                KeyBinding::key(Key::D),
-                KeyBinding::key(Key::E),
-                KeyBinding::key(Key::F),
-                KeyBinding::key(Key::G),
-                KeyBinding::key(Key::H),
-                KeyBinding::key(Key::I),
-                KeyBinding::key(Key::J),
-                KeyBinding::key(Key::K),
-                KeyBinding::key(Key::L),
-                KeyBinding::key(Key::M),
-                KeyBinding::key(Key::N),
-                KeyBinding::key(Key::O),
-                KeyBinding::key(Key::P),
-                KeyBinding::key(Key::Q),
-                KeyBinding::key(Key::R),
-                KeyBinding::key(Key::S),
-                KeyBinding::key(Key::T),
-                KeyBinding::key(Key::U),
-                KeyBinding::key(Key::V),
-                KeyBinding::key(Key::W),
-                KeyBinding::key(Key::X),
-                KeyBinding::key(Key::Y),
-                KeyBinding::key(Key::Z),
-            ],
+            open_next_directory: vec![KeyBinding::pointer_button(PointerButton::Extra2)],
+            create_new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
         }
     }
 }

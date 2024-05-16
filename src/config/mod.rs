@@ -2,7 +2,7 @@ mod labels;
 pub use labels::FileDialogLabels;
 
 mod keybindings;
-pub use keybindings::KeyBindings;
+pub use keybindings::FileDialogKeyBindings;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -46,7 +46,7 @@ pub struct FileDialogConfig {
     /// Persistent data of the file dialog.
     pub storage: FileDialogStorage,
     /// Keybindings used by the file dialog.
-    pub keybindings: KeyBindings,
+    pub keybindings: FileDialogKeyBindings,
 
     // ------------------------------------------------------------------------
     // General options:
@@ -155,7 +155,7 @@ impl Default for FileDialogConfig {
     fn default() -> Self {
         Self {
             storage: FileDialogStorage::default(),
-            keybindings: KeyBindings::default(),
+            keybindings: FileDialogKeyBindings::default(),
 
             labels: FileDialogLabels::default(),
             initial_directory: std::env::current_dir().unwrap_or_default(),
