@@ -6,6 +6,20 @@
 [![Total lines of code ](https://sloc.xyz/github/fluxxcode/egui-file-dialog/)](https://github.com/fluxxcode/egui-file-dialog/)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fluxxcode/egui-file-dialog/blob/master/LICENSE)
 
+<details>
+    <summary>Table of contents</summary>
+
+    1. [Description](#egui-file-dialog)
+    1. [Features](#features)
+    1. [Planned Features](#planned-features)
+    1. [Example](#example)
+    1. [Customization](#customization)
+    1. [Multilingual support](#multilingual-support)
+
+</details>
+
+</br>
+
 This repository provides an easy-to-use and customizable file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui).
 
 The file dialog is intended for use by desktop applications, allowing the use of a file dialog directly within the egui application without relying on the operating system's file explorer. This also ensures that the file dialog looks the same and provides the same functionality on all platforms.
@@ -25,6 +39,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Shortcut for user directories (Home, Documents, ...) and system disks
+- Pin folders to the left sidebar
 - Manually edit the path via text
 - Customization highlights:
   - Customize which areas and functions of the dialog are visible
@@ -35,7 +50,6 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 ## Planned features
 The following lists some of the features that are currently missing but are planned for the future!
 - Selection of multiple directory items at once
-- Pinnable folders for quick access [#42](https://github.com/fluxxcode/egui-file-dialog/issues/42)
 - Only show files with a specific file extension (The user can already filter files by file extension using the search, but there is currently no backend method for this or a dropdown to be able to select from predefined file extensions.)
 - Keyboard input [#70](https://github.com/fluxxcode/egui-file-dialog/issues/70)
 - Context menus, for example for renaming, deleting or copying files or directories
