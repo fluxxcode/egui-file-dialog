@@ -12,6 +12,9 @@
 ### 🐛 Bug Fixes
 - Fixed the size of the path edit input box and fixed an issue where the path edit would not close when clicking the apply button [#102](https://github.com/fluxxcode/egui-file-dialog/pull/102)
 
+### 🔧 Changes
+- Restructure `config` module [#109](https://github.com/fluxxcode/egui-file-dialog/pull/109)
+
 ### 📚 Documentation
 - Added `persistence` example showing how to save the persistent data of the file dialog [#107](https://github.com/fluxxcode/egui-file-dialog/pull/107)
 
