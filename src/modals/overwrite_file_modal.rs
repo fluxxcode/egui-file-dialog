@@ -21,7 +21,7 @@ impl OverwriteFileModal {
     pub fn new(path: PathBuf) -> Self {
         Self {
             state: ModalState::Pending,
-            path
+            path,
         }
     }
 }

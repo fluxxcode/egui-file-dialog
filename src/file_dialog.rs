@@ -1762,7 +1762,7 @@ impl FileDialog {
                 // We want to use the submit button (Enter) to enter a new directory instead of
                 // selecting the current one.
                 // We might want to change this behavior later.
-                DialogMode::SelectDirectory => {},
+                DialogMode::SelectDirectory => {}
             }
         }
     }

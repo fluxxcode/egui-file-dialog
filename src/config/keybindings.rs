@@ -90,7 +90,7 @@ impl Default for FileDialogKeyBindings {
             ],
             reload: vec![KeyBinding::key(egui::Key::F5)],
             create_new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
-            edit_path: vec![KeyBinding::key(Key::Slash)]
+            edit_path: vec![KeyBinding::key(Key::Slash)],
         }
     }
 }
