@@ -1731,6 +1731,12 @@ impl FileDialog {
             self.open_new_folder_dialog();
         }
 
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path)
+            && self.config.show_new_folder_button
+        {
+            self.open_path_edit();
+        }
+
         self.config.keybindings = keybindings;
     }
 

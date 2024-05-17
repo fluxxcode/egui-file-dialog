@@ -55,6 +55,8 @@ pub struct FileDialogKeyBindings {
     pub reload: Vec<KeyBinding>,
     /// Shortcut to open the dialog to create a new folder
     pub create_new_folder: Vec<KeyBinding>,
+    /// Shortcut to text edit the current path
+    pub edit_path: Vec<KeyBinding>,
 }
 
 impl FileDialogKeyBindings {
@@ -88,6 +90,10 @@ impl Default for FileDialogKeyBindings {
             ],
             reload: vec![KeyBinding::key(egui::Key::F5)],
             create_new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
+            edit_path: vec![
+                KeyBinding::key(Key::Slash),
+                KeyBinding::key(Key::Backslash),
+            ]
         }
     }
 }
