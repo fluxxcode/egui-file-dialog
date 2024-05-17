@@ -69,9 +69,14 @@ impl CreateDirectoryDialog {
         self.directory = Some(directory);
     }
 
-    /// Closes and resets the dialog.
+    /// Closes and resets the dialog without creating the directory.
     pub fn close(&mut self) {
         self.reset();
+    }
+
+    /// Triggers the action to create the folder with the given name.
+    pub fn submit(&mut self) -> CreateDirectoryResponse {
+        self.create_directory()
     }
 
     /// Main update function of the dialog. Should be called in every frame

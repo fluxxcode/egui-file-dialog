@@ -6,6 +6,7 @@ mod overwrite_file_modal;
 pub use overwrite_file_modal::OverwriteFileModal;
 
 /// Contains actions that are executed by the file dialog when closing a modal.
+#[derive(Clone)]
 pub enum ModalAction {
     /// If no action should be executed.
     None,
@@ -14,6 +15,7 @@ pub enum ModalAction {
     SaveFile(PathBuf),
 }
 
+#[derive(Clone)]
 pub enum ModalState {
     /// If the modal is currently open and still waiting for user input
     Pending,

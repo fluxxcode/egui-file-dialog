@@ -1124,14 +1124,11 @@ impl FileDialog {
         let btn_response = ui.add_sized(edit_button_size, egui::Button::new("✔"));
 
         if btn_response.clicked() {
-            self.load_path_edit_directory(true);
+            self.submit_path_edit(true);
         }
 
-        if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
-            self.path_edit_request_focus = true;
-            self.load_path_edit_directory(false);
-        } else if !response.has_focus() && !btn_response.contains_pointer() {
-            self.path_edit_visible = false;
+        if !response.has_focus() && !btn_response.contains_pointer() {
+            self.close_path_edit();
         }
     }
 
@@ -1499,36 +1496,7 @@ impl FileDialog {
                 label,
                 self.file_name_input_error.as_deref(),
             ) {
-                match &self.mode {
-                    DialogMode::SelectDirectory | DialogMode::SelectFile => {
-                        // self.selected_item should always contain a value,
-                        // since self.is_selection_valid() validates the selection and
-                        // returns false if the selection is none.
-                        if let Some(selection) = self.selected_item.clone() {
-                            self.finish(selection.to_path_buf());
-                        }
-                    }
-                    DialogMode::SaveFile => {
-                        // self.current_directory should always contain a value,
-                        // since self.is_selection_valid() makes sure there is no
-                        // file_name_input_error. The file_name_input_error
-                        // gets validated every time something changes
-                        // by the validate_file_name_input, which sets an error
-                        // if we are currently not in a directory.
-                        if let Some(path) = self.current_directory() {
-                            let mut full_path = path.to_path_buf();
-                            full_path.push(&self.file_name_input);
-
-                            if full_path.exists() {
-                                self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
-
-                                return;
-                            }
-
-                            self.finish(full_path);
-                        }
-                    }
-                }
+                self.submit();
             }
 
             ui.add_space(ui.ctx().style().spacing.item_spacing.y);
@@ -1639,10 +1607,7 @@ impl FileDialog {
                         .update(ui, &self.config)
                         .directory()
                     {
-                        let entry = DirectoryEntry::from_path(&self.config, &path);
-
-                        self.directory_content.push(entry.clone());
-                        self.select_item(&entry);
+                        self.process_new_folder(&path);
                     }
                 });
         });
@@ -1715,7 +1680,7 @@ impl FileDialog {
     }
 }
 
-/// Implementation
+/// Keybindings
 impl FileDialog {
     /// Checks whether certain keybindings have been pressed and executes the corresponding actions.
     fn update_keybindings(&mut self, ctx: &egui::Context) {
@@ -1727,6 +1692,14 @@ impl FileDialog {
         }
 
         let keybindings = std::mem::take(&mut self.config.keybindings);
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit) {
+            self.exec_keybinding_submit();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel) {
+            self.exec_keybinding_cancel();
+        }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent)
             && self.config.show_back_button
@@ -1761,11 +1734,61 @@ impl FileDialog {
         self.config.keybindings = keybindings;
     }
 
+    /// Executes the action when the keybinding `submit` is pressed.
+    fn exec_keybinding_submit(&mut self) {
+        if self.create_directory_dialog.is_open() {
+            if let Some(path) = self.create_directory_dialog.submit().directory() {
+                self.process_new_folder(&path);
+            }
+        } else if self.path_edit_visible {
+            self.submit_path_edit(false);
+        } else {
+            // The submit button (Enter) is used to open the directory that is currently selected
+            if let Some(path) = &self.selected_item {
+                if path.is_dir() {
+                    let _ = self.load_directory(&path.to_path_buf());
+                    return;
+                }
+            }
+
+            match &self.mode {
+                DialogMode::SelectFile | DialogMode::SaveFile => self.submit(),
+                // We want to use the submit button (Enter) to enter a new directory instead of
+                // selecting the current one.
+                // We might want to change this behavior later.
+                DialogMode::SelectDirectory => {},
+            }
+        }
+    }
+
+    /// Executes the action when the keybinding `cancel` is pressed.
+    fn exec_keybinding_cancel(&mut self) {
+        if self.create_directory_dialog.is_open() {
+            self.create_directory_dialog.close();
+        } else if self.path_edit_visible {
+            self.close_path_edit()
+        } else {
+            self.cancel();
+            return;
+        }
+    }
+}
+
+/// Implementation
+impl FileDialog {
     /// Opens the dialog to create a new folder.
     fn open_new_folder_dialog(&mut self) {
         if let Some(x) = self.current_directory() {
             self.create_directory_dialog.open(x.to_path_buf());
         }
+    }
+
+    /// Function that processes a newly created folder.
+    fn process_new_folder(&mut self, created_dir: &Path) {
+        let entry = DirectoryEntry::from_path(&self.config, created_dir);
+
+        self.directory_content.push(entry.clone());
+        self.select_item(&entry);
     }
 
     /// Opens a new modal window.
@@ -1836,6 +1859,40 @@ impl FileDialog {
         self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
 
         let _ = self.reload_directory();
+    }
+
+    /// Submits the current selection and tries to finish the dialog, if the selection is valid.
+    fn submit(&mut self) {
+        // Make sure the selected item or entered file name is valid.
+        if !self.is_selection_valid() {
+            return;
+        }
+
+        match &self.mode {
+            DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                // Should always contain a value since `is_selection_valid` is used to
+                // validate the selection.
+                if let Some(selection) = self.selected_item.clone() {
+                    self.finish(selection.to_path_buf());
+                }
+            }
+            DialogMode::SaveFile => {
+                // Should always contain a value since `is_selection_valid` is used to
+                // validate the selection.
+                if let Some(path) = self.current_directory() {
+                    let mut full_path = path.to_path_buf();
+                    full_path.push(&self.file_name_input);
+
+                    if full_path.exists() {
+                        self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
+
+                        return;
+                    }
+
+                    self.finish(full_path);
+                }
+            }
+        }
     }
 
     /// Finishes the dialog.
@@ -1943,12 +2000,20 @@ impl FileDialog {
     }
 
     /// Loads the directory from the path text edit.
-    fn load_path_edit_directory(&mut self, close_text_edit: bool) {
+    fn submit_path_edit(&mut self, close_text_edit: bool) {
         if close_text_edit {
-            self.path_edit_visible = false;
+            self.close_path_edit();
+        } else {
+            self.path_edit_request_focus = true;
         }
 
         let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
+    }
+
+    /// Closes the text field at the top to edit the current path without loading
+    /// the entered directory.
+    fn close_path_edit(&mut self) {
+        self.path_edit_visible = false;
     }
 
     /// Loads the next directory in the directory_stack.

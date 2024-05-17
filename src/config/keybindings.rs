@@ -41,6 +41,10 @@ impl KeyBinding {
 /// Stores the keybindings used for the file dialog.
 #[derive(Debug, Clone)]
 pub struct FileDialogKeyBindings {
+    /// Shortcut to submit the current action
+    pub submit: Vec<KeyBinding>,
+    /// Shortcut to cancel the current action
+    pub cancel: Vec<KeyBinding>,
     /// Shortcut to open the parent directory
     pub parent: Vec<KeyBinding>,
     /// Shortcut to go back
@@ -71,6 +75,8 @@ impl Default for FileDialogKeyBindings {
         use egui::{Key, Modifiers, PointerButton};
 
         Self {
+            submit: vec![KeyBinding::key(Key::Enter)],
+            cancel: vec![KeyBinding::key(Key::Escape)],
             parent: vec![KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowUp)],
             back: vec![
                 KeyBinding::pointer_button(PointerButton::Extra1),
