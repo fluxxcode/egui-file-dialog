@@ -325,7 +325,7 @@ impl FileDialog {
             return self;
         }
 
-        self.update_keyboard_input(ctx);
+        self.update_keybindings(ctx);
         self.update_ui(ctx);
 
         self
@@ -1718,8 +1718,21 @@ impl FileDialog {
 /// Implementation
 impl FileDialog {
     /// Checks whether certain keybindings have been pressed and executes the corresponding actions.
-    fn update_keyboard_input(&mut self, ctx: &egui::Context) {
+    fn update_keybindings(&mut self, ctx: &egui::Context) {
+        // We definitely don't want to execute keybindings if a modal is currently open.
+        // The modals implement the keybindings themselves.
+        if let Some(modal) = self.modals.last_mut() {
+            modal.update_keybindings(&self.config, ctx);
+            return;
+        }
+
         let keybindings = std::mem::take(&mut self.config.keybindings);
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent)
+            && self.config.show_back_button
+        {
+            let _ = self.load_parent_directory();
+        }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back)
             && self.config.show_back_button
@@ -1731,6 +1744,12 @@ impl FileDialog {
             && self.config.show_forward_button
         {
             let _ = self.load_next_directory();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload)
+            && self.config.show_reload_button
+        {
+            self.refresh();
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.create_new_folder)
@@ -1987,6 +2006,9 @@ impl FileDialog {
     /// Reloads the currently open directory.
     /// If no directory is currently open, Ok() will be returned.
     /// Otherwise, the result of the directory loading operation is returned.
+    ///
+    /// In most cases, this function should not be called directly.
+    /// Instead, `refresh` should be used to reload all other data like system disks too.
     fn reload_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
             return self.load_directory_content(x.to_path_buf().as_path());

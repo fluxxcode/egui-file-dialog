@@ -5,7 +5,7 @@ pub enum KeyBinding {
     Key(egui::Key),
     /// If a keyboard shortcut should be used as a keybinding
     KeyboardShortcut(egui::KeyboardShortcut),
-    /// If pointer buttons should be used as the keybinding
+    /// If a pointer button should be used as the keybinding
     PointerButton(egui::PointerButton),
 }
 
@@ -41,8 +41,15 @@ impl KeyBinding {
 /// Stores the keybindings used for the file dialog.
 #[derive(Debug, Clone)]
 pub struct FileDialogKeyBindings {
+    /// Shortcut to open the parent directory
+    pub parent: Vec<KeyBinding>,
+    /// Shortcut to go back
     pub back: Vec<KeyBinding>,
+    /// Shortcut to go forward
     pub forward: Vec<KeyBinding>,
+    /// Shortcut to reload the file dialog
+    pub reload: Vec<KeyBinding>,
+    /// Shortcut to open the dialog to create a new folder
     pub create_new_folder: Vec<KeyBinding>,
 }
 
@@ -64,8 +71,16 @@ impl Default for FileDialogKeyBindings {
         use egui::{Key, Modifiers, PointerButton};
 
         Self {
-            back: vec![KeyBinding::pointer_button(PointerButton::Extra1)],
-            forward: vec![KeyBinding::pointer_button(PointerButton::Extra2)],
+            parent: vec![KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowUp)],
+            back: vec![
+                KeyBinding::pointer_button(PointerButton::Extra1),
+                KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowLeft),
+            ],
+            forward: vec![
+                KeyBinding::pointer_button(PointerButton::Extra2),
+                KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowRight),
+            ],
+            reload: vec![KeyBinding::key(egui::Key::F5)],
             create_new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
         }
     }

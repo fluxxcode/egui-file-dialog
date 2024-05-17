@@ -25,4 +25,7 @@ pub trait FileDialogModal {
     /// Main update method of the modal.
     /// Should be called every time the modal should be visible.
     fn update(&mut self, config: &FileDialogConfig, ui: &mut egui::Ui) -> ModalState;
+
+    /// Updates the configured keybindings for the modal window.
+    fn update_keybindings(&mut self, _config: &FileDialogConfig, _ctx: &egui::Context) {}
 }
