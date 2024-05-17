@@ -1721,13 +1721,13 @@ impl FileDialog {
     fn update_keyboard_input(&mut self, ctx: &egui::Context) {
         let keybindings = std::mem::take(&mut self.config.keybindings);
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.open_previous_directory)
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back)
             && self.config.show_back_button
         {
             let _ = self.load_previous_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.open_next_directory)
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward)
             && self.config.show_forward_button
         {
             let _ = self.load_next_directory();
