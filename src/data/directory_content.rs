@@ -126,6 +126,21 @@ impl DirectoryContent {
         self.content.iter()
     }
 
+    /// Gets the item at the specified index.
+    pub fn get(&self, index: usize) -> Option<&DirectoryEntry> {
+        self.content.get(index)
+    }
+
+    /// Gets the last item inside the directory.
+    pub fn last(&self) -> Option<&DirectoryEntry> {
+        self.content.last()
+    }
+
+    /// Gets the first item inside the directory.
+    pub fn first(&self) -> Option<&DirectoryEntry> {
+        self.content.first()
+    }
+
     /// Returns the number of elements inside the directory.
     pub fn len(&self) -> usize {
         self.content.len()

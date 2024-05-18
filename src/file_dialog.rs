@@ -1749,6 +1749,14 @@ impl FileDialog {
             self.open_path_edit();
         }
 
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up) {
+            self.exec_keybinding_selection_up();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_down) {
+            self.exec_keybinding_selection_down();
+        }
+
         self.config.keybindings = keybindings;
     }
 
@@ -1789,6 +1797,59 @@ impl FileDialog {
             self.cancel();
             return;
         }
+    }
+
+    /// Executes the action when the keybinding `selection_up` is pressed.
+    fn exec_keybinding_selection_up(&mut self) {
+        if self.directory_content.len() == 0 {
+            return;
+        }
+
+        self.close_path_edit();
+
+        if let Some(selection) = &self.selected_item {
+            if let Some(index) = selection.index {
+                if index == 0 {
+                    // We can't go further up. Try to select the last element inside the directory.
+                    self.select_last_dir_item();
+                } else {
+                    self.select_dir_item_at_index(index - 1);
+                }
+
+                return;
+            }
+        }
+
+        // No item is selected or the currently selected item is not inside the central view.
+        // Select the last item from the directory content.
+        self.select_last_dir_item();
+    }
+
+    /// Executes the action when the keybinding `selection_down` is pressed.
+    fn exec_keybinding_selection_down(&mut self) {
+        if self.directory_content.len() == 0 {
+            return;
+        }
+
+        self.close_path_edit();
+
+        if let Some(selection) = &self.selected_item {
+            if let Some(index) = selection.index {
+                if index == self.directory_content.len() - 1 {
+                    // We can't go further down. Try to select the first element
+                    // inside the directory.
+                    self.select_first_dir_item();
+                } else {
+                    self.select_dir_item_at_index(index + 1);
+                }
+
+                return;
+            }
+        }
+
+        // No item is selected or the currently selected item is not inside the central view.
+        // Select the first item from the directory content.
+        self.select_first_dir_item();
     }
 }
 
@@ -2012,6 +2073,30 @@ impl FileDialog {
         }
     }
 
+    /// Tries to select the item inside `directory_content` at the given index.
+    fn select_dir_item_at_index(&mut self, index: usize) {
+        if let Some(item) = self.directory_content.get(index) {
+            self.select_item(item.clone(), Some(index));
+            self.scroll_to_selection = true;
+        }
+    }
+
+    /// Tries to select the first item inside `directory_content`.
+    fn select_first_dir_item(&mut self) {
+        if let Some(item) = self.directory_content.first() {
+            self.select_item(item.clone(), Some(0));
+            self.scroll_to_selection = true;
+        }
+    }
+
+    /// Tries to select the last item inside `directory_content`.
+    fn select_last_dir_item(&mut self) {
+        if let Some(item) = self.directory_content.last() {
+            self.select_item(item.clone(), Some(self.directory_content.len() - 1));
+            self.scroll_to_selection = true;
+        }
+    }
+
     /// Opens the text field in the top panel to text edit the current path.
     fn open_path_edit(&mut self) {
         let path = match self.current_directory() {
@@ -2046,6 +2131,8 @@ impl FileDialog {
     /// nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_next_directory(&mut self) -> io::Result<()> {
+        self.close_path_edit();
+
         if self.directory_offset == 0 {
             // There is no next directory that can be loaded
             return Ok(());
@@ -2065,6 +2152,8 @@ impl FileDialog {
     /// If there is no previous directory left, Ok() is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_previous_directory(&mut self) -> io::Result<()> {
+        self.close_path_edit();
+
         if self.directory_offset + 1 >= self.directory_stack.len() {
             // There is no previous directory that can be loaded
             return Ok(());
@@ -2084,6 +2173,8 @@ impl FileDialog {
     /// If the directory doesn't have a parent, Ok() is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_parent_directory(&mut self) -> io::Result<()> {
+        self.close_path_edit();
+
         if let Some(x) = self.current_directory() {
             if let Some(x) = x.to_path_buf().parent() {
                 return self.load_directory(x);
@@ -2100,6 +2191,8 @@ impl FileDialog {
     /// In most cases, this function should not be called directly.
     /// Instead, `refresh` should be used to reload all other data like system disks too.
     fn reload_directory(&mut self) -> io::Result<()> {
+        self.close_path_edit();
+
         if let Some(x) = self.current_directory() {
             return self.load_directory_content(x.to_path_buf().as_path());
         }
@@ -2156,6 +2249,19 @@ impl FileDialog {
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;
+
+        if let Some(selection) = &mut self.selected_item {
+            selection.index = None;
+
+            // Check if the selected item is now inside the directory content.
+            // If so, the selection index needs to be updated.
+            for (i, path) in self.directory_content.iter().enumerate() {
+                if *path == selection.item {
+                    selection.index = Some(i);
+                    break;
+                }
+            }
+        }
 
         if self.mode == DialogMode::SaveFile {
             self.file_name_input_error = self.validate_file_name_input();
