@@ -166,6 +166,11 @@ pub struct FileDialog {
     scroll_to_selection: bool,
     /// Buffer containing the value of the search input.
     search_value: String,
+
+    /// If any widget was focused in the last frame.
+    /// This is used to prevent the dialog from closing when pressing the escape key
+    /// inside a text input.
+    any_focused_last_frame: bool,
 }
 
 impl Default for FileDialog {
@@ -211,6 +216,8 @@ impl FileDialog {
 
             scroll_to_selection: false,
             search_value: String::new(),
+
+            any_focused_last_frame: false,
         }
     }
 
@@ -862,6 +869,8 @@ impl FileDialog {
                 self.ui_update_central_panel(ui);
             });
         });
+
+        self.any_focused_last_frame = ctx.memory(|r| r.focused()).is_some();
 
         // User closed the window without finishing the dialog
         if !is_open {
@@ -1795,6 +1804,7 @@ impl FileDialog {
         // the create directory dialog.
         // However, this causes problems when the user presses escape in other text
         // inputs for which we have no status saved. This would then close the entire file dialog.
+        // To fix this, we check if any item was focused in the last frame.
         //
         // Note that this only happens with the escape key and not when the enter key is
         // used to close a text input. This is why we don't have to check for the
@@ -1804,7 +1814,7 @@ impl FileDialog {
             self.create_directory_dialog.close();
         } else if self.path_edit_visible {
             self.close_path_edit()
-        } else {
+        } else if !self.any_focused_last_frame {
             self.cancel();
             return;
         }
