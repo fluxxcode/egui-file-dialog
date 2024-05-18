@@ -41,7 +41,7 @@ impl KeyBinding {
 /// Stores the keybindings used for the file dialog.
 #[derive(Debug, Clone)]
 pub struct FileDialogKeyBindings {
-    /// Shortcut to submit the current action
+    /// Shortcut to submit the current action or enter the currently selected directory
     pub submit: Vec<KeyBinding>,
     /// Shortcut to cancel the current action
     pub cancel: Vec<KeyBinding>,
@@ -54,7 +54,7 @@ pub struct FileDialogKeyBindings {
     /// Shortcut to reload the file dialog
     pub reload: Vec<KeyBinding>,
     /// Shortcut to open the dialog to create a new folder
-    pub create_new_folder: Vec<KeyBinding>,
+    pub new_folder: Vec<KeyBinding>,
     /// Shortcut to text edit the current path
     pub edit_path: Vec<KeyBinding>,
 }
@@ -83,13 +83,14 @@ impl Default for FileDialogKeyBindings {
             back: vec![
                 KeyBinding::pointer_button(PointerButton::Extra1),
                 KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowLeft),
+                KeyBinding::key(Key::Backspace),
             ],
             forward: vec![
                 KeyBinding::pointer_button(PointerButton::Extra2),
                 KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowRight),
             ],
             reload: vec![KeyBinding::key(egui::Key::F5)],
-            create_new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
+            new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
             edit_path: vec![KeyBinding::key(Key::Slash)],
         }
     }

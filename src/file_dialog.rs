@@ -1725,7 +1725,7 @@ impl FileDialog {
             self.refresh();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.create_new_folder)
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder)
             && self.config.show_new_folder_button
         {
             self.open_new_folder_dialog();
