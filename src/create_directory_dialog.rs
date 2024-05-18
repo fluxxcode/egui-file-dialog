@@ -113,7 +113,8 @@ impl CreateDirectoryDialog {
                 self.error = self.validate_input(&config.labels);
             }
 
-            if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
+            if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter))
+            {
                 // Only necessary in the event of an error
                 self.request_focus = true;
 
