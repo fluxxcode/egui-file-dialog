@@ -93,6 +93,7 @@ impl Default for FileDialogKeyBindings {
             back: vec![
                 KeyBinding::pointer_button(PointerButton::Extra1),
                 KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowLeft),
+                KeyBinding::key(Key::Backspace),
             ],
             forward: vec![
                 KeyBinding::pointer_button(PointerButton::Extra2),

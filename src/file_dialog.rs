@@ -1762,33 +1762,41 @@ impl FileDialog {
 
     /// Executes the action when the keybinding `submit` is pressed.
     fn exec_keybinding_submit(&mut self) {
-        if self.create_directory_dialog.is_open() {
-            if let Some(path) = self.create_directory_dialog.submit().directory() {
-                self.process_new_folder(&path);
+        // The submit button (Enter) is used to open the directory that is currently selected
+        if let Some(path) = &self.selected_item {
+            if path.item.is_dir() {
+                let _ = self.load_directory(&path.item.to_path_buf());
+                return;
             }
-        } else if self.path_edit_visible {
-            self.submit_path_edit(false);
-        } else {
-            // The submit button (Enter) is used to open the directory that is currently selected
-            if let Some(path) = &self.selected_item {
-                if path.item.is_dir() {
-                    let _ = self.load_directory(&path.item.to_path_buf());
-                    return;
-                }
-            }
+        }
 
-            match &self.mode {
-                DialogMode::SelectFile | DialogMode::SaveFile => self.submit(),
-                // We want to use the submit button (Enter) to enter a new directory instead of
-                // selecting the current one.
-                // We might want to change this behavior later.
-                DialogMode::SelectDirectory => {}
-            }
+        match &self.mode {
+            DialogMode::SelectFile | DialogMode::SaveFile => self.submit(),
+            // We want to use the submit button (Enter) to enter a new directory instead of
+            // selecting the current one.
+            // We might want to change this behavior later.
+            DialogMode::SelectDirectory => {}
         }
     }
 
     /// Executes the action when the keybinding `cancel` is pressed.
     fn exec_keybinding_cancel(&mut self) {
+        // We have to check if the `create_directory_dialog` and `path_edit_visible` is open,
+        // because egui does not consume pressing the escape key inside a text input.
+        // So when pressing the escape key inside a text input, the text input is closed
+        // but the keybindings still register the press on the escape key.
+        // (Although the keybindings are updated before the UI and they check whether another
+        //  widget is currently in focus!)
+        //
+        // This is practical for us because we can close the path edit and
+        // the create directory dialog.
+        // However, this causes problems when the user presses escape in other text
+        // inputs for which we have no status saved. This would then close the entire file dialog.
+        //
+        // Note that this only happens with the escape key and not when the enter key is
+        // used to close a text input. This is why we don't have to check for the
+        // dialogs in `exec_keybinding_submit`.
+
         if self.create_directory_dialog.is_open() {
             self.create_directory_dialog.close();
         } else if self.path_edit_visible {
