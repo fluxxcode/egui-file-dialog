@@ -150,6 +150,11 @@ impl DirectoryContent {
     pub fn push(&mut self, item: DirectoryEntry) {
         self.content.push(item);
     }
+
+    /// Clears the items inside the directory.
+    pub fn clear(&mut self) {
+        self.content.clear();
+    }
 }
 
 /// Loads the contents of the given directory.

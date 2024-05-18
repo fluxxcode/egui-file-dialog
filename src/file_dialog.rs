@@ -2242,6 +2242,8 @@ impl FileDialog {
             match DirectoryContent::from_path(&self.config, path, self.show_files) {
                 Ok(content) => content,
                 Err(err) => {
+                    self.directory_content.clear();
+                    self.selected_item = None;
                     self.directory_error = Some(err.to_string());
                     return Err(err);
                 }
