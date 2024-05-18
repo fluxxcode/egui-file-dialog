@@ -126,6 +126,11 @@ impl DirectoryContent {
         self.content.iter()
     }
 
+    /// Returns the number of elements inside the directory.
+    pub fn len(&self) -> usize {
+        self.content.len()
+    }
+
     /// Pushes a new item to the content.
     pub fn push(&mut self, item: DirectoryEntry) {
         self.content.push(item);

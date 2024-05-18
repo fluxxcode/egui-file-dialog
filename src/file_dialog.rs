@@ -56,6 +56,25 @@ impl Default for FileDialogStorage {
     }
 }
 
+/// Contains information of the current selected item inside the file dialog.
+#[derive(Clone)]
+struct Selection {
+    /// The index of the selected item inside the `directory_content`.
+    /// This is only set if an item inside the central view is selected, not if an
+    /// item from the left panel is selected.
+    /// The index is used to implement the `selection_up` and `selection_down` keybindings,
+    /// without having to iterate over `directory_content`.
+    pub index: Option<usize>,
+    /// The item that the user selected.
+    pub item: DirectoryEntry,
+}
+
+impl Selection {
+    pub fn new(item: DirectoryEntry, index: Option<usize>) -> Self {
+        Self { index, item }
+    }
+}
+
 /// Represents a file dialog instance.
 ///
 /// The `FileDialog` instance can be used multiple times and for different actions.
@@ -136,7 +155,7 @@ pub struct FileDialog {
 
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
-    selected_item: Option<DirectoryEntry>,
+    selected_item: Option<Selection>,
     /// Buffer for the input of the file name when the dialog is in "SaveFile" mode.
     file_name_input: String,
     /// This variables contains the error message if the file_name_input is invalid.
@@ -1457,7 +1476,7 @@ impl FileDialog {
                                 .show(ui, |ui| {
                                     ui.colored_label(
                                         ui.style().visuals.selection.bg_fill,
-                                        x.file_name(),
+                                        x.item.file_name(),
                                     );
                                 });
                         }
@@ -1538,7 +1557,7 @@ impl FileDialog {
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
 
-                    for path in data.iter() {
+                    for (i, path) in data.iter().enumerate() {
                         let file_name = path.file_name();
 
                         if !self.search_value.is_empty()
@@ -1551,7 +1570,7 @@ impl FileDialog {
 
                         let mut selected = false;
                         if let Some(x) = &self.selected_item {
-                            selected = x == path;
+                            selected = x.item == *path;
                         }
 
                         let pinned = self.is_pinned(path);
@@ -1568,7 +1587,7 @@ impl FileDialog {
                             self.ui_update_path_context_menu(&response, path);
 
                             if response.context_menu_opened() {
-                                self.select_item(path);
+                                self.select_item(path.clone(), Some(i));
                             }
                         }
 
@@ -1577,7 +1596,7 @@ impl FileDialog {
                         }
 
                         if response.clicked() {
-                            self.select_item(path);
+                            self.select_item(path.clone(), Some(i));
                         }
 
                         if response.double_clicked() {
@@ -1586,16 +1605,9 @@ impl FileDialog {
                                 return;
                             }
 
-                            self.select_item(path);
+                            self.select_item(path.clone(), Some(i));
 
-                            if self.is_selection_valid() {
-                                // self.selected_item should always contain a value
-                                // since self.is_selection_valid() validates the selection
-                                // and returns false if the selection is none.
-                                if let Some(selection) = self.selected_item.clone() {
-                                    self.finish(selection.to_path_buf());
-                                }
-                            }
+                            self.submit();
                         }
                     }
 
@@ -1751,8 +1763,8 @@ impl FileDialog {
         } else {
             // The submit button (Enter) is used to open the directory that is currently selected
             if let Some(path) = &self.selected_item {
-                if path.is_dir() {
-                    let _ = self.load_directory(&path.to_path_buf());
+                if path.item.is_dir() {
+                    let _ = self.load_directory(&path.item.to_path_buf());
                     return;
                 }
             }
@@ -1794,7 +1806,8 @@ impl FileDialog {
         let entry = DirectoryEntry::from_path(&self.config, created_dir);
 
         self.directory_content.push(entry.clone());
-        self.select_item(&entry);
+
+        self.select_item(entry, Some(self.directory_content.len() - 1));
     }
 
     /// Opens a new modal window.
@@ -1879,7 +1892,7 @@ impl FileDialog {
                 // Should always contain a value since `is_selection_valid` is used to
                 // validate the selection.
                 if let Some(selection) = self.selected_item.clone() {
-                    self.finish(selection.to_path_buf());
+                    self.finish(selection.item.to_path_buf());
                 }
             }
             DialogMode::SaveFile => {
@@ -1942,8 +1955,8 @@ impl FileDialog {
     fn is_selection_valid(&self) -> bool {
         if let Some(selection) = &self.selected_item {
             return match &self.mode {
-                DialogMode::SelectDirectory => selection.is_dir(),
-                DialogMode::SelectFile => selection.is_file(),
+                DialogMode::SelectDirectory => selection.item.is_dir(),
+                DialogMode::SelectFile => selection.item.is_file(),
                 DialogMode::SaveFile => self.file_name_input_error.is_none(),
             };
         }
@@ -1984,11 +1997,17 @@ impl FileDialog {
 
     /// Marks the given item as the selected directory item.
     /// Also updates the file_name_input to the name of the selected item.
-    fn select_item(&mut self, dir_entry: &DirectoryEntry) {
-        self.selected_item = Some(dir_entry.clone());
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item that the user selected
+    /// * `index` - The index of the item inside `directory_content`. Only used if an
+    ///             item inside the central area is selected.
+    fn select_item(&mut self, item: DirectoryEntry, index: Option<usize>) {
+        self.selected_item = Some(Selection::new(item.clone(), index));
 
-        if self.mode == DialogMode::SaveFile && dir_entry.is_file() {
-            self.file_name_input = dir_entry.file_name().to_string();
+        if self.mode == DialogMode::SaveFile && item.is_file() {
+            self.file_name_input = item.file_name().to_string();
             self.file_name_input_error = self.validate_file_name_input();
         }
     }
@@ -2113,7 +2132,7 @@ impl FileDialog {
         self.load_directory_content(path)?;
 
         let dir_entry = DirectoryEntry::from_path(&self.config, path);
-        self.select_item(&dir_entry);
+        self.select_item(dir_entry, None);
 
         // Clear the entry filter buffer.
         // It's unlikely the user wants to keep the current filter when entering a new directory.
