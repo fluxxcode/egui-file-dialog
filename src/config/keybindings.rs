@@ -30,6 +30,12 @@ impl KeyBinding {
 
     /// Checks if the keybinding was pressed by the user.
     pub fn pressed(&self, ctx: &egui::Context) -> bool {
+        // We want to suppress keyboard input when any other widget like
+        // text fields have focus.
+        if ctx.memory(|r| r.focused()).is_some() {
+            return false;
+        }
+
         match self {
             KeyBinding::Key(k) => ctx.input(|i| i.key_pressed(*k)),
             KeyBinding::KeyboardShortcut(s) => ctx.input_mut(|i| i.consume_shortcut(s)),
