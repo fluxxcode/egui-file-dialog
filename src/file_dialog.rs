@@ -1146,8 +1146,11 @@ impl FileDialog {
             self.submit_path_edit(true);
         }
 
-        if !response.has_focus() && !btn_response.contains_pointer() {
-            self.close_path_edit();
+        if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
+            self.path_edit_request_focus = true;
+            self.submit_path_edit(false);
+        } else if !response.has_focus() && !btn_response.contains_pointer() {
+            self.path_edit_visible = false;
         }
     }
 

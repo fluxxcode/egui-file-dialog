@@ -44,6 +44,8 @@ pub struct CreateDirectoryDialog {
     error: Option<String>,
     /// If we should scroll to the error in the next frame
     scroll_to_error: bool,
+    /// If the text input should request focus in the next frame
+    request_focus: bool,
 }
 
 impl CreateDirectoryDialog {
@@ -57,6 +59,7 @@ impl CreateDirectoryDialog {
             input: String::new(),
             error: None,
             scroll_to_error: false,
+            request_focus: true,
         }
     }
 
@@ -72,11 +75,6 @@ impl CreateDirectoryDialog {
     /// Closes and resets the dialog without creating the directory.
     pub fn close(&mut self) {
         self.reset();
-    }
-
-    /// Triggers the action to create the folder with the given name.
-    pub fn submit(&mut self) -> CreateDirectoryResponse {
-        self.create_directory()
     }
 
     /// Main update function of the dialog. Should be called in every frame
@@ -103,10 +101,27 @@ impl CreateDirectoryDialog {
 
                 self.error = self.validate_input(&config.labels);
                 self.init = false;
+                self.request_focus = false;
+            }
+
+            if self.request_focus {
+                response.request_focus();
+                self.request_focus = false;
             }
 
             if response.changed() {
                 self.error = self.validate_input(&config.labels);
+            }
+
+            if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
+                // Only necessary in the event of an error
+                self.request_focus = true;
+
+                if self.error.is_none() {
+                    result = self.create_directory();
+                }
+            } else if response.lost_focus() {
+                self.close();
             }
 
             if ui
