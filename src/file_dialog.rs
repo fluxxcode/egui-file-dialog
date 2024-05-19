@@ -150,6 +150,9 @@ pub struct FileDialog {
     path_edit_visible: bool,
     /// Buffer holding the text when the user edits the current path.
     path_edit_value: String,
+    /// If the path edit should be initialized. Unlike `path_edit_request_focus`,
+    /// this also sets the cursor to the end of the text input field.
+    path_edit_activate: bool,
     /// If the text edit of the path should request focus in the next frame.
     path_edit_request_focus: bool,
 
@@ -210,13 +213,14 @@ impl FileDialog {
 
             path_edit_visible: false,
             path_edit_value: String::new(),
+            path_edit_activate: false,
             path_edit_request_focus: false,
 
             selected_item: None,
             file_name_input: String::new(),
             file_name_input_error: None,
             file_name_input_request_focus: true,
-
+            
             scroll_to_selection: false,
             search_value: String::new(),
 
@@ -1147,6 +1151,12 @@ impl FileDialog {
             .show(ui)
             .response;
 
+        if self.path_edit_activate {
+            response.request_focus();
+            Self::set_cursor_to_end(&response, &self.path_edit_value);
+            self.path_edit_activate = false;
+        }
+
         if self.path_edit_request_focus {
             response.request_focus();
             self.path_edit_request_focus = false;
@@ -1159,7 +1169,6 @@ impl FileDialog {
         }
 
         if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
-            self.path_edit_request_focus = true;
             self.submit_path_edit(false);
         } else if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
@@ -1183,6 +1192,7 @@ impl FileDialog {
                         egui::Vec2::new(ui.available_width(), 0.0),
                         egui::TextEdit::singleline(&mut self.search_value),
                     );
+
                     self.edit_filter_on_text_input(ui, re);
                 });
             });
@@ -1195,10 +1205,10 @@ impl FileDialog {
     ///
     /// - `re`: The [`egui::Response`] returned by the filter text edit widget
     fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
-        let any_focused = ui.memory(|mem| mem.focused().is_some());
-        if any_focused {
+        if ui.memory(|mem| mem.focused().is_some()) {
             return;
         }
+
         // Whether to activate the text input widget
         let mut activate = false;
         ui.input(|inp| {
@@ -1206,6 +1216,7 @@ impl FileDialog {
             if inp.modifiers.any() && !inp.modifiers.shift_only() {
                 return;
             }
+
             // If we find any text input event, we append it to the filter string
             // and allow proceeding to activating the filter input widget.
             for text in inp.events.iter().filter_map(|ev| match ev {
@@ -1216,18 +1227,11 @@ impl FileDialog {
                 activate = true;
             }
         });
+
         if activate {
             // Focus the filter input widget
             re.request_focus();
-            // Set the cursor to the end of the filter input string
-            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
-                state
-                    .cursor
-                    .set_char_range(Some(CCursorRange::one(CCursor::new(
-                        self.search_value.len(),
-                    ))));
-                state.store(ui.ctx(), re.id);
-            }
+            Self::set_cursor_to_end(&re, &self.search_value);
         }
     }
 
@@ -1714,13 +1718,29 @@ impl FileDialog {
             }
         });
     }
+
+    /// Sets the cursor position to the end of a text input field.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `re` - response of the text input widget
+    /// * `data` - buffer holding the text of the input widget
+    fn set_cursor_to_end(re: &egui::Response, data: &str) {
+        // Set the cursor to the end of the filter input string
+        if let Some(mut state) = egui::TextEdit::load_state(&re.ctx, re.id) {
+            state
+                .cursor
+                .set_char_range(Some(CCursorRange::one(CCursor::new(data.len()))));
+            state.store(&re.ctx, re.id);
+        }
+    }
 }
 
 /// Keybindings
 impl FileDialog {
     /// Checks whether certain keybindings have been pressed and executes the corresponding actions.
     fn update_keybindings(&mut self, ctx: &egui::Context) {
-        // We definitely don't want to execute keybindings if a modal is currently open.
+        // We don't want to execute keybindings if a modal is currently open.
         // The modals implement the keybindings themselves.
         if let Some(modal) = self.modals.last_mut() {
             modal.update_keybindings(&self.config, ctx);
@@ -2121,7 +2141,7 @@ impl FileDialog {
         };
 
         self.path_edit_value = path;
-        self.path_edit_request_focus = true;
+        self.path_edit_activate = true;
         self.path_edit_visible = true;
     }
 
