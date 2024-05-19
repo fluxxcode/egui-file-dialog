@@ -366,19 +366,6 @@ impl FileDialog {
 
     // -------------------------------------------------
     // Setter:
-    /// Sets the storage used by the file dialog.
-    /// Storage includes all data that is persistently stored between multiple
-    /// file dialog instances.
-    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
-        self.config.storage = storage;
-        self
-    }
-
-    /// Mutably borrow internal storage.
-    pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
-        &mut self.config.storage
-    }
-
     /// Overwrites the configuration of the file dialog.
     ///
     /// This is useful when you want to configure multiple `FileDialog` objects with the
@@ -449,6 +436,25 @@ impl FileDialog {
     /// Mutably borrow internal `config`.
     pub fn config_mut(&mut self) -> &mut FileDialogConfig {
         &mut self.config
+    }
+
+    /// Sets the storage used by the file dialog.
+    /// Storage includes all data that is persistently stored between multiple
+    /// file dialog instances.
+    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
+        self.config.storage = storage;
+        self
+    }
+
+    /// Mutably borrow internal storage.
+    pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
+        &mut self.config.storage
+    }
+
+    /// Sets the keybindings used by the file dialog.
+    pub fn keybindings(mut self, keybindings: FileDialogKeyBindings) -> Self {
+        self.config.keybindings = keybindings;
+        self
     }
 
     /// Sets the labels the file dialog uses.
