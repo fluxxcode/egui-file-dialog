@@ -8,7 +8,24 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::FileDialogStorage;
+use crate::data::DirectoryEntry;
+
+/// Contains data of the FileDialog that should be stored persistently.
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+pub struct FileDialogStorage {
+    /// The folders the user pinned to the left sidebar.
+    pub pinned_folders: Vec<DirectoryEntry>,
+}
+
+impl Default for FileDialogStorage {
+    /// Creates a new object with default values
+    fn default() -> Self {
+        Self {
+            pinned_folders: Vec::new(),
+        }
+    }
+}
 
 /// Contains configuration values of a file dialog.
 ///

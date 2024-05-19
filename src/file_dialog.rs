@@ -4,7 +4,8 @@ use std::{fs, io};
 use egui::text::{CCursor, CCursorRange};
 
 use crate::config::{
-    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, Filter, QuickAccess,
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, Filter,
+    QuickAccess,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
@@ -37,23 +38,6 @@ pub enum DialogState {
 
     /// The user cancelled the dialog and didn't select anything.
     Cancelled,
-}
-
-/// Contains data of the FileDialog that should be stored persistently.
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-pub struct FileDialogStorage {
-    /// The folders the user pinned to the left sidebar.
-    pub pinned_folders: Vec<DirectoryEntry>,
-}
-
-impl Default for FileDialogStorage {
-    /// Creates a new object with default values
-    fn default() -> Self {
-        Self {
-            pinned_folders: Vec::new(),
-        }
-    }
 }
 
 /// Represents a file dialog instance.
