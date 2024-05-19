@@ -1627,6 +1627,7 @@ impl FileDialog {
 
                         if selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
+                            self.scroll_to_selection = false;
                         }
 
                         if response.clicked() {
@@ -1645,7 +1646,6 @@ impl FileDialog {
                         }
                     }
 
-                    self.scroll_to_selection = false;
                     self.directory_content = data;
 
                     if let Some(path) = self
@@ -1864,8 +1864,6 @@ impl FileDialog {
             return;
         }
 
-        self.close_path_edit();
-
         if let Some(selection) = &self.selected_item {
             if let Some(index) = selection.index {
                 if index == 0 {
@@ -1889,8 +1887,6 @@ impl FileDialog {
         if self.directory_content.len() == 0 {
             return;
         }
-
-        self.close_path_edit();
 
         if let Some(selection) = &self.selected_item {
             if let Some(index) = selection.index {
