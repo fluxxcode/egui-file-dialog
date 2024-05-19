@@ -161,5 +161,8 @@ mod data;
 mod file_dialog;
 mod modals;
 
-pub use config::{FileDialogConfig, FileDialogLabels};
+pub use config::{
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, IconFilter, KeyBinding, QuickAccess,
+    QuickAccessPath,
+};
 pub use file_dialog::{DialogMode, DialogState, FileDialog, FileDialogStorage};

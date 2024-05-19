@@ -2,7 +2,7 @@ mod labels;
 pub use labels::FileDialogLabels;
 
 mod keybindings;
-pub use keybindings::FileDialogKeyBindings;
+pub use keybindings::{FileDialogKeyBindings, KeyBinding};
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -298,15 +298,20 @@ impl std::fmt::Debug for IconFilter {
 /// Stores the display name and the actual path of a quick access link.
 #[derive(Debug, Clone)]
 pub struct QuickAccessPath {
+    /// Name of the path that is shown inside the left panel.
     pub display_name: String,
+    /// Absolute or relative path to the folder.
     pub path: PathBuf,
 }
 
 /// Stores a custom quick access section of the file dialog.
 #[derive(Debug, Clone)]
 pub struct QuickAccess {
-    pub canonicalize_paths: bool,
+    /// If the path's inside the quick access section should be canonicalized.
+    canonicalize_paths: bool,
+    /// Name of the quick access section displayed inside the left panel.
     pub heading: String,
+    /// Path's contained inside the quick access section.
     pub paths: Vec<QuickAccessPath>,
 }
 
