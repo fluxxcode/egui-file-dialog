@@ -1737,7 +1737,7 @@ impl FileDialog {
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent)
-            && self.config.show_back_button
+            && self.config.show_parent_button
         {
             let _ = self.load_parent_directory();
         }
