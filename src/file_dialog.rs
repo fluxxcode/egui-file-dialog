@@ -220,7 +220,7 @@ impl FileDialog {
             file_name_input: String::new(),
             file_name_input_error: None,
             file_name_input_request_focus: true,
-            
+
             scroll_to_selection: false,
             search_value: String::new(),
 
@@ -1726,9 +1726,9 @@ impl FileDialog {
     }
 
     /// Sets the cursor position to the end of a text input field.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `re` - response of the text input widget
     /// * `data` - buffer holding the text of the input widget
     fn set_cursor_to_end(re: &egui::Response, data: &str) {
