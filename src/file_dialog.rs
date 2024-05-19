@@ -2184,8 +2184,6 @@ impl FileDialog {
     /// nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_next_directory(&mut self) -> io::Result<()> {
-        self.close_path_edit();
-
         if self.directory_offset == 0 {
             // There is no next directory that can be loaded
             return Ok(());
@@ -2205,8 +2203,6 @@ impl FileDialog {
     /// If there is no previous directory left, Ok() is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_previous_directory(&mut self) -> io::Result<()> {
-        self.close_path_edit();
-
         if self.directory_offset + 1 >= self.directory_stack.len() {
             // There is no previous directory that can be loaded
             return Ok(());
@@ -2226,8 +2222,6 @@ impl FileDialog {
     /// If the directory doesn't have a parent, Ok() is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_parent_directory(&mut self) -> io::Result<()> {
-        self.close_path_edit();
-
         if let Some(x) = self.current_directory() {
             if let Some(x) = x.to_path_buf().parent() {
                 return self.load_directory(x);
@@ -2244,8 +2238,6 @@ impl FileDialog {
     /// In most cases, this function should not be called directly.
     /// Instead, `refresh` should be used to reload all other data like system disks too.
     fn reload_directory(&mut self) -> io::Result<()> {
-        self.close_path_edit();
-
         if let Some(x) = self.current_directory() {
             return self.load_directory_content(x.to_path_buf().as_path());
         }
