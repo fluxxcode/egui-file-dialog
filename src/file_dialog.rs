@@ -1932,6 +1932,8 @@ impl FileDialog {
     /// Resets the dialog to use default values.
     /// Configuration variables such as `initial_directory` are retained.
     fn reset(&mut self) {
+        self.modals = Vec::new();
+
         self.state = DialogState::Closed;
         self.show_files = true;
         self.operation_id = None;
@@ -1939,18 +1941,25 @@ impl FileDialog {
         self.user_directories = UserDirectories::new(self.config.canonicalize_paths);
         self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
 
-        self.directory_stack = vec![];
+        self.directory_stack = Vec::new();
         self.directory_offset = 0;
         self.directory_content = DirectoryContent::new();
         self.directory_error = None;
 
         self.create_directory_dialog = CreateDirectoryDialog::new();
 
+        self.path_edit_visible = false;
+        self.path_edit_value = String::new();
+        self.path_edit_request_focus = false;
+
         self.selected_item = None;
         self.file_name_input = String::new();
+        self.file_name_input_error = None;
 
         self.scroll_to_selection = false;
         self.search_value = String::new();
+
+        self.any_focused_last_frame = false;
     }
 
     /// Refreshes the dialog.
