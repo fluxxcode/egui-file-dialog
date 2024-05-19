@@ -161,6 +161,8 @@ pub struct FileDialog {
     /// This variables contains the error message if the file_name_input is invalid.
     /// This can be the case, for example, if a file or folder with the name already exists.
     file_name_input_error: Option<String>,
+    /// If the file name input text field should request focus in the next frame.
+    file_name_input_request_focus: bool,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
@@ -213,6 +215,7 @@ impl FileDialog {
             selected_item: None,
             file_name_input: String::new(),
             file_name_input_error: None,
+            file_name_input_request_focus: true,
 
             scroll_to_selection: false,
             search_value: String::new(),
@@ -1390,7 +1393,7 @@ impl FileDialog {
         visible
     }
 
-    /// Updates the list of devices like system disks
+    /// Updates the list of devices like system disks.
     ///
     /// Returns true if at least one device was included in the list and the
     /// heading is visible. If no device was listed, false is returned.
@@ -1500,8 +1503,17 @@ impl FileDialog {
                             .desired_width(f32::INFINITY),
                     );
 
+                    if self.file_name_input_request_focus {
+                        response.request_focus();
+                        self.file_name_input_request_focus = false;
+                    }
+
                     if response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
+                    }
+
+                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                        self.submit();
                     }
                 }
             };
@@ -1955,6 +1967,7 @@ impl FileDialog {
         self.selected_item = None;
         self.file_name_input = String::new();
         self.file_name_input_error = None;
+        self.file_name_input_request_focus = true;
 
         self.scroll_to_selection = false;
         self.search_value = String::new();
