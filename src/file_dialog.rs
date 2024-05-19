@@ -56,25 +56,6 @@ impl Default for FileDialogStorage {
     }
 }
 
-/// Contains information of the current selected item inside the file dialog.
-#[derive(Clone)]
-struct Selection {
-    /// The index of the selected item inside the `directory_content`.
-    /// This is only set if an item inside the central view is selected, not if an
-    /// item from the left panel is selected.
-    /// The index is used to implement the `selection_up` and `selection_down` keybindings,
-    /// without having to iterate over `directory_content`.
-    pub index: Option<usize>,
-    /// The item that the user selected.
-    pub item: DirectoryEntry,
-}
-
-impl Selection {
-    pub fn new(item: DirectoryEntry, index: Option<usize>) -> Self {
-        Self { index, item }
-    }
-}
-
 /// Represents a file dialog instance.
 ///
 /// The `FileDialog` instance can be used multiple times and for different actions.
@@ -158,7 +139,7 @@ pub struct FileDialog {
 
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
-    selected_item: Option<Selection>,
+    selected_item: Option<DirectoryEntry>,
     /// Buffer for the input of the file name when the dialog is in "SaveFile" mode.
     file_name_input: String,
     /// This variables contains the error message if the file_name_input is invalid.
@@ -1491,7 +1472,7 @@ impl FileDialog {
             match &self.mode {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
                     if self.is_selection_valid() {
-                        if let Some(x) = &self.selected_item {
+                        if let Some(item) = &self.selected_item {
                             use egui::containers::scroll_area::ScrollBarVisibility;
 
                             egui::containers::ScrollArea::horizontal()
@@ -1501,7 +1482,7 @@ impl FileDialog {
                                 .show(ui, |ui| {
                                     ui.colored_label(
                                         ui.style().visuals.selection.bg_fill,
-                                        x.item.file_name(),
+                                        item.file_name(),
                                     );
                                 });
                         }
@@ -1591,20 +1572,12 @@ impl FileDialog {
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
 
-                    for (i, path) in data.iter().enumerate() {
+                    for path in data.filtered_iter(&self.search_value.clone()) {
                         let file_name = path.file_name();
-
-                        if !self.search_value.is_empty()
-                            && !file_name
-                                .to_lowercase()
-                                .contains(&self.search_value.to_lowercase())
-                        {
-                            continue;
-                        }
 
                         let mut selected = false;
                         if let Some(x) = &self.selected_item {
-                            selected = x.item == *path;
+                            selected = x == path;
                         }
 
                         let pinned = self.is_pinned(path);
@@ -1621,7 +1594,7 @@ impl FileDialog {
                             self.ui_update_path_context_menu(&response, path);
 
                             if response.context_menu_opened() {
-                                self.select_item(path.clone(), Some(i));
+                                self.select_item(path.clone());
                             }
                         }
 
@@ -1631,7 +1604,7 @@ impl FileDialog {
                         }
 
                         if response.clicked() {
-                            self.select_item(path.clone(), Some(i));
+                            self.select_item(path.clone());
                         }
 
                         if response.double_clicked() {
@@ -1640,7 +1613,7 @@ impl FileDialog {
                                 return;
                             }
 
-                            self.select_item(path.clone(), Some(i));
+                            self.select_item(path.clone());
 
                             self.submit();
                         }
@@ -1813,9 +1786,9 @@ impl FileDialog {
     /// Executes the action when the keybinding `submit` is pressed.
     fn exec_keybinding_submit(&mut self) {
         // The submit button (Enter) is used to open the directory that is currently selected
-        if let Some(path) = &self.selected_item {
-            if path.item.is_dir() {
-                let _ = self.load_directory(&path.item.to_path_buf());
+        if let Some(item) = &self.selected_item {
+            if item.is_dir() {
+                let _ = self.load_directory(&item.to_path_buf());
                 return;
             }
         }
@@ -1864,22 +1837,15 @@ impl FileDialog {
             return;
         }
 
-        if let Some(selection) = &self.selected_item {
-            if let Some(index) = selection.index {
-                if index == 0 {
-                    // We can't go further up. Try to select the last element inside the directory.
-                    self.select_last_dir_item();
-                } else {
-                    self.select_dir_item_at_index(index - 1);
-                }
-
+        if let Some(item) = &self.selected_item {
+            if self.select_next_visible_item_before(&item.clone()) {
                 return;
             }
         }
 
-        // No item is selected or the currently selected item is not inside the central view.
+        // No item is selected or no more items left.
         // Select the last item from the directory content.
-        self.select_last_dir_item();
+        self.select_last_visible_item();
     }
 
     /// Executes the action when the keybinding `selection_down` is pressed.
@@ -1888,23 +1854,15 @@ impl FileDialog {
             return;
         }
 
-        if let Some(selection) = &self.selected_item {
-            if let Some(index) = selection.index {
-                if index == self.directory_content.len() - 1 {
-                    // We can't go further down. Try to select the first element
-                    // inside the directory.
-                    self.select_first_dir_item();
-                } else {
-                    self.select_dir_item_at_index(index + 1);
-                }
-
+        if let Some(item) = &self.selected_item {
+            if self.select_next_visible_item_after(&item.clone()) {
                 return;
             }
         }
 
-        // No item is selected or the currently selected item is not inside the central view.
-        // Select the first item from the directory content.
-        self.select_first_dir_item();
+        // No item is selected or no more items left.
+        // Select the last item from the directory content.
+        self.select_first_visible_item();
     }
 }
 
@@ -1923,7 +1881,7 @@ impl FileDialog {
 
         self.directory_content.push(entry.clone());
 
-        self.select_item(entry, Some(self.directory_content.len() - 1));
+        self.select_item(entry);
     }
 
     /// Opens a new modal window.
@@ -1990,8 +1948,8 @@ impl FileDialog {
             DialogMode::SelectDirectory | DialogMode::SelectFile => {
                 // Should always contain a value since `is_selection_valid` is used to
                 // validate the selection.
-                if let Some(selection) = self.selected_item.clone() {
-                    self.finish(selection.item.to_path_buf());
+                if let Some(item) = self.selected_item.clone() {
+                    self.finish(item.to_path_buf());
                 }
             }
             DialogMode::SaveFile => {
@@ -2052,10 +2010,10 @@ impl FileDialog {
     /// Checks whether the selection or the file name entered is valid.
     /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
-        if let Some(selection) = &self.selected_item {
+        if let Some(item) = &self.selected_item {
             return match &self.mode {
-                DialogMode::SelectDirectory => selection.item.is_dir(),
-                DialogMode::SelectFile => selection.item.is_file(),
+                DialogMode::SelectDirectory => item.is_dir(),
+                DialogMode::SelectFile => item.is_file(),
                 DialogMode::SaveFile => self.file_name_input_error.is_none(),
             };
         }
@@ -2096,14 +2054,8 @@ impl FileDialog {
 
     /// Marks the given item as the selected directory item.
     /// Also updates the file_name_input to the name of the selected item.
-    ///
-    /// # Arguments
-    ///
-    /// * `item` - The item that the user selected
-    /// * `index` - The index of the item inside `directory_content`. Only used if an
-    ///             item inside the central area is selected.
-    fn select_item(&mut self, item: DirectoryEntry, index: Option<usize>) {
-        self.selected_item = Some(Selection::new(item.clone(), index));
+    fn select_item(&mut self, item: DirectoryEntry) {
+        self.selected_item = Some(item.clone());
 
         if self.mode == DialogMode::SaveFile && item.is_file() {
             self.file_name_input = item.file_name().to_string();
@@ -2111,26 +2063,89 @@ impl FileDialog {
         }
     }
 
-    /// Tries to select the item inside `directory_content` at the given index.
-    fn select_dir_item_at_index(&mut self, index: usize) {
-        if let Some(item) = self.directory_content.get(index) {
-            self.select_item(item.clone(), Some(index));
-            self.scroll_to_selection = true;
+    /// Attempts to select the last visible item in `directory_content` before the specified item.
+    ///
+    /// Returns true if an item is found and selected.
+    /// Returns false if no visible item is found before the specified item.
+    fn select_next_visible_item_before(&mut self, item: &DirectoryEntry) -> bool {
+        let mut return_val = false;
+
+        let directory_content = std::mem::take(&mut self.directory_content);
+        let search_value = self.search_value.clone();
+
+        if let Some(index) = directory_content
+            .filtered_iter(&search_value)
+            .position(|p| p == item)
+        {
+            if index != 0 {
+                if let Some(item) = directory_content
+                    .filtered_iter(&search_value)
+                    .nth(index.saturating_sub(1))
+                {
+                    self.select_item(item.clone());
+                    self.scroll_to_selection = true;
+                    return_val = true;
+                }
+            }
         }
+
+        self.directory_content = directory_content;
+
+        return_val
     }
 
-    /// Tries to select the first item inside `directory_content`.
-    fn select_first_dir_item(&mut self) {
-        if let Some(item) = self.directory_content.first() {
-            self.select_item(item.clone(), Some(0));
-            self.scroll_to_selection = true;
+    /// Attempts to select the last visible item in `directory_content` after the specified item.
+    ///
+    /// Returns true if an item is found and selected.
+    /// Returns false if no visible item is found after the specified item.
+    fn select_next_visible_item_after(&mut self, item: &DirectoryEntry) -> bool {
+        let mut return_val = false;
+
+        let directory_content = std::mem::take(&mut self.directory_content);
+        let search_value = self.search_value.clone();
+
+        if let Some(index) = directory_content
+            .filtered_iter(&search_value)
+            .position(|p| p == item)
+        {
+            if let Some(item) = directory_content
+                .filtered_iter(&search_value)
+                .nth(index.saturating_add(1))
+            {
+                self.select_item(item.clone());
+                self.scroll_to_selection = true;
+                return_val = true;
+            }
         }
+
+        self.directory_content = directory_content;
+
+        return_val
     }
 
-    /// Tries to select the last item inside `directory_content`.
-    fn select_last_dir_item(&mut self) {
-        if let Some(item) = self.directory_content.last() {
-            self.select_item(item.clone(), Some(self.directory_content.len() - 1));
+    /// Tries to select the first visible item inside `directory_content`.
+    fn select_first_visible_item(&mut self) {
+        let directory_content = std::mem::take(&mut self.directory_content);
+
+        if let Some(item) = directory_content
+            .filtered_iter(&self.search_value.clone())
+            .next()
+        {
+            self.select_item(item.clone());
+            self.scroll_to_selection = true;
+        }
+
+        self.directory_content = directory_content;
+    }
+
+    /// Tries to select the last visible item inside `directory_content`.
+    fn select_last_visible_item(&mut self) {
+        if let Some(item) = self
+            .directory_content
+            .filtered_iter(&self.search_value)
+            .last()
+        {
+            self.select_item(item.clone());
             self.scroll_to_selection = true;
         }
     }
@@ -2263,7 +2278,7 @@ impl FileDialog {
         self.load_directory_content(path)?;
 
         let dir_entry = DirectoryEntry::from_path(&self.config, path);
-        self.select_item(dir_entry, None);
+        self.select_item(dir_entry);
 
         // Clear the entry filter buffer.
         // It's unlikely the user wants to keep the current filter when entering a new directory.
@@ -2289,19 +2304,6 @@ impl FileDialog {
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;
-
-        if let Some(selection) = &mut self.selected_item {
-            selection.index = None;
-
-            // Check if the selected item is now inside the directory content.
-            // If so, the selection index needs to be updated.
-            for (i, path) in self.directory_content.iter().enumerate() {
-                if *path == selection.item {
-                    selection.index = Some(i);
-                    break;
-                }
-            }
-        }
 
         if self.mode == DialogMode::SaveFile {
             self.file_name_input_error = self.validate_file_name_input();

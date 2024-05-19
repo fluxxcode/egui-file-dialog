@@ -120,25 +120,27 @@ impl DirectoryContent {
         })
     }
 
-    /// Very simple wrapper methods of the contents .iter() method.
-    /// No trait is implemented since this is currently only used internal.
-    pub fn iter(&self) -> std::slice::Iter<'_, DirectoryEntry> {
-        self.content.iter()
+    /// Checks if the given directory entry is visible with the applied filters.
+    fn is_entry_visible(dir_entry: &DirectoryEntry, search_value: &str) -> bool {
+        if !search_value.is_empty()
+            && !dir_entry
+                .file_name()
+                .to_lowercase()
+                .contains(&search_value.to_lowercase())
+        {
+            return false;
+        }
+
+        true
     }
 
-    /// Gets the item at the specified index.
-    pub fn get(&self, index: usize) -> Option<&DirectoryEntry> {
-        self.content.get(index)
-    }
-
-    /// Gets the last item inside the directory.
-    pub fn last(&self) -> Option<&DirectoryEntry> {
-        self.content.last()
-    }
-
-    /// Gets the first item inside the directory.
-    pub fn first(&self) -> Option<&DirectoryEntry> {
-        self.content.first()
+    pub fn filtered_iter<'s>(
+        &'s self,
+        search_value: &'s str,
+    ) -> impl Iterator<Item = &DirectoryEntry> + 's {
+        self.content
+            .iter()
+            .filter(|p| Self::is_entry_visible(p, search_value))
     }
 
     /// Returns the number of elements inside the directory.
