@@ -1720,39 +1720,27 @@ impl FileDialog {
             self.exec_keybinding_cancel();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent)
-            && self.config.show_parent_button
-        {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent) {
             let _ = self.load_parent_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back)
-            && self.config.show_back_button
-        {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back) {
             let _ = self.load_previous_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward)
-            && self.config.show_forward_button
-        {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward) {
             let _ = self.load_next_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload)
-            && self.config.show_reload_button
-        {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload) {
             self.refresh();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder)
-            && self.config.show_new_folder_button
-        {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder) {
             self.open_new_folder_dialog();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path)
-            && self.config.show_path_edit_button
-        {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path) {
             self.open_path_edit();
         }
 
