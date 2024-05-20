@@ -1771,7 +1771,14 @@ impl FileDialog {
     fn exec_keybinding_submit(&mut self) {
         // The submit button (Enter) is used to open the directory that is currently selected
         if let Some(item) = &self.selected_item {
-            if item.is_dir() {
+            // Make sure the selected item is visible inside the directory view.
+            let is_visible = self
+                .directory_content
+                .filtered_iter(&self.search_value)
+                .position(|p| p == item)
+                .is_some();
+
+            if is_visible && item.is_dir() {
                 let _ = self.load_directory(&item.to_path_buf());
                 return;
             }
