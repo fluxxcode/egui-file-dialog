@@ -93,11 +93,11 @@ impl CreateDirectoryDialog {
         ui.horizontal(|ui| {
             ui.label(&config.default_folder_icon);
 
-            let response = ui.text_edit_singleline(&mut self.input);
+            let text_edit_response = ui.text_edit_singleline(&mut self.input);
 
             if self.init {
-                response.scroll_to_me(Some(egui::Align::Center));
-                response.request_focus();
+                text_edit_response.scroll_to_me(Some(egui::Align::Center));
+                text_edit_response.request_focus();
 
                 self.error = self.validate_input(&config.labels);
                 self.init = false;
@@ -105,15 +105,27 @@ impl CreateDirectoryDialog {
             }
 
             if self.request_focus {
-                response.request_focus();
+                text_edit_response.request_focus();
                 self.request_focus = false;
             }
 
-            if response.changed() {
+            if text_edit_response.changed() {
                 self.error = self.validate_input(&config.labels);
             }
 
-            if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter))
+            let apply_button_response =
+                ui.add_enabled(self.error.is_none(), egui::Button::new("✔"));
+
+            if apply_button_response.clicked() {
+                result = self.create_directory();
+            }
+
+            if ui.button("✖").clicked() {
+                self.close();
+            }
+
+            if text_edit_response.lost_focus()
+                && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter))
             {
                 // Only necessary in the event of an error
                 self.request_focus = true;
@@ -121,18 +133,7 @@ impl CreateDirectoryDialog {
                 if self.error.is_none() {
                     result = self.create_directory();
                 }
-            } else if response.lost_focus() {
-                self.close();
-            }
-
-            if ui
-                .add_enabled(self.error.is_none(), egui::Button::new("✔"))
-                .clicked()
-            {
-                result = self.create_directory();
-            }
-
-            if ui.button("✖").clicked() {
+            } else if text_edit_response.lost_focus() && !apply_button_response.contains_pointer() {
                 self.close();
             }
         });
