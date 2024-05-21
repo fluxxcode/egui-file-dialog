@@ -1,11 +1,13 @@
 use std::path::PathBuf;
 
 use super::{FileDialogModal, ModalAction, ModalState};
-use crate::config::FileDialogConfig;
+use crate::config::{FileDialogConfig, FileDialogKeyBindings};
 
 /// The modal that is used to ask the user if the selected path should be
 /// overwritten.
 pub struct OverwriteFileModal {
+    /// The current state of the modal.
+    state: ModalState,
     /// The path selected for overwriting.
     path: PathBuf,
 }
@@ -17,14 +19,27 @@ impl OverwriteFileModal {
     ///
     /// * `path` - The path selected for overwriting.
     pub fn new(path: PathBuf) -> Self {
-        Self { path }
+        Self {
+            state: ModalState::Pending,
+            path,
+        }
+    }
+}
+
+impl OverwriteFileModal {
+    /// Submits the modal and triggers the action to save the file.
+    fn submit(&mut self) {
+        self.state = ModalState::Close(ModalAction::SaveFile(self.path.to_path_buf()));
+    }
+
+    /// Closes the modal without overwriting the file.
+    fn cancel(&mut self) {
+        self.state = ModalState::Close(ModalAction::None);
     }
 }
 
 impl FileDialogModal for OverwriteFileModal {
     fn update(&mut self, config: &FileDialogConfig, ui: &mut egui::Ui) -> ModalState {
-        let mut return_val = ModalState::Pending;
-
         const SECTION_SPACING: f32 = 15.0;
         const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(90.0, 20.0);
 
@@ -65,7 +80,7 @@ impl FileDialogModal for OverwriteFileModal {
                     .add_sized(BUTTON_SIZE, egui::Button::new(&config.labels.cancel))
                     .clicked()
                 {
-                    return_val = ModalState::Close(ModalAction::None);
+                    self.cancel()
                 }
 
                 ui.add_space(ui.style().spacing.item_spacing.x);
@@ -74,11 +89,21 @@ impl FileDialogModal for OverwriteFileModal {
                     .add_sized(BUTTON_SIZE, egui::Button::new(&config.labels.overwrite))
                     .clicked()
                 {
-                    return_val = ModalState::Close(ModalAction::SaveFile(self.path.to_path_buf()));
+                    self.submit();
                 }
             });
         });
 
-        return_val
+        self.state.clone()
+    }
+
+    fn update_keybindings(&mut self, config: &FileDialogConfig, ctx: &egui::Context) {
+        if FileDialogKeyBindings::any_pressed(ctx, &config.keybindings.submit) {
+            self.submit();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &config.keybindings.cancel) {
+            self.cancel();
+        }
     }
 }

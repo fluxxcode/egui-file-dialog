@@ -3,7 +3,10 @@ use std::{fs, io};
 
 use egui::text::{CCursor, CCursorRange};
 
-use crate::config::{FileDialogConfig, FileDialogLabels, Filter, QuickAccess};
+use crate::config::{
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, Filter,
+    QuickAccess,
+};
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
@@ -35,23 +38,6 @@ pub enum DialogState {
 
     /// The user cancelled the dialog and didn't select anything.
     Cancelled,
-}
-
-/// Contains data of the FileDialog that should be stored persistently.
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-pub struct FileDialogStorage {
-    /// The folders the user pinned to the left sidebar.
-    pub pinned_folders: Vec<DirectoryEntry>,
-}
-
-impl Default for FileDialogStorage {
-    /// Creates a new object with default values
-    fn default() -> Self {
-        Self {
-            pinned_folders: Vec::new(),
-        }
-    }
 }
 
 /// Represents a file dialog instance.
@@ -129,6 +115,9 @@ pub struct FileDialog {
     path_edit_visible: bool,
     /// Buffer holding the text when the user edits the current path.
     path_edit_value: String,
+    /// If the path edit should be initialized. Unlike `path_edit_request_focus`,
+    /// this also sets the cursor to the end of the text input field.
+    path_edit_activate: bool,
     /// If the text edit of the path should request focus in the next frame.
     path_edit_request_focus: bool,
 
@@ -140,11 +129,18 @@ pub struct FileDialog {
     /// This variables contains the error message if the file_name_input is invalid.
     /// This can be the case, for example, if a file or folder with the name already exists.
     file_name_input_error: Option<String>,
+    /// If the file name input text field should request focus in the next frame.
+    file_name_input_request_focus: bool,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
     /// Buffer containing the value of the search input.
     search_value: String,
+
+    /// If any widget was focused in the last frame.
+    /// This is used to prevent the dialog from closing when pressing the escape key
+    /// inside a text input.
+    any_focused_last_frame: bool,
 }
 
 impl Default for FileDialog {
@@ -182,14 +178,18 @@ impl FileDialog {
 
             path_edit_visible: false,
             path_edit_value: String::new(),
+            path_edit_activate: false,
             path_edit_request_focus: false,
 
             selected_item: None,
             file_name_input: String::new(),
             file_name_input_error: None,
+            file_name_input_request_focus: true,
 
             scroll_to_selection: false,
             search_value: String::new(),
+
+            any_focused_last_frame: false,
         }
     }
 
@@ -323,6 +323,7 @@ impl FileDialog {
             return self;
         }
 
+        self.update_keybindings(ctx);
         self.update_ui(ctx);
 
         self
@@ -330,19 +331,6 @@ impl FileDialog {
 
     // -------------------------------------------------
     // Setter:
-    /// Sets the storage used by the file dialog.
-    /// Storage includes all data that is persistently stored between multiple
-    /// file dialog instances.
-    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
-        self.config.storage = storage;
-        self
-    }
-
-    /// Mutably borrow internal storage.
-    pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
-        &mut self.config.storage
-    }
-
     /// Overwrites the configuration of the file dialog.
     ///
     /// This is useful when you want to configure multiple `FileDialog` objects with the
@@ -413,6 +401,25 @@ impl FileDialog {
     /// Mutably borrow internal `config`.
     pub fn config_mut(&mut self) -> &mut FileDialogConfig {
         &mut self.config
+    }
+
+    /// Sets the storage used by the file dialog.
+    /// Storage includes all data that is persistently stored between multiple
+    /// file dialog instances.
+    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
+        self.config.storage = storage;
+        self
+    }
+
+    /// Mutably borrow internal storage.
+    pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
+        &mut self.config.storage
+    }
+
+    /// Sets the keybindings used by the file dialog.
+    pub fn keybindings(mut self, keybindings: FileDialogKeyBindings) -> Self {
+        self.config.keybindings = keybindings;
+        self
     }
 
     /// Sets the labels the file dialog uses.
@@ -841,6 +848,8 @@ impl FileDialog {
             });
         });
 
+        self.any_focused_last_frame = ctx.memory(|r| r.focused()).is_some();
+
         // User closed the window without finishing the dialog
         if !is_open {
             self.cancel();
@@ -993,9 +1002,7 @@ impl FileDialog {
                 None,
             )
         {
-            if let Some(x) = self.current_directory() {
-                self.create_directory_dialog.open(x.to_path_buf());
-            }
+            self.open_new_folder_dialog();
         }
     }
 
@@ -1115,6 +1122,12 @@ impl FileDialog {
             .show(ui)
             .response;
 
+        if self.path_edit_activate {
+            response.request_focus();
+            Self::set_cursor_to_end(&response, &self.path_edit_value);
+            self.path_edit_activate = false;
+        }
+
         if self.path_edit_request_focus {
             response.request_focus();
             self.path_edit_request_focus = false;
@@ -1123,12 +1136,11 @@ impl FileDialog {
         let btn_response = ui.add_sized(edit_button_size, egui::Button::new("✔"));
 
         if btn_response.clicked() {
-            self.load_path_edit_directory(true);
+            self.submit_path_edit(true);
         }
 
         if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
-            self.path_edit_request_focus = true;
-            self.load_path_edit_directory(false);
+            self.submit_path_edit(false);
         } else if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
         }
@@ -1151,6 +1163,7 @@ impl FileDialog {
                         egui::Vec2::new(ui.available_width(), 0.0),
                         egui::TextEdit::singleline(&mut self.search_value),
                     );
+
                     self.edit_filter_on_text_input(ui, re);
                 });
             });
@@ -1163,10 +1176,10 @@ impl FileDialog {
     ///
     /// - `re`: The [`egui::Response`] returned by the filter text edit widget
     fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
-        let any_focused = ui.memory(|mem| mem.focused().is_some());
-        if any_focused {
+        if ui.memory(|mem| mem.focused().is_some()) {
             return;
         }
+
         // Whether to activate the text input widget
         let mut activate = false;
         ui.input(|inp| {
@@ -1174,6 +1187,7 @@ impl FileDialog {
             if inp.modifiers.any() && !inp.modifiers.shift_only() {
                 return;
             }
+
             // If we find any text input event, we append it to the filter string
             // and allow proceeding to activating the filter input widget.
             for text in inp.events.iter().filter_map(|ev| match ev {
@@ -1184,18 +1198,11 @@ impl FileDialog {
                 activate = true;
             }
         });
+
         if activate {
             // Focus the filter input widget
             re.request_focus();
-            // Set the cursor to the end of the filter input string
-            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), re.id) {
-                state
-                    .cursor
-                    .set_char_range(Some(CCursorRange::one(CCursor::new(
-                        self.search_value.len(),
-                    ))));
-                state.store(ui.ctx(), re.id);
-            }
+            Self::set_cursor_to_end(&re, &self.search_value);
         }
     }
 
@@ -1361,7 +1368,7 @@ impl FileDialog {
         visible
     }
 
-    /// Updates the list of devices like system disks
+    /// Updates the list of devices like system disks.
     ///
     /// Returns true if at least one device was included in the list and the
     /// heading is visible. If no device was listed, false is returned.
@@ -1449,7 +1456,7 @@ impl FileDialog {
             match &self.mode {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
                     if self.is_selection_valid() {
-                        if let Some(x) = &self.selected_item {
+                        if let Some(item) = &self.selected_item {
                             use egui::containers::scroll_area::ScrollBarVisibility;
 
                             egui::containers::ScrollArea::horizontal()
@@ -1459,7 +1466,7 @@ impl FileDialog {
                                 .show(ui, |ui| {
                                     ui.colored_label(
                                         ui.style().visuals.selection.bg_fill,
-                                        x.file_name(),
+                                        item.file_name(),
                                     );
                                 });
                         }
@@ -1471,8 +1478,17 @@ impl FileDialog {
                             .desired_width(f32::INFINITY),
                     );
 
+                    if self.file_name_input_request_focus {
+                        response.request_focus();
+                        self.file_name_input_request_focus = false;
+                    }
+
                     if response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
+                    }
+
+                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                        self.submit();
                     }
                 }
             };
@@ -1498,36 +1514,7 @@ impl FileDialog {
                 label,
                 self.file_name_input_error.as_deref(),
             ) {
-                match &self.mode {
-                    DialogMode::SelectDirectory | DialogMode::SelectFile => {
-                        // self.selected_item should always contain a value,
-                        // since self.is_selection_valid() validates the selection and
-                        // returns false if the selection is none.
-                        if let Some(selection) = self.selected_item.clone() {
-                            self.finish(selection.to_path_buf());
-                        }
-                    }
-                    DialogMode::SaveFile => {
-                        // self.current_directory should always contain a value,
-                        // since self.is_selection_valid() makes sure there is no
-                        // file_name_input_error. The file_name_input_error
-                        // gets validated every time something changes
-                        // by the validate_file_name_input, which sets an error
-                        // if we are currently not in a directory.
-                        if let Some(path) = self.current_directory() {
-                            let mut full_path = path.to_path_buf();
-                            full_path.push(&self.file_name_input);
-
-                            if full_path.exists() {
-                                self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
-
-                                return;
-                            }
-
-                            self.finish(full_path);
-                        }
-                    }
-                }
+                self.submit();
             }
 
             ui.add_space(ui.ctx().style().spacing.item_spacing.y);
@@ -1569,16 +1556,8 @@ impl FileDialog {
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
 
-                    for path in data.iter() {
+                    for path in data.filtered_iter(&self.search_value.clone()) {
                         let file_name = path.file_name();
-
-                        if !self.search_value.is_empty()
-                            && !file_name
-                                .to_lowercase()
-                                .contains(&self.search_value.to_lowercase())
-                        {
-                            continue;
-                        }
 
                         let mut selected = false;
                         if let Some(x) = &self.selected_item {
@@ -1599,16 +1578,17 @@ impl FileDialog {
                             self.ui_update_path_context_menu(&response, path);
 
                             if response.context_menu_opened() {
-                                self.select_item(path);
+                                self.select_item(path.clone());
                             }
                         }
 
                         if selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
+                            self.scroll_to_selection = false;
                         }
 
                         if response.clicked() {
-                            self.select_item(path);
+                            self.select_item(path.clone());
                         }
 
                         if response.double_clicked() {
@@ -1617,20 +1597,12 @@ impl FileDialog {
                                 return;
                             }
 
-                            self.select_item(path);
+                            self.select_item(path.clone());
 
-                            if self.is_selection_valid() {
-                                // self.selected_item should always contain a value
-                                // since self.is_selection_valid() validates the selection
-                                // and returns false if the selection is none.
-                                if let Some(selection) = self.selected_item.clone() {
-                                    self.finish(selection.to_path_buf());
-                                }
-                            }
+                            self.submit();
                         }
                     }
 
-                    self.scroll_to_selection = false;
                     self.directory_content = data;
 
                     if let Some(path) = self
@@ -1638,10 +1610,7 @@ impl FileDialog {
                         .update(ui, &self.config)
                         .directory()
                     {
-                        let entry = DirectoryEntry::from_path(&self.config, &path);
-
-                        self.directory_content.push(entry.clone());
-                        self.select_item(&entry);
+                        self.process_new_folder(&path);
                     }
                 });
         });
@@ -1712,10 +1681,187 @@ impl FileDialog {
             }
         });
     }
+
+    /// Sets the cursor position to the end of a text input field.
+    ///
+    /// # Arguments
+    ///
+    /// * `re` - response of the text input widget
+    /// * `data` - buffer holding the text of the input widget
+    fn set_cursor_to_end(re: &egui::Response, data: &str) {
+        // Set the cursor to the end of the filter input string
+        if let Some(mut state) = egui::TextEdit::load_state(&re.ctx, re.id) {
+            state
+                .cursor
+                .set_char_range(Some(CCursorRange::one(CCursor::new(data.len()))));
+            state.store(&re.ctx, re.id);
+        }
+    }
+}
+
+/// Keybindings
+impl FileDialog {
+    /// Checks whether certain keybindings have been pressed and executes the corresponding actions.
+    fn update_keybindings(&mut self, ctx: &egui::Context) {
+        // We don't want to execute keybindings if a modal is currently open.
+        // The modals implement the keybindings themselves.
+        if let Some(modal) = self.modals.last_mut() {
+            modal.update_keybindings(&self.config, ctx);
+            return;
+        }
+
+        let keybindings = std::mem::take(&mut self.config.keybindings);
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit) {
+            self.exec_keybinding_submit();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel) {
+            self.exec_keybinding_cancel();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent) {
+            let _ = self.load_parent_directory();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back) {
+            let _ = self.load_previous_directory();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward) {
+            let _ = self.load_next_directory();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload) {
+            self.refresh();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder) {
+            self.open_new_folder_dialog();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path) {
+            self.open_path_edit();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up) {
+            self.exec_keybinding_selection_up();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_down) {
+            self.exec_keybinding_selection_down();
+        }
+
+        self.config.keybindings = keybindings;
+    }
+
+    /// Executes the action when the keybinding `submit` is pressed.
+    fn exec_keybinding_submit(&mut self) {
+        // The submit button (Enter) is used to open the directory that is currently selected
+        if let Some(item) = &self.selected_item {
+            // Make sure the selected item is visible inside the directory view.
+            let is_visible = self
+                .directory_content
+                .filtered_iter(&self.search_value)
+                .any(|p| p == item);
+
+            if is_visible && item.is_dir() {
+                let _ = self.load_directory(&item.to_path_buf());
+                return;
+            }
+        }
+
+        match &self.mode {
+            DialogMode::SelectFile | DialogMode::SaveFile => self.submit(),
+            // We want to use the submit button (Enter) to enter a new directory instead of
+            // selecting the current one.
+            // We might want to change this behavior later.
+            DialogMode::SelectDirectory => {}
+        }
+    }
+
+    /// Executes the action when the keybinding `cancel` is pressed.
+    fn exec_keybinding_cancel(&mut self) {
+        // We have to check if the `create_directory_dialog` and `path_edit_visible` is open,
+        // because egui does not consume pressing the escape key inside a text input.
+        // So when pressing the escape key inside a text input, the text input is closed
+        // but the keybindings still register the press on the escape key.
+        // (Although the keybindings are updated before the UI and they check whether another
+        //  widget is currently in focus!)
+        //
+        // This is practical for us because we can close the path edit and
+        // the create directory dialog.
+        // However, this causes problems when the user presses escape in other text
+        // inputs for which we have no status saved. This would then close the entire file dialog.
+        // To fix this, we check if any item was focused in the last frame.
+        //
+        // Note that this only happens with the escape key and not when the enter key is
+        // used to close a text input. This is why we don't have to check for the
+        // dialogs in `exec_keybinding_submit`.
+
+        if self.create_directory_dialog.is_open() {
+            self.create_directory_dialog.close();
+        } else if self.path_edit_visible {
+            self.close_path_edit()
+        } else if !self.any_focused_last_frame {
+            self.cancel();
+            return;
+        }
+    }
+
+    /// Executes the action when the keybinding `selection_up` is pressed.
+    fn exec_keybinding_selection_up(&mut self) {
+        if self.directory_content.len() == 0 {
+            return;
+        }
+
+        if let Some(item) = &self.selected_item {
+            if self.select_next_visible_item_before(&item.clone()) {
+                return;
+            }
+        }
+
+        // No item is selected or no more items left.
+        // Select the last item from the directory content.
+        self.select_last_visible_item();
+    }
+
+    /// Executes the action when the keybinding `selection_down` is pressed.
+    fn exec_keybinding_selection_down(&mut self) {
+        if self.directory_content.len() == 0 {
+            return;
+        }
+
+        if let Some(item) = &self.selected_item {
+            if self.select_next_visible_item_after(&item.clone()) {
+                return;
+            }
+        }
+
+        // No item is selected or no more items left.
+        // Select the last item from the directory content.
+        self.select_first_visible_item();
+    }
 }
 
 /// Implementation
 impl FileDialog {
+    /// Opens the dialog to create a new folder.
+    fn open_new_folder_dialog(&mut self) {
+        if let Some(x) = self.current_directory() {
+            self.create_directory_dialog.open(x.to_path_buf());
+        }
+    }
+
+    /// Function that processes a newly created folder.
+    fn process_new_folder(&mut self, created_dir: &Path) {
+        let entry = DirectoryEntry::from_path(&self.config, created_dir);
+
+        self.directory_content.push(entry.clone());
+
+        self.select_item(entry);
+    }
+
     /// Opens a new modal window.
     fn open_modal(&mut self, modal: Box<dyn FileDialogModal>) {
         self.modals.push(modal);
@@ -1754,27 +1900,10 @@ impl FileDialog {
     }
 
     /// Resets the dialog to use default values.
-    /// Configuration variables such as `initial_directory` are retained.
+    /// Configuration variables are retained.
     fn reset(&mut self) {
-        self.state = DialogState::Closed;
-        self.show_files = true;
-        self.operation_id = None;
-
-        self.user_directories = UserDirectories::new(self.config.canonicalize_paths);
-        self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
-
-        self.directory_stack = vec![];
-        self.directory_offset = 0;
-        self.directory_content = DirectoryContent::new();
-        self.directory_error = None;
-
-        self.create_directory_dialog = CreateDirectoryDialog::new();
-
-        self.selected_item = None;
-        self.file_name_input = String::new();
-
-        self.scroll_to_selection = false;
-        self.search_value = String::new();
+        let config = self.config.clone();
+        *self = FileDialog::with_config(config);
     }
 
     /// Refreshes the dialog.
@@ -1784,6 +1913,40 @@ impl FileDialog {
         self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
 
         let _ = self.reload_directory();
+    }
+
+    /// Submits the current selection and tries to finish the dialog, if the selection is valid.
+    fn submit(&mut self) {
+        // Make sure the selected item or entered file name is valid.
+        if !self.is_selection_valid() {
+            return;
+        }
+
+        match &self.mode {
+            DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                // Should always contain a value since `is_selection_valid` is used to
+                // validate the selection.
+                if let Some(item) = self.selected_item.clone() {
+                    self.finish(item.to_path_buf());
+                }
+            }
+            DialogMode::SaveFile => {
+                // Should always contain a value since `is_selection_valid` is used to
+                // validate the selection.
+                if let Some(path) = self.current_directory() {
+                    let mut full_path = path.to_path_buf();
+                    full_path.push(&self.file_name_input);
+
+                    if full_path.exists() {
+                        self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
+
+                        return;
+                    }
+
+                    self.finish(full_path);
+                }
+            }
+        }
     }
 
     /// Finishes the dialog.
@@ -1825,10 +1988,10 @@ impl FileDialog {
     /// Checks whether the selection or the file name entered is valid.
     /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
-        if let Some(selection) = &self.selected_item {
+        if let Some(item) = &self.selected_item {
             return match &self.mode {
-                DialogMode::SelectDirectory => selection.is_dir(),
-                DialogMode::SelectFile => selection.is_file(),
+                DialogMode::SelectDirectory => item.is_dir(),
+                DialogMode::SelectFile => item.is_file(),
                 DialogMode::SaveFile => self.file_name_input_error.is_none(),
             };
         }
@@ -1869,12 +2032,99 @@ impl FileDialog {
 
     /// Marks the given item as the selected directory item.
     /// Also updates the file_name_input to the name of the selected item.
-    fn select_item(&mut self, dir_entry: &DirectoryEntry) {
-        self.selected_item = Some(dir_entry.clone());
+    fn select_item(&mut self, item: DirectoryEntry) {
+        self.selected_item = Some(item.clone());
 
-        if self.mode == DialogMode::SaveFile && dir_entry.is_file() {
-            self.file_name_input = dir_entry.file_name().to_string();
+        if self.mode == DialogMode::SaveFile && item.is_file() {
+            self.file_name_input = item.file_name().to_string();
             self.file_name_input_error = self.validate_file_name_input();
+        }
+    }
+
+    /// Attempts to select the last visible item in `directory_content` before the specified item.
+    ///
+    /// Returns true if an item is found and selected.
+    /// Returns false if no visible item is found before the specified item.
+    fn select_next_visible_item_before(&mut self, item: &DirectoryEntry) -> bool {
+        let mut return_val = false;
+
+        let directory_content = std::mem::take(&mut self.directory_content);
+        let search_value = self.search_value.clone();
+
+        if let Some(index) = directory_content
+            .filtered_iter(&search_value)
+            .position(|p| p == item)
+        {
+            if index != 0 {
+                if let Some(item) = directory_content
+                    .filtered_iter(&search_value)
+                    .nth(index.saturating_sub(1))
+                {
+                    self.select_item(item.clone());
+                    self.scroll_to_selection = true;
+                    return_val = true;
+                }
+            }
+        }
+
+        self.directory_content = directory_content;
+
+        return_val
+    }
+
+    /// Attempts to select the last visible item in `directory_content` after the specified item.
+    ///
+    /// Returns true if an item is found and selected.
+    /// Returns false if no visible item is found after the specified item.
+    fn select_next_visible_item_after(&mut self, item: &DirectoryEntry) -> bool {
+        let mut return_val = false;
+
+        let directory_content = std::mem::take(&mut self.directory_content);
+        let search_value = self.search_value.clone();
+
+        if let Some(index) = directory_content
+            .filtered_iter(&search_value)
+            .position(|p| p == item)
+        {
+            if let Some(item) = directory_content
+                .filtered_iter(&search_value)
+                .nth(index.saturating_add(1))
+            {
+                self.select_item(item.clone());
+                self.scroll_to_selection = true;
+                return_val = true;
+            }
+        }
+
+        self.directory_content = directory_content;
+
+        return_val
+    }
+
+    /// Tries to select the first visible item inside `directory_content`.
+    fn select_first_visible_item(&mut self) {
+        let directory_content = std::mem::take(&mut self.directory_content);
+
+        if let Some(item) = directory_content
+            .filtered_iter(&self.search_value.clone())
+            .next()
+        {
+            self.select_item(item.clone());
+            self.scroll_to_selection = true;
+        }
+
+        self.directory_content = directory_content;
+    }
+
+    /// Tries to select the last visible item inside `directory_content`.
+    fn select_last_visible_item(&mut self) {
+        if let Some(item) = self
+            .directory_content
+            .filtered_iter(&self.search_value)
+            .last()
+        {
+            self.select_item(item.clone());
+            self.scroll_to_selection = true;
         }
     }
 
@@ -1886,17 +2136,25 @@ impl FileDialog {
         };
 
         self.path_edit_value = path;
-        self.path_edit_request_focus = true;
+        self.path_edit_activate = true;
         self.path_edit_visible = true;
     }
 
     /// Loads the directory from the path text edit.
-    fn load_path_edit_directory(&mut self, close_text_edit: bool) {
+    fn submit_path_edit(&mut self, close_text_edit: bool) {
         if close_text_edit {
-            self.path_edit_visible = false;
+            self.close_path_edit();
+        } else {
+            self.path_edit_request_focus = true;
         }
 
         let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
+    }
+
+    /// Closes the text field at the top to edit the current path without loading
+    /// the entered directory.
+    fn close_path_edit(&mut self) {
+        self.path_edit_visible = false;
     }
 
     /// Loads the next directory in the directory_stack.
@@ -1954,6 +2212,9 @@ impl FileDialog {
     /// Reloads the currently open directory.
     /// If no directory is currently open, Ok() will be returned.
     /// Otherwise, the result of the directory loading operation is returned.
+    ///
+    /// In most cases, this function should not be called directly.
+    /// Instead, `refresh` should be used to reload all other data like system disks too.
     fn reload_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
             return self.load_directory_content(x.to_path_buf().as_path());
@@ -1987,7 +2248,7 @@ impl FileDialog {
         self.load_directory_content(path)?;
 
         let dir_entry = DirectoryEntry::from_path(&self.config, path);
-        self.select_item(&dir_entry);
+        self.select_item(dir_entry);
 
         // Clear the entry filter buffer.
         // It's unlikely the user wants to keep the current filter when entering a new directory.
@@ -2004,6 +2265,8 @@ impl FileDialog {
             match DirectoryContent::from_path(&self.config, path, self.show_files) {
                 Ok(content) => content,
                 Err(err) => {
+                    self.directory_content.clear();
+                    self.selected_item = None;
                     self.directory_error = Some(err.to_string());
                     return Err(err);
                 }

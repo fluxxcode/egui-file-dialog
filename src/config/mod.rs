@@ -1,11 +1,31 @@
 mod labels;
 pub use labels::FileDialogLabels;
 
+mod keybindings;
+pub use keybindings::{FileDialogKeyBindings, KeyBinding};
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::FileDialogStorage;
+use crate::data::DirectoryEntry;
+
+/// Contains data of the FileDialog that should be stored persistently.
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+pub struct FileDialogStorage {
+    /// The folders the user pinned to the left sidebar.
+    pub pinned_folders: Vec<DirectoryEntry>,
+}
+
+impl Default for FileDialogStorage {
+    /// Creates a new object with default values
+    fn default() -> Self {
+        Self {
+            pinned_folders: Vec::new(),
+        }
+    }
+}
 
 /// Contains configuration values of a file dialog.
 ///
@@ -42,6 +62,8 @@ pub struct FileDialogConfig {
     // Core:
     /// Persistent data of the file dialog.
     pub storage: FileDialogStorage,
+    /// Keybindings used by the file dialog.
+    pub keybindings: FileDialogKeyBindings,
 
     // ------------------------------------------------------------------------
     // General options:
@@ -150,6 +172,7 @@ impl Default for FileDialogConfig {
     fn default() -> Self {
         Self {
             storage: FileDialogStorage::default(),
+            keybindings: FileDialogKeyBindings::default(),
 
             labels: FileDialogLabels::default(),
             initial_directory: std::env::current_dir().unwrap_or_default(),
@@ -292,15 +315,20 @@ impl std::fmt::Debug for IconFilter {
 /// Stores the display name and the actual path of a quick access link.
 #[derive(Debug, Clone)]
 pub struct QuickAccessPath {
+    /// Name of the path that is shown inside the left panel.
     pub display_name: String,
+    /// Absolute or relative path to the folder.
     pub path: PathBuf,
 }
 
 /// Stores a custom quick access section of the file dialog.
 #[derive(Debug, Clone)]
 pub struct QuickAccess {
-    pub canonicalize_paths: bool,
+    /// If the path's inside the quick access section should be canonicalized.
+    canonicalize_paths: bool,
+    /// Name of the quick access section displayed inside the left panel.
     pub heading: String,
+    /// Path's contained inside the quick access section.
     pub paths: Vec<QuickAccessPath>,
 }
 
