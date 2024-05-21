@@ -10,11 +10,11 @@
 <summary>Table of contents</summary>
 
 1. [Features](#features)
-1. [Planned Features](#planned-features)
 1. [Example](#example)
 1. [Customization](#customization)
 1. [Multilingual support](#multilingual-support)
 1. [Persistent data](#persistent-data)
+1. [Keybindings](#keybindings)
 
 </details>
 
@@ -24,8 +24,6 @@ The file dialog is intended for use by desktop applications, allowing the use of
 
 <img src="media/demo.png">
 
-The project is currently in a very early version. Some planned features are still missing and some improvements still need to be made. See the [Planned features](#Planned-features) section for some of the features to be implemented in the future.
-
 The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
 **Currently only tested on Linux and Windows!**
@@ -34,6 +32,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Select a file or a directory
 - Save a file (Prompt user for a destination path)
 - Create a new folder
+- Keyboard navigation
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Shortcut for user directories (Home, Documents, ...) and system disks
@@ -44,14 +43,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
   - Customize the text labels used by the dialog to enable multilingual support
   - Customize file and folder icons
   - Add custom quick access sections to the left sidebar
-
-## Planned features
-The following lists some of the features that are currently missing but are planned for the future!
-- Selection of multiple directory items at once
-- Only show files with a specific file extension (The user can already filter files by file extension using the search, but there is currently no backend method for this or a dropdown to be able to select from predefined file extensions.)
-- Keyboard input [#70](https://github.com/fluxxcode/egui-file-dialog/issues/70)
-- Context menus, for example for renaming, deleting or copying files or directories
-- Option to show or hide hidden files and folders
+  - Customize keybindings
 
 ## Example
 Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/master/examples) folder.
@@ -121,6 +113,7 @@ A few highlights of the customization are listed below. For all possible customi
 - Set which areas and functions of the dialog are visible using `FileDialog::show_*` methods
 - Update the text labels that the dialog uses. See [Multilingual support](#multilingual-support)
 - Customize file and folder icons using `FileDialog::set_file_icon` (Currently only unicode is supported)
+- Customize keybindings used by the file dialog using `FileDialog::keybindings`. See [Keybindings](#keybindings)
 
 Since the dialog uses the egui style to look like the rest of the application, the appearance can be customized with `egui::Style` and `egui::Context::set_style`.
 
@@ -267,3 +260,19 @@ impl eframe::App for MyApp {
     }
 }
 ```
+
+## Keybindings
+Keybindings can be used in the file dialog for easier navigation. All keybindings can be configured from the backend with `FileDialogKeyBindings` and `FileDialog::keybindings`. \
+The following table lists all available keybindings and their default values.
+| Name | Description | Default |
+| --- | --- | --- |
+| submit | | `Enter` |
+| cancel | | `Escape` |
+| parent | | `ALT` + `↑` |
+| back | | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace` |
+| forward | | `Mouse button 2` <br/> `ALT` + `→` |
+| reload | | `F5` |
+| new_folder | | `CTRL` + `N` |
+| edit_path | | `/` |
+| selection_up | | `Arrow up` |
+| selection_down | | `Arrow down` |
