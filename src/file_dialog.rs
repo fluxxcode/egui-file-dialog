@@ -80,6 +80,8 @@ pub struct FileDialog {
     /// If files are displayed in addition to directories.
     /// This option will be ignored when mode == DialogMode::SelectFile.
     show_files: bool,
+    /// If hidden files and directories should be visible inside the directory view.
+    show_hidden: bool,
     /// This is an optional ID that can be set when opening the dialog to determine which
     /// operation the dialog is used for. This is useful if the dialog is used multiple times
     /// for different actions in the same view. The ID then makes it possible to distinguish
@@ -164,6 +166,7 @@ impl FileDialog {
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
             show_files: true,
+            show_hidden: false,
             operation_id: None,
 
             user_directories: UserDirectories::new(true),
@@ -948,12 +951,27 @@ impl FileDialog {
                 self.ui_update_current_path(ui, path_display_width);
             }
 
+            let menu_button_response = ui.add_sized(BUTTON_SIZE, egui::Button::new("☰"));
+
+            ui.menu_button(title, add_contents)
+
+            menu_button_response.context_menu(|ui| {
+                if self.config.show_reload_button && ui.button("⟲  Reload").clicked() {
+                    self.refresh();
+                    ui.close_menu();
+                }
+
+                if ui.checkbox(&mut self.show_hidden, " Show hidden").clicked() {
+                    ui.close_menu();
+                }
+            });
+
             // Reload button
-            if self.config.show_reload_button
-                && ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked()
-            {
-                self.refresh();
-            }
+            // if self.config.show_reload_button
+            //     && ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked()
+            // {
+            //     self.refresh();
+            // }
 
             if self.config.show_search {
                 self.ui_update_search(ui);
@@ -1556,7 +1574,7 @@ impl FileDialog {
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
 
-                    for path in data.filtered_iter(&self.search_value.clone()) {
+                    for path in data.filtered_iter(self.show_hidden, &self.search_value.clone()) {
                         let file_name = path.file_name();
 
                         let mut selected = false;
@@ -1697,6 +1715,31 @@ impl FileDialog {
             state.store(&re.ctx, re.id);
         }
     }
+
+    fn sized_menu_button<'c, R>(
+        ui: &mut egui::Ui,
+        title: impl Into<egui::WidgetText>,
+        add_contents: Box<dyn FnOnce(&mut egui::Ui) -> R + 'c>,
+    ) -> egui::InnerResponse<Option<R>> {
+        let title = title.into();
+        let bar_id = ui.id();
+        let menu_id = bar_id.with(title.text());
+    
+        let mut bar_state = egui::BarState::load(ui.ctx(), bar_id);
+    
+        let mut button = egui::Button::new(title);
+    
+        if bar_state.open_menu.is_menu_open(menu_id) {
+            button = button.fill(ui.visuals().widgets.open.weak_bg_fill);
+            button = button.stroke(ui.visuals().widgets.open.bg_stroke);
+        }
+    
+        let button_response = ui.add(button);
+        let inner = bar_state.bar_menu(&button_response, add_contents);
+    
+        bar_state.store(ui.ctx(), bar_id);
+        egui::InnerResponse::new(inner.map(|r| r.inner), button_response)
+    }
 }
 
 /// Keybindings
@@ -1762,7 +1805,7 @@ impl FileDialog {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
-                .filtered_iter(&self.search_value)
+                .filtered_iter(self.show_hidden, &self.search_value)
                 .any(|p| p == item);
 
             if is_visible && item.is_dir() {
@@ -2052,12 +2095,12 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(&search_value)
+            .filtered_iter(self.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter(&search_value)
+                    .filtered_iter(self.show_hidden, &search_value)
                     .nth(index.saturating_sub(1))
                 {
                     self.select_item(item.clone());
@@ -2083,11 +2126,11 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(&search_value)
+            .filtered_iter(self.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if let Some(item) = directory_content
-                .filtered_iter(&search_value)
+                .filtered_iter(self.show_hidden, &search_value)
                 .nth(index.saturating_add(1))
             {
                 self.select_item(item.clone());
@@ -2106,7 +2149,7 @@ impl FileDialog {
         let directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
-            .filtered_iter(&self.search_value.clone())
+            .filtered_iter(self.show_hidden, &self.search_value.clone())
             .next()
         {
             self.select_item(item.clone());
@@ -2120,7 +2163,7 @@ impl FileDialog {
     fn select_last_visible_item(&mut self) {
         if let Some(item) = self
             .directory_content
-            .filtered_iter(&self.search_value)
+            .filtered_iter(self.show_hidden, &self.search_value)
             .last()
         {
             self.select_item(item.clone());

@@ -94,6 +94,10 @@ impl DirectoryEntry {
                 ""
             })
     }
+
+    pub fn is_hidden(&self) -> bool {
+        is_path_hidden(&self)
+    }
 }
 
 /// Contains the content of a directory.
@@ -121,7 +125,7 @@ impl DirectoryContent {
     }
 
     /// Checks if the given directory entry is visible with the applied filters.
-    fn is_entry_visible(dir_entry: &DirectoryEntry, search_value: &str) -> bool {
+    fn is_entry_visible(dir_entry: &DirectoryEntry, show_hidden: bool, search_value: &str) -> bool {
         if !search_value.is_empty()
             && !dir_entry
                 .file_name()
@@ -131,16 +135,21 @@ impl DirectoryContent {
             return false;
         }
 
+        if !show_hidden && dir_entry.is_hidden() {
+            return false;
+        }
+
         true
     }
 
     pub fn filtered_iter<'s>(
         &'s self,
+        show_hidden: bool,
         search_value: &'s str,
     ) -> impl Iterator<Item = &DirectoryEntry> + 's {
         self.content
             .iter()
-            .filter(|p| Self::is_entry_visible(p, search_value))
+            .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value))
     }
 
     /// Returns the number of elements inside the directory.
@@ -195,9 +204,23 @@ fn load_directory(
         },
     });
 
-    // TODO: Implement "Show hidden files and folders" option
-
     Ok(result)
+}
+
+#[cfg(windows)]
+fn is_path_hidden(item: &DirectoryEntry) -> bool {
+    // TODO: Implement show hidden files/folders option on Windows.
+    // https://users.rust-lang.org/t/read-windows-hidden-file-attribute/51180
+    false
+}
+
+#[cfg(not(windows))]
+fn is_path_hidden(item: &DirectoryEntry) -> bool {
+    if item.file_name().bytes().next() == Some(b'.') {
+        return true;
+    }
+
+    false
 }
 
 /// Generates the icon for the specific path.
