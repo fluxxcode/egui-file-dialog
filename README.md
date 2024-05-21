@@ -43,7 +43,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
   - Customize the text labels used by the dialog to enable multilingual support
   - Customize file and folder icons
   - Add custom quick access sections to the left sidebar
-  - Customize keybindings
+  - Customize keybindings used by the file dialog
 
 ## Example
 Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/master/examples) folder.
