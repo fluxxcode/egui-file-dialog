@@ -11,10 +11,10 @@
 
 1. [Features](#features)
 1. [Example](#example)
+1. [Keybindings](#keybindings)
 1. [Customization](#customization)
 1. [Multilingual support](#multilingual-support)
 1. [Persistent data](#persistent-data)
-1. [Keybindings](#keybindings)
 
 </details>
 
@@ -105,6 +105,22 @@ fn main() -> eframe::Result<()> {
     )
 }
 ```
+
+## Keybindings
+Keybindings can be used in the file dialog for easier navigation. All keybindings can be configured from the backend with `FileDialogKeyBindings` and `FileDialog::keybindings`. \
+The following table lists all available keybindings and their default values.
+| Name | Description | Default |
+| --- | --- | --- |
+| submit | | `Enter` |
+| cancel | | `Escape` |
+| parent | | `ALT` + `↑` |
+| back | | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace` |
+| forward | | `Mouse button 2` <br/> `ALT` + `→` |
+| reload | | `F5` |
+| new_folder | | `CTRL` + `N` |
+| edit_path | | `/` |
+| selection_up | | `↑` |
+| selection_down | | `↓` |
 
 ## Customization
 Many things can be customized so that the dialog can be used in different situations. \
@@ -260,19 +276,3 @@ impl eframe::App for MyApp {
     }
 }
 ```
-
-## Keybindings
-Keybindings can be used in the file dialog for easier navigation. All keybindings can be configured from the backend with `FileDialogKeyBindings` and `FileDialog::keybindings`. \
-The following table lists all available keybindings and their default values.
-| Name | Description | Default |
-| --- | --- | --- |
-| submit | | `Enter` |
-| cancel | | `Escape` |
-| parent | | `ALT` + `↑` |
-| back | | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace` |
-| forward | | `Mouse button 2` <br/> `ALT` + `→` |
-| reload | | `F5` |
-| new_folder | | `CTRL` + `N` |
-| edit_path | | `/` |
-| selection_up | | `↑` |
-| selection_down | | `↓` |
