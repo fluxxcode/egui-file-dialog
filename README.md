@@ -274,5 +274,5 @@ The following table lists all available keybindings and their default values.
 | reload | | `F5` |
 | new_folder | | `CTRL` + `N` |
 | edit_path | | `/` |
-| selection_up | | `Arrow up` |
-| selection_down | | `Arrow down` |
+| selection_up | | `↑` |
+| selection_down | | `↓` |
