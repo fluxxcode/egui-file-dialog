@@ -96,7 +96,7 @@ impl DirectoryEntry {
     }
 
     pub fn is_hidden(&self) -> bool {
-        is_path_hidden(&self)
+        is_path_hidden(self)
     }
 }
 
