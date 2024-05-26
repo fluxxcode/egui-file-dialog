@@ -1193,11 +1193,11 @@ impl FileDialog {
         let btn_response = ui.add_sized(edit_button_size, egui::Button::new("✔"));
 
         if btn_response.clicked() {
-            self.submit_path_edit(true);
+            self.submit_path_edit();
         }
 
         if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
-            self.submit_path_edit(false);
+            self.submit_path_edit();
         } else if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
         }
@@ -2200,13 +2200,8 @@ impl FileDialog {
     }
 
     /// Loads the directory from the path text edit.
-    fn submit_path_edit(&mut self, close_text_edit: bool) {
-        if close_text_edit {
-            self.close_path_edit();
-        } else {
-            self.path_edit_request_focus = true;
-        }
-
+    fn submit_path_edit(&mut self) {
+        self.close_path_edit();
         let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
     }
 
