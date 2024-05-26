@@ -7,6 +7,7 @@
 - Added new modal and option `FileDialog::allow_file_overwrite` to allow overwriting an already existing file when the dialog is in `DialogMode::SaveFile` mode [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106)
 - Implemented customizable keyboard navigation using `FileDialogKeybindings` and `FileDialog::keybindings` [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110)
 - Implemented show hidden files and folders option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
+- Implemented `FileDialog::keep_focus` which keeps the file dialog in focus so it appears on top of all other windows, even if the user clicks outside the window [#112](https://github.com/fluxxcode/egui-file-dialog/pull/112)
 
 ### ☢️ Deprecated
 - Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)
