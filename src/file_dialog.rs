@@ -938,7 +938,7 @@ impl FileDialog {
 
             let mut path_display_width = ui.available_width();
 
-            // Leave some area for the reload button and search input
+            // Leave some area for the menu button and search input
             if self.config.show_reload_button {
                 path_display_width -= BUTTON_SIZE.x + ui.style().spacing.item_spacing.x * 2.5;
             }
@@ -951,27 +951,23 @@ impl FileDialog {
                 self.ui_update_current_path(ui, path_display_width);
             }
 
-            let menu_button_response = ui.add_sized(BUTTON_SIZE, egui::Button::new("☰"));
+            // Menu button containing reload button and different options
+            ui.allocate_ui_with_layout(
+                BUTTON_SIZE,
+                egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
+                |ui| {
+                    ui.menu_button("☰", |ui| {
+                        if self.config.show_reload_button && ui.button("⟲  Reload").clicked() {
+                            self.refresh();
+                            ui.close_menu();
+                        }
 
-            ui.menu_button(title, add_contents)
-
-            menu_button_response.context_menu(|ui| {
-                if self.config.show_reload_button && ui.button("⟲  Reload").clicked() {
-                    self.refresh();
-                    ui.close_menu();
-                }
-
-                if ui.checkbox(&mut self.show_hidden, " Show hidden").clicked() {
-                    ui.close_menu();
-                }
-            });
-
-            // Reload button
-            // if self.config.show_reload_button
-            //     && ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked()
-            // {
-            //     self.refresh();
-            // }
+                        if ui.checkbox(&mut self.show_hidden, " Show hidden").clicked() {
+                            ui.close_menu();
+                        }
+                    });
+                },
+            );
 
             if self.config.show_search {
                 self.ui_update_search(ui);
@@ -1714,31 +1710,6 @@ impl FileDialog {
                 .set_char_range(Some(CCursorRange::one(CCursor::new(data.len()))));
             state.store(&re.ctx, re.id);
         }
-    }
-
-    fn sized_menu_button<'c, R>(
-        ui: &mut egui::Ui,
-        title: impl Into<egui::WidgetText>,
-        add_contents: Box<dyn FnOnce(&mut egui::Ui) -> R + 'c>,
-    ) -> egui::InnerResponse<Option<R>> {
-        let title = title.into();
-        let bar_id = ui.id();
-        let menu_id = bar_id.with(title.text());
-    
-        let mut bar_state = egui::BarState::load(ui.ctx(), bar_id);
-    
-        let mut button = egui::Button::new(title);
-    
-        if bar_state.open_menu.is_menu_open(menu_id) {
-            button = button.fill(ui.visuals().widgets.open.weak_bg_fill);
-            button = button.stroke(ui.visuals().widgets.open.bg_stroke);
-        }
-    
-        let button_response = ui.add(button);
-        let inner = bar_state.bar_menu(&button_response, add_contents);
-    
-        bar_state.store(ui.ctx(), bar_id);
-        egui::InnerResponse::new(inner.map(|r| r.inner), button_response)
     }
 }
 

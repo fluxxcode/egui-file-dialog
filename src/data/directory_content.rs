@@ -213,7 +213,7 @@ fn is_path_hidden(item: &DirectoryEntry) -> bool {
 
     match fs::metadata(item.as_path()) {
         Ok(metadata) => metadata.file_attributes() & 0x2 > 0,
-        Err(_) => false
+        Err(_) => false,
     }
 }
 
