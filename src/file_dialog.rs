@@ -957,12 +957,17 @@ impl FileDialog {
                 egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
                 |ui| {
                     ui.menu_button("☰", |ui| {
-                        if self.config.show_reload_button && ui.button("⟲  Reload").clicked() {
+                        if self.config.show_reload_button
+                            && ui.button(&self.config.labels.reload).clicked()
+                        {
                             self.refresh();
                             ui.close_menu();
                         }
 
-                        if ui.checkbox(&mut self.show_hidden, " Show hidden").clicked() {
+                        if ui
+                            .checkbox(&mut self.show_hidden, &self.config.labels.show_hidden)
+                            .clicked()
+                        {
                             ui.close_menu();
                         }
                     });
