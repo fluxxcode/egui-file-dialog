@@ -1771,44 +1771,52 @@ impl FileDialog {
 
         let keybindings = std::mem::take(&mut self.config.keybindings);
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit, true) {
             self.exec_keybinding_submit();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel, true) {
             self.exec_keybinding_cancel();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent, true) {
             let _ = self.load_parent_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back, true) {
             let _ = self.load_previous_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward, true) {
             let _ = self.load_next_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload, true) {
             self.refresh();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder, true) {
             self.open_new_folder_dialog();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path, true) {
             self.open_path_edit();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up, false) {
             self.exec_keybinding_selection_up();
+
+            if let Some(id) = ctx.memory(|r| r.focused()) {
+                ctx.memory_mut(|w| w.surrender_focus(id));
+            }
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_down) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_down, false) {
             self.exec_keybinding_selection_down();
+
+            if let Some(id) = ctx.memory(|r| r.focused()) {
+                ctx.memory_mut(|w| w.surrender_focus(id));
+            }
         }
 
         self.config.keybindings = keybindings;
