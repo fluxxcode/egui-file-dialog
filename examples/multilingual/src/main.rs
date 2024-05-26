@@ -18,6 +18,9 @@ fn get_labels_german() -> FileDialogLabels {
         cancel: "Abbrechen".to_string(),
         overwrite: "Überschreiben".to_string(),
 
+        reload: "⟲  Neu laden".to_string(),
+        show_hidden: " Versteckte Dateien anzeigen".to_string(),
+
         heading_pinned: "Angeheftet".to_string(),
         heading_places: "Orte".to_string(),
         heading_devices: "Medien".to_string(),

@@ -16,6 +16,8 @@ use crate::data::DirectoryEntry;
 pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
     pub pinned_folders: Vec<DirectoryEntry>,
+    /// If hidden files and folders should be listed inside the directory view.
+    pub show_hidden: bool,
 }
 
 impl Default for FileDialogStorage {
@@ -23,6 +25,7 @@ impl Default for FileDialogStorage {
     fn default() -> Self {
         Self {
             pinned_folders: Vec::new(),
+            show_hidden: false,
         }
     }
 }
@@ -148,8 +151,12 @@ pub struct FileDialogConfig {
     pub show_current_path: bool,
     /// If the button to text edit the current path should be visible.
     pub show_path_edit_button: bool,
-    /// If the reload button in the top panel should be visible.
+    /// If the menu button containing the reload button and other options should be visible.
+    pub show_menu_button: bool,
+    /// If the reload button inside the top panel menu should be visible.
     pub show_reload_button: bool,
+    /// If the show hidden files and folders option inside the top panel menu should be visible.
+    pub show_hidden_option: bool,
     /// If the search input in the top panel should be visible.
     pub show_search: bool,
 
@@ -212,7 +219,9 @@ impl Default for FileDialogConfig {
             show_new_folder_button: true,
             show_current_path: true,
             show_path_edit_button: true,
+            show_menu_button: true,
             show_reload_button: true,
+            show_hidden_option: true,
             show_search: true,
 
             show_left_panel: true,

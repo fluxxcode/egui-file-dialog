@@ -36,6 +36,13 @@ pub struct FileDialogLabels {
     pub overwrite: String,
 
     // ------------------------------------------------------------------------
+    // Top panel:
+    /// Text used for the option to reload the file dialog.
+    pub reload: String,
+    /// Text used for the option to show or hide hidden files and folders.
+    pub show_hidden: String,
+
+    // ------------------------------------------------------------------------
     // Left panel:
     /// Heading of the "Pinned" sections in the left panel
     pub heading_pinned: String,
@@ -111,6 +118,9 @@ impl Default for FileDialogLabels {
 
             cancel: "Cancel".to_string(),
             overwrite: "Overwrite".to_string(),
+
+            reload: "⟲  Reload".to_string(),
+            show_hidden: " Show hidden".to_string(),
 
             heading_pinned: "Pinned".to_string(),
             heading_places: "Places".to_string(),

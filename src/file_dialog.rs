@@ -701,11 +701,31 @@ impl FileDialog {
         self
     }
 
-    /// Sets whether the reload button should be visible in the top panel.
+    /// Sets whether the menu with the reload button and other options should be visible
+    /// inside the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_menu_button(mut self, show_menu_button: bool) -> Self {
+        self.config.show_menu_button = show_menu_button;
+        self
+    }
+
+    /// Sets whether the reload button inside the top panel menu should be visible.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` or
+    /// `FileDialog::show_menu_button` is disabled.
     pub fn show_reload_button(mut self, show_reload_button: bool) -> Self {
         self.config.show_reload_button = show_reload_button;
+        self
+    }
+
+    /// Sets whether the show hidden files and folders option inside the top panel
+    /// menu should be visible.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` or
+    /// `FileDialog::show_menu_button` is disabled.
+    pub fn show_hidden_option(mut self, show_hidden_option: bool) -> Self {
+        self.config.show_hidden_option = show_hidden_option;
         self
     }
 
@@ -935,7 +955,7 @@ impl FileDialog {
 
             let mut path_display_width = ui.available_width();
 
-            // Leave some area for the reload button and search input
+            // Leave some area for the menu button and search input
             if self.config.show_reload_button {
                 path_display_width -= BUTTON_SIZE.x + ui.style().spacing.item_spacing.x * 2.5;
             }
@@ -948,11 +968,35 @@ impl FileDialog {
                 self.ui_update_current_path(ui, path_display_width);
             }
 
-            // Reload button
-            if self.config.show_reload_button
-                && ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked()
+            // Menu button containing reload button and different options
+            if self.config.show_menu_button
+                && (self.config.show_reload_button || self.config.show_hidden_option)
             {
-                self.refresh();
+                ui.allocate_ui_with_layout(
+                    BUTTON_SIZE,
+                    egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
+                    |ui| {
+                        ui.menu_button("☰", |ui| {
+                            if self.config.show_reload_button
+                                && ui.button(&self.config.labels.reload).clicked()
+                            {
+                                self.refresh();
+                                ui.close_menu();
+                            }
+
+                            if self.config.show_hidden_option
+                                && ui
+                                    .checkbox(
+                                        &mut self.config.storage.show_hidden,
+                                        &self.config.labels.show_hidden,
+                                    )
+                                    .clicked()
+                            {
+                                ui.close_menu();
+                            }
+                        });
+                    },
+                );
             }
 
             if self.config.show_search {
@@ -1556,7 +1600,9 @@ impl FileDialog {
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
 
-                    for path in data.filtered_iter(&self.search_value.clone()) {
+                    for path in data
+                        .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
+                    {
                         let file_name = path.file_name();
 
                         let mut selected = false;
@@ -1762,7 +1808,7 @@ impl FileDialog {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
-                .filtered_iter(&self.search_value)
+                .filtered_iter(self.config.storage.show_hidden, &self.search_value)
                 .any(|p| p == item);
 
             if is_visible && item.is_dir() {
@@ -2052,12 +2098,12 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(&search_value)
+            .filtered_iter(self.config.storage.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter(&search_value)
+                    .filtered_iter(self.config.storage.show_hidden, &search_value)
                     .nth(index.saturating_sub(1))
                 {
                     self.select_item(item.clone());
@@ -2083,11 +2129,11 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(&search_value)
+            .filtered_iter(self.config.storage.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if let Some(item) = directory_content
-                .filtered_iter(&search_value)
+                .filtered_iter(self.config.storage.show_hidden, &search_value)
                 .nth(index.saturating_add(1))
             {
                 self.select_item(item.clone());
@@ -2106,7 +2152,7 @@ impl FileDialog {
         let directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
-            .filtered_iter(&self.search_value.clone())
+            .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
             .next()
         {
             self.select_item(item.clone());
@@ -2120,7 +2166,7 @@ impl FileDialog {
     fn select_last_visible_item(&mut self) {
         if let Some(item) = self
             .directory_content
-            .filtered_iter(&self.search_value)
+            .filtered_iter(self.config.storage.show_hidden, &self.search_value)
             .last()
         {
             self.select_item(item.clone());
