@@ -437,6 +437,15 @@ impl FileDialog {
         &mut self.config.labels
     }
 
+    /// If the file dialog window should keep focus and appear on top of all other windows,
+    /// even if the user clicks outside the window.
+    /// However, this does not prevent the user from using other widgets outside of the
+    /// file dialog.
+    pub fn keep_focus(mut self, keep_focus: bool) -> Self {
+        self.config.keep_focus = keep_focus;
+        self
+    }
+
     /// Sets the first loaded directory when the dialog opens.
     /// If the path is a file, the file's parent directory is used. If the path then has no
     /// parent directory or cannot be loaded, the user will receive an error.
@@ -834,6 +843,10 @@ impl FileDialog {
         let mut is_open = true;
 
         self.create_window(&mut is_open).show(ctx, |ui| {
+            if self.config.keep_focus {
+                ui.ctx().move_to_top(ui.layer_id());
+            }
+
             if !self.modals.is_empty() {
                 self.ui_update_modals(ui);
                 return;

@@ -65,13 +65,16 @@ pub struct FileDialogConfig {
     // Core:
     /// Persistent data of the file dialog.
     pub storage: FileDialogStorage,
+    /// The labels that the dialog uses.
+    pub labels: FileDialogLabels,
     /// Keybindings used by the file dialog.
     pub keybindings: FileDialogKeyBindings,
 
     // ------------------------------------------------------------------------
     // General options:
-    /// The labels that the dialog uses.
-    pub labels: FileDialogLabels,
+    /// If the file dialog window should keep focus and appear on top of all other windows,
+    /// even if the user clicks outside the window.
+    pub keep_focus: bool,
     /// The first directory that will be opened when the dialog opens.
     pub initial_directory: PathBuf,
     /// The default filename when opening the dialog in `DialogMode::SaveFile` mode.
@@ -179,9 +182,10 @@ impl Default for FileDialogConfig {
     fn default() -> Self {
         Self {
             storage: FileDialogStorage::default(),
+            labels: FileDialogLabels::default(),
             keybindings: FileDialogKeyBindings::default(),
 
-            labels: FileDialogLabels::default(),
+            keep_focus: true,
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             allow_file_overwrite: true,
