@@ -80,8 +80,6 @@ pub struct FileDialog {
     /// If files are displayed in addition to directories.
     /// This option will be ignored when mode == DialogMode::SelectFile.
     show_files: bool,
-    /// If hidden files and directories should be visible inside the directory view.
-    show_hidden: bool,
     /// This is an optional ID that can be set when opening the dialog to determine which
     /// operation the dialog is used for. This is useful if the dialog is used multiple times
     /// for different actions in the same view. The ID then makes it possible to distinguish
@@ -166,7 +164,6 @@ impl FileDialog {
             mode: DialogMode::SelectDirectory,
             state: DialogState::Closed,
             show_files: true,
-            show_hidden: false,
             operation_id: None,
 
             user_directories: UserDirectories::new(true),
@@ -965,7 +962,10 @@ impl FileDialog {
                         }
 
                         if ui
-                            .checkbox(&mut self.show_hidden, &self.config.labels.show_hidden)
+                            .checkbox(
+                                &mut self.config.storage.show_hidden,
+                                &self.config.labels.show_hidden,
+                            )
                             .clicked()
                         {
                             ui.close_menu();
@@ -1575,7 +1575,9 @@ impl FileDialog {
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
 
-                    for path in data.filtered_iter(self.show_hidden, &self.search_value.clone()) {
+                    for path in data
+                        .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
+                    {
                         let file_name = path.file_name();
 
                         let mut selected = false;
@@ -1781,7 +1783,7 @@ impl FileDialog {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
-                .filtered_iter(self.show_hidden, &self.search_value)
+                .filtered_iter(self.config.storage.show_hidden, &self.search_value)
                 .any(|p| p == item);
 
             if is_visible && item.is_dir() {
@@ -2071,12 +2073,12 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(self.show_hidden, &search_value)
+            .filtered_iter(self.config.storage.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter(self.show_hidden, &search_value)
+                    .filtered_iter(self.config.storage.show_hidden, &search_value)
                     .nth(index.saturating_sub(1))
                 {
                     self.select_item(item.clone());
@@ -2102,11 +2104,11 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(self.show_hidden, &search_value)
+            .filtered_iter(self.config.storage.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if let Some(item) = directory_content
-                .filtered_iter(self.show_hidden, &search_value)
+                .filtered_iter(self.config.storage.show_hidden, &search_value)
                 .nth(index.saturating_add(1))
             {
                 self.select_item(item.clone());
@@ -2125,7 +2127,7 @@ impl FileDialog {
         let directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
-            .filtered_iter(self.show_hidden, &self.search_value.clone())
+            .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
             .next()
         {
             self.select_item(item.clone());
@@ -2139,7 +2141,7 @@ impl FileDialog {
     fn select_last_visible_item(&mut self) {
         if let Some(item) = self
             .directory_content
-            .filtered_iter(self.show_hidden, &self.search_value)
+            .filtered_iter(self.config.storage.show_hidden, &self.search_value)
             .last()
         {
             self.select_item(item.clone());

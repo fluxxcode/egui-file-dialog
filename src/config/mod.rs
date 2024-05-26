@@ -16,6 +16,8 @@ use crate::data::DirectoryEntry;
 pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
     pub pinned_folders: Vec<DirectoryEntry>,
+    /// If hidden files and folders should be listed inside the directory view.
+    pub show_hidden: bool,
 }
 
 impl Default for FileDialogStorage {
@@ -23,6 +25,7 @@ impl Default for FileDialogStorage {
     fn default() -> Self {
         Self {
             pinned_folders: Vec::new(),
+            show_hidden: false,
         }
     }
 }
