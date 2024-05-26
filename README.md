@@ -33,6 +33,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Save a file (Prompt user for a destination path)
 - Create a new folder
 - Keyboard navigation
+- Option to show or hide hidden files and folders
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Shortcut for user directories (Home, Documents, ...) and system disks
