@@ -136,6 +136,8 @@ pub struct FileDialog {
     scroll_to_selection: bool,
     /// Buffer containing the value of the search input.
     search_value: String,
+    /// If the search should be initialized in the next frame.
+    init_search: bool,
 
     /// If any widget was focused in the last frame.
     /// This is used to prevent the dialog from closing when pressing the escape key
@@ -188,6 +190,7 @@ impl FileDialog {
 
             scroll_to_selection: false,
             search_value: String::new(),
+            init_search: false,
 
             any_focused_last_frame: false,
         }
@@ -1221,18 +1224,30 @@ impl FileDialog {
                         egui::TextEdit::singleline(&mut self.search_value),
                     );
 
-                    self.edit_filter_on_text_input(ui, re);
+                    self.edit_search_on_text_input(ui);
+
+                    if re.changed() || self.init_search {
+                        self.selected_item = None;
+                        self.select_first_visible_item();
+                    }
+
+                    if self.init_search {
+                        re.request_focus();
+                        Self::set_cursor_to_end(&re, &self.search_value);
+
+                        self.init_search = false;
+                    }
                 });
             });
     }
 
-    /// Focuses and types into the filter input, if text input without
+    /// Focuses and types into the search input, if text input without
     /// shortcut modifiers is detected, and no other inputs are focused.
     ///
     /// # Arguments
     ///
     /// - `re`: The [`egui::Response`] returned by the filter text edit widget
-    fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
+    fn edit_search_on_text_input(&mut self, ui: &mut egui::Ui) {
         if ui.memory(|mem| mem.focused().is_some()) {
             return;
         }
@@ -1257,9 +1272,7 @@ impl FileDialog {
         });
 
         if activate {
-            // Focus the filter input widget
-            re.request_focus();
-            Self::set_cursor_to_end(&re, &self.search_value);
+            self.init_search = true;
         }
     }
 
