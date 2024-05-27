@@ -29,5 +29,5 @@ sysinfo = { version = "0.30.5", default-features = false }
 serde = { version = "1", features = ["derive"], optional = true}
 
 [features]
-default = ["persistence"]
-persistence = ["dep:serde"]
+default = ["serde"]
+serde = ["dep:serde"]
