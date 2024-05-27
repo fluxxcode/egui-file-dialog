@@ -12,10 +12,12 @@ use crate::data::DirectoryEntry;
 
 /// Contains data of the FileDialog that should be stored persistently.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
     pub pinned_folders: Vec<DirectoryEntry>,
+    /// If hidden files and folders should be listed inside the directory view.
+    pub show_hidden: bool,
 }
 
 impl Default for FileDialogStorage {
@@ -23,6 +25,7 @@ impl Default for FileDialogStorage {
     fn default() -> Self {
         Self {
             pinned_folders: Vec::new(),
+            show_hidden: false,
         }
     }
 }
@@ -62,13 +65,16 @@ pub struct FileDialogConfig {
     // Core:
     /// Persistent data of the file dialog.
     pub storage: FileDialogStorage,
+    /// The labels that the dialog uses.
+    pub labels: FileDialogLabels,
     /// Keybindings used by the file dialog.
     pub keybindings: FileDialogKeyBindings,
 
     // ------------------------------------------------------------------------
     // General options:
-    /// The labels that the dialog uses.
-    pub labels: FileDialogLabels,
+    /// If the file dialog window should keep focus and appear on top of all other windows,
+    /// even if the user clicks outside the window.
+    pub keep_focus: bool,
     /// The first directory that will be opened when the dialog opens.
     pub initial_directory: PathBuf,
     /// The default filename when opening the dialog in `DialogMode::SaveFile` mode.
@@ -148,8 +154,12 @@ pub struct FileDialogConfig {
     pub show_current_path: bool,
     /// If the button to text edit the current path should be visible.
     pub show_path_edit_button: bool,
-    /// If the reload button in the top panel should be visible.
+    /// If the menu button containing the reload button and other options should be visible.
+    pub show_menu_button: bool,
+    /// If the reload button inside the top panel menu should be visible.
     pub show_reload_button: bool,
+    /// If the show hidden files and folders option inside the top panel menu should be visible.
+    pub show_hidden_option: bool,
     /// If the search input in the top panel should be visible.
     pub show_search: bool,
 
@@ -172,9 +182,10 @@ impl Default for FileDialogConfig {
     fn default() -> Self {
         Self {
             storage: FileDialogStorage::default(),
+            labels: FileDialogLabels::default(),
             keybindings: FileDialogKeyBindings::default(),
 
-            labels: FileDialogLabels::default(),
+            keep_focus: true,
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             allow_file_overwrite: true,
@@ -212,7 +223,9 @@ impl Default for FileDialogConfig {
             show_new_folder_button: true,
             show_current_path: true,
             show_path_edit_button: true,
+            show_menu_button: true,
             show_reload_button: true,
+            show_hidden_option: true,
             show_search: true,
 
             show_left_panel: true,

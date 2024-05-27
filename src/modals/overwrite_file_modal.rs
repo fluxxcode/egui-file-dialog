@@ -98,11 +98,11 @@ impl FileDialogModal for OverwriteFileModal {
     }
 
     fn update_keybindings(&mut self, config: &FileDialogConfig, ctx: &egui::Context) {
-        if FileDialogKeyBindings::any_pressed(ctx, &config.keybindings.submit) {
+        if FileDialogKeyBindings::any_pressed(ctx, &config.keybindings.submit, true) {
             self.submit();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &config.keybindings.cancel) {
+        if FileDialogKeyBindings::any_pressed(ctx, &config.keybindings.cancel, true) {
             self.cancel();
         }
     }

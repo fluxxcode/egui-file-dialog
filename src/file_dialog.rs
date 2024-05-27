@@ -136,6 +136,8 @@ pub struct FileDialog {
     scroll_to_selection: bool,
     /// Buffer containing the value of the search input.
     search_value: String,
+    /// If the search should be initialized in the next frame.
+    init_search: bool,
 
     /// If any widget was focused in the last frame.
     /// This is used to prevent the dialog from closing when pressing the escape key
@@ -188,6 +190,7 @@ impl FileDialog {
 
             scroll_to_selection: false,
             search_value: String::new(),
+            init_search: false,
 
             any_focused_last_frame: false,
         }
@@ -435,6 +438,15 @@ impl FileDialog {
     /// Mutably borrow internal `config.labels`.
     pub fn labels_mut(&mut self) -> &mut FileDialogLabels {
         &mut self.config.labels
+    }
+
+    /// If the file dialog window should keep focus and appear on top of all other windows,
+    /// even if the user clicks outside the window.
+    /// However, this does not prevent the user from using other widgets outside of the
+    /// file dialog.
+    pub fn keep_focus(mut self, keep_focus: bool) -> Self {
+        self.config.keep_focus = keep_focus;
+        self
     }
 
     /// Sets the first loaded directory when the dialog opens.
@@ -701,11 +713,31 @@ impl FileDialog {
         self
     }
 
-    /// Sets whether the reload button should be visible in the top panel.
+    /// Sets whether the menu with the reload button and other options should be visible
+    /// inside the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
+    pub fn show_menu_button(mut self, show_menu_button: bool) -> Self {
+        self.config.show_menu_button = show_menu_button;
+        self
+    }
+
+    /// Sets whether the reload button inside the top panel menu should be visible.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` or
+    /// `FileDialog::show_menu_button` is disabled.
     pub fn show_reload_button(mut self, show_reload_button: bool) -> Self {
         self.config.show_reload_button = show_reload_button;
+        self
+    }
+
+    /// Sets whether the show hidden files and folders option inside the top panel
+    /// menu should be visible.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` or
+    /// `FileDialog::show_menu_button` is disabled.
+    pub fn show_hidden_option(mut self, show_hidden_option: bool) -> Self {
+        self.config.show_hidden_option = show_hidden_option;
         self
     }
 
@@ -814,6 +846,10 @@ impl FileDialog {
         let mut is_open = true;
 
         self.create_window(&mut is_open).show(ctx, |ui| {
+            if self.config.keep_focus {
+                ui.ctx().move_to_top(ui.layer_id());
+            }
+
             if !self.modals.is_empty() {
                 self.ui_update_modals(ui);
                 return;
@@ -935,7 +971,7 @@ impl FileDialog {
 
             let mut path_display_width = ui.available_width();
 
-            // Leave some area for the reload button and search input
+            // Leave some area for the menu button and search input
             if self.config.show_reload_button {
                 path_display_width -= BUTTON_SIZE.x + ui.style().spacing.item_spacing.x * 2.5;
             }
@@ -948,11 +984,35 @@ impl FileDialog {
                 self.ui_update_current_path(ui, path_display_width);
             }
 
-            // Reload button
-            if self.config.show_reload_button
-                && ui.add_sized(BUTTON_SIZE, egui::Button::new("⟲")).clicked()
+            // Menu button containing reload button and different options
+            if self.config.show_menu_button
+                && (self.config.show_reload_button || self.config.show_hidden_option)
             {
-                self.refresh();
+                ui.allocate_ui_with_layout(
+                    BUTTON_SIZE,
+                    egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
+                    |ui| {
+                        ui.menu_button("☰", |ui| {
+                            if self.config.show_reload_button
+                                && ui.button(&self.config.labels.reload).clicked()
+                            {
+                                self.refresh();
+                                ui.close_menu();
+                            }
+
+                            if self.config.show_hidden_option
+                                && ui
+                                    .checkbox(
+                                        &mut self.config.storage.show_hidden,
+                                        &self.config.labels.show_hidden,
+                                    )
+                                    .clicked()
+                            {
+                                ui.close_menu();
+                            }
+                        });
+                    },
+                );
             }
 
             if self.config.show_search {
@@ -1136,12 +1196,10 @@ impl FileDialog {
         let btn_response = ui.add_sized(edit_button_size, egui::Button::new("✔"));
 
         if btn_response.clicked() {
-            self.submit_path_edit(true);
+            self.submit_path_edit();
         }
 
-        if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
-            self.submit_path_edit(false);
-        } else if !response.has_focus() && !btn_response.contains_pointer() {
+        if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
         }
     }
@@ -1164,18 +1222,30 @@ impl FileDialog {
                         egui::TextEdit::singleline(&mut self.search_value),
                     );
 
-                    self.edit_filter_on_text_input(ui, re);
+                    self.edit_search_on_text_input(ui);
+
+                    if re.changed() || self.init_search {
+                        self.selected_item = None;
+                        self.select_first_visible_item();
+                    }
+
+                    if self.init_search {
+                        re.request_focus();
+                        Self::set_cursor_to_end(&re, &self.search_value);
+
+                        self.init_search = false;
+                    }
                 });
             });
     }
 
-    /// Focuses and types into the filter input, if text input without
+    /// Focuses and types into the search input, if text input without
     /// shortcut modifiers is detected, and no other inputs are focused.
     ///
     /// # Arguments
     ///
     /// - `re`: The [`egui::Response`] returned by the filter text edit widget
-    fn edit_filter_on_text_input(&mut self, ui: &mut egui::Ui, re: egui::Response) {
+    fn edit_search_on_text_input(&mut self, ui: &mut egui::Ui) {
         if ui.memory(|mem| mem.focused().is_some()) {
             return;
         }
@@ -1200,9 +1270,7 @@ impl FileDialog {
         });
 
         if activate {
-            // Focus the filter input widget
-            re.request_focus();
-            Self::set_cursor_to_end(&re, &self.search_value);
+            self.init_search = true;
         }
     }
 
@@ -1556,7 +1624,9 @@ impl FileDialog {
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
 
-                    for path in data.filtered_iter(&self.search_value.clone()) {
+                    for path in data
+                        .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
+                    {
                         let file_name = path.file_name();
 
                         let mut selected = false;
@@ -1712,44 +1782,54 @@ impl FileDialog {
 
         let keybindings = std::mem::take(&mut self.config.keybindings);
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit, false) {
             self.exec_keybinding_submit();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel, false) {
             self.exec_keybinding_cancel();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent, true) {
             let _ = self.load_parent_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back, true) {
             let _ = self.load_previous_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward, true) {
             let _ = self.load_next_directory();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload, true) {
             self.refresh();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.new_folder, true) {
             self.open_new_folder_dialog();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path, true) {
             self.open_path_edit();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up, false) {
             self.exec_keybinding_selection_up();
+
+            // We want to break out of input fields like search when pressing selection keys
+            if let Some(id) = ctx.memory(|r| r.focused()) {
+                ctx.memory_mut(|w| w.surrender_focus(id));
+            }
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_down) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_down, false) {
             self.exec_keybinding_selection_down();
+
+            // We want to break out of input fields like search when pressing selection keys
+            if let Some(id) = ctx.memory(|r| r.focused()) {
+                ctx.memory_mut(|w| w.surrender_focus(id));
+            }
         }
 
         self.config.keybindings = keybindings;
@@ -1757,12 +1837,24 @@ impl FileDialog {
 
     /// Executes the action when the keybinding `submit` is pressed.
     fn exec_keybinding_submit(&mut self) {
-        // The submit button (Enter) is used to open the directory that is currently selected
+        if self.path_edit_visible {
+            self.submit_path_edit();
+            return;
+        }
+
+        if self.create_directory_dialog.is_open() {
+            if let Some(dir) = self.create_directory_dialog.submit().directory() {
+                self.process_new_folder(&dir);
+            }
+            return;
+        }
+
+        // Check if there is a directory selected we can open
         if let Some(item) = &self.selected_item {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
-                .filtered_iter(&self.search_value)
+                .filtered_iter(self.config.storage.show_hidden, &self.search_value)
                 .any(|p| p == item);
 
             if is_visible && item.is_dir() {
@@ -1771,13 +1863,7 @@ impl FileDialog {
             }
         }
 
-        match &self.mode {
-            DialogMode::SelectFile | DialogMode::SaveFile => self.submit(),
-            // We want to use the submit button (Enter) to enter a new directory instead of
-            // selecting the current one.
-            // We might want to change this behavior later.
-            DialogMode::SelectDirectory => {}
-        }
+        self.submit();
     }
 
     /// Executes the action when the keybinding `cancel` is pressed.
@@ -2052,12 +2138,12 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(&search_value)
+            .filtered_iter(self.config.storage.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter(&search_value)
+                    .filtered_iter(self.config.storage.show_hidden, &search_value)
                     .nth(index.saturating_sub(1))
                 {
                     self.select_item(item.clone());
@@ -2083,11 +2169,11 @@ impl FileDialog {
         let search_value = self.search_value.clone();
 
         if let Some(index) = directory_content
-            .filtered_iter(&search_value)
+            .filtered_iter(self.config.storage.show_hidden, &search_value)
             .position(|p| p == item)
         {
             if let Some(item) = directory_content
-                .filtered_iter(&search_value)
+                .filtered_iter(self.config.storage.show_hidden, &search_value)
                 .nth(index.saturating_add(1))
             {
                 self.select_item(item.clone());
@@ -2106,7 +2192,7 @@ impl FileDialog {
         let directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
-            .filtered_iter(&self.search_value.clone())
+            .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
             .next()
         {
             self.select_item(item.clone());
@@ -2120,7 +2206,7 @@ impl FileDialog {
     fn select_last_visible_item(&mut self) {
         if let Some(item) = self
             .directory_content
-            .filtered_iter(&self.search_value)
+            .filtered_iter(self.config.storage.show_hidden, &self.search_value)
             .last()
         {
             self.select_item(item.clone());
@@ -2141,13 +2227,8 @@ impl FileDialog {
     }
 
     /// Loads the directory from the path text edit.
-    fn submit_path_edit(&mut self, close_text_edit: bool) {
-        if close_text_edit {
-            self.close_path_edit();
-        } else {
-            self.path_edit_request_focus = true;
-        }
-
+    fn submit_path_edit(&mut self) {
+        self.close_path_edit();
         let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
     }
 
