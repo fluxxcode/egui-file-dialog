@@ -29,10 +29,19 @@ impl KeyBinding {
     }
 
     /// Checks if the keybinding was pressed by the user.
-    pub fn pressed(&self, ctx: &egui::Context) -> bool {
+    ///
+    /// # Arguments
+    ///
+    /// * `ignore_if_any_focused` - Determines whether keyboard shortcuts pressed while another
+    ///    widget is currently in focus should be ignored.
+    ///    In most cases, this should be enabled so that no shortcuts are executed if,
+    ///    for example, the search  text field is currently in focus. With the selection
+    ///    keybindings, however, it is desired that when they are pressed, the text fields
+    ///    lose focus and the keybinding is executed.
+    pub fn pressed(&self, ctx: &egui::Context, ignore_if_any_focused: bool) -> bool {
         // We want to suppress keyboard input when any other widget like
         // text fields have focus.
-        if ctx.memory(|r| r.focused()).is_some() {
+        if ignore_if_any_focused && ctx.memory(|r| r.focused()).is_some() {
             return false;
         }
 
@@ -71,9 +80,13 @@ pub struct FileDialogKeyBindings {
 
 impl FileDialogKeyBindings {
     /// Checks wether any of the given keybindings is pressed.
-    pub fn any_pressed(ctx: &egui::Context, keybindings: &Vec<KeyBinding>) -> bool {
+    pub fn any_pressed(
+        ctx: &egui::Context,
+        keybindings: &Vec<KeyBinding>,
+        suppress_if_any_focused: bool,
+    ) -> bool {
         for keybinding in keybindings {
-            if keybinding.pressed(ctx) {
+            if keybinding.pressed(ctx, suppress_if_any_focused) {
                 return true;
             }
         }
