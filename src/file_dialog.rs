@@ -1199,9 +1199,7 @@ impl FileDialog {
             self.submit_path_edit();
         }
 
-        if response.lost_focus() && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter)) {
-            self.submit_path_edit();
-        } else if !response.has_focus() && !btn_response.contains_pointer() {
+        if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
         }
     }
@@ -1236,12 +1234,6 @@ impl FileDialog {
                         Self::set_cursor_to_end(&re, &self.search_value);
 
                         self.init_search = false;
-                    }
-
-                    if re.lost_focus()
-                        && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter))
-                    {
-                        self.submit();
                     }
                 });
             });
@@ -1790,11 +1782,11 @@ impl FileDialog {
 
         let keybindings = std::mem::take(&mut self.config.keybindings);
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit, true) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.submit, false) {
             self.exec_keybinding_submit();
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel, true) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.cancel, false) {
             self.exec_keybinding_cancel();
         }
 
@@ -1845,8 +1837,15 @@ impl FileDialog {
 
     /// Executes the action when the keybinding `submit` is pressed.
     fn exec_keybinding_submit(&mut self) {
-        // The submit button (Enter) is used to open the directory that is currently selected
-        if let Some(item) = &self.selected_item {
+        if self.path_edit_visible {
+            self.submit_path_edit();
+        } else if self.create_directory_dialog.is_open() {
+            if let Some(dir) = self.create_directory_dialog.submit().directory() {
+                self.process_new_folder(&dir);
+            }
+        } else if let Some(item) = &self.selected_item {
+            // The submit button (Enter) is used to open the directory that is currently selected
+
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
