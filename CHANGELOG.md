@@ -1,6 +1,10 @@
 # egui-file-dialog changelog
 
 ## Unreleased - v0.6.0
+### 🚨 Breaking Changes
+- Added new labels to `FileDialogLabels` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
+- Added new configuration values to `FileDialogConfig`  [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104), [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106), [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#112](https://github.com/fluxxcode/egui-file-dialog/pull/112)
+
 ### ✨ Features
 - Added the ability to pin folders to the left sidebar and enable or disable the feature with `FileDialog::show_pinned_folders` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100)
 - Added `FileDialogConfig::storage`, `FileDialog::storage` and `FileDialog::storage_mut` to be able to save and load persistent data [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104) and [#105](https://github.com/fluxxcode/egui-file-dialog/pull/105)
