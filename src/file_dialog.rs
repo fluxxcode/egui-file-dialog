@@ -1237,6 +1237,12 @@ impl FileDialog {
 
                         self.init_search = false;
                     }
+
+                    if re.lost_focus()
+                        && ui.ctx().input(|input| input.key_pressed(egui::Key::Enter))
+                    {
+                        self.submit();
+                    }
                 });
             });
     }
