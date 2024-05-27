@@ -1839,13 +1839,18 @@ impl FileDialog {
     fn exec_keybinding_submit(&mut self) {
         if self.path_edit_visible {
             self.submit_path_edit();
-        } else if self.create_directory_dialog.is_open() {
+            return;
+        }
+
+        if self.create_directory_dialog.is_open() {
             if let Some(dir) = self.create_directory_dialog.submit().directory() {
                 self.process_new_folder(&dir);
             }
-        } else if let Some(item) = &self.selected_item {
-            // The submit button (Enter) is used to open the directory that is currently selected
+            return;
+        }
 
+        // Check if there is a directory selected we can open
+        if let Some(item) = &self.selected_item {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
@@ -1858,13 +1863,7 @@ impl FileDialog {
             }
         }
 
-        match &self.mode {
-            DialogMode::SelectFile | DialogMode::SaveFile => self.submit(),
-            // We want to use the submit button (Enter) to enter a new directory instead of
-            // selecting the current one.
-            // We might want to change this behavior later.
-            DialogMode::SelectDirectory => {}
-        }
+        self.submit();
     }
 
     /// Executes the action when the keybinding `cancel` is pressed.
