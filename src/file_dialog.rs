@@ -1806,6 +1806,7 @@ impl FileDialog {
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up, false) {
             self.exec_keybinding_selection_up();
 
+            // We want to break out of input fields like search when pressing selection keys
             if let Some(id) = ctx.memory(|r| r.focused()) {
                 ctx.memory_mut(|w| w.surrender_focus(id));
             }
@@ -1814,6 +1815,7 @@ impl FileDialog {
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_down, false) {
             self.exec_keybinding_selection_down();
 
+            // We want to break out of input fields like search when pressing selection keys
             if let Some(id) = ctx.memory(|r| r.focused()) {
                 ctx.memory_mut(|w| w.surrender_focus(id));
             }
