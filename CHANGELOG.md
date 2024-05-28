@@ -24,6 +24,7 @@
 - Restructured `config` module and fixed new `1.78` clippy warnings [#109](https://github.com/fluxxcode/egui-file-dialog/pull/109)
 - The reload button has been changed to a menu button. This menu contains the reload button and the “Show hidden" option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
 - Minor navigation improvements [#113](https://github.com/fluxxcode/egui-file-dialog/pull/113)
+- Made `DirectoryEntry` public reachable [#119](https://github.com/fluxxcode/egui-file-dialog/pull/119) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 
 ### 📚 Documentation
 - Added `persistence` example showing how to save the persistent data of the file dialog [#107](https://github.com/fluxxcode/egui-file-dialog/pull/107)
