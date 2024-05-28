@@ -95,6 +95,7 @@ impl DirectoryEntry {
             })
     }
 
+    /// Returns whether the path this DirectoryEntry points to is considered hidden.
     pub fn is_hidden(&self) -> bool {
         is_path_hidden(self)
     }
