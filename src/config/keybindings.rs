@@ -72,6 +72,8 @@ pub struct FileDialogKeyBindings {
     pub new_folder: Vec<KeyBinding>,
     /// Shortcut to text edit the current path
     pub edit_path: Vec<KeyBinding>,
+    /// Shortcut to switch to the home directory and text edit the current path
+    pub home_edit_path: Vec<KeyBinding>,
     /// Shortcut to move the selection one item up
     pub selection_up: Vec<KeyBinding>,
     /// Shortcut to move the selection one item down
@@ -115,6 +117,7 @@ impl Default for FileDialogKeyBindings {
             reload: vec![KeyBinding::key(egui::Key::F5)],
             new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
             edit_path: vec![KeyBinding::key(Key::Slash)],
+            home_edit_path: vec![KeyBinding::keyboard_shortcut(Modifiers::SHIFT, egui::Key::Backtick)],
             selection_up: vec![KeyBinding::key(Key::ArrowUp)],
             selection_down: vec![KeyBinding::key(Key::ArrowDown)],
         }

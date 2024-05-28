@@ -1808,6 +1808,15 @@ impl FileDialog {
             self.open_path_edit();
         }
 
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.home_edit_path, false) {
+            if let Some(dirs) = &self.user_directories {
+                if let Some(home) = dirs.home_dir() {
+                    let _ = self.load_directory(&home.to_path_buf());
+                    self.open_path_edit();
+                }
+            }
+        }
+
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up, false) {
             self.exec_keybinding_selection_up();
 
