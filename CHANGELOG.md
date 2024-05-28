@@ -3,7 +3,7 @@
 ## Unreleased - v0.6.0
 ### 🚨 Breaking Changes
 - Added new labels to `FileDialogLabels` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
-- Added new configuration values to `FileDialogConfig`  [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104), [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106), [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#112](https://github.com/fluxxcode/egui-file-dialog/pull/112)
+- Added new configuration values to `FileDialogConfig` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104), [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106), [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#112](https://github.com/fluxxcode/egui-file-dialog/pull/112), [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
 
 ### ✨ Features
 - Added the ability to pin folders to the left sidebar and enable or disable the feature with `FileDialog::show_pinned_folders` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100)
@@ -12,6 +12,7 @@
 - Implemented customizable keyboard navigation using `FileDialogKeybindings` and `FileDialog::keybindings` [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110)
 - Implemented show hidden files and folders option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
 - Implemented `FileDialog::keep_focus` which keeps the file dialog in focus so it appears on top of all other windows, even if the user clicks outside the window [#112](https://github.com/fluxxcode/egui-file-dialog/pull/112)
+- The dialog is now displayed as a modal window by default. This can be disabled with `FileDialog::as_modal`. The color of the modal overlay can be adjusted using `FileDialog::modal_overlay_color`. [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
 
 ### ☢️ Deprecated
 - Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)
