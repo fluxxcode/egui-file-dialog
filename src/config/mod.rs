@@ -77,9 +77,6 @@ pub struct FileDialogConfig {
     pub as_modal: bool,
     /// Color of the overlay that is displayed under the modal to prevent user interaction.
     pub modal_overlay_color: egui::Color32,
-    /// If the file dialog window should keep focus and appear on top of all other windows,
-    /// even if the user clicks outside the window.
-    pub keep_focus: bool,
     /// The first directory that will be opened when the dialog opens.
     pub initial_directory: PathBuf,
     /// The default filename when opening the dialog in `DialogMode::SaveFile` mode.
@@ -192,7 +189,6 @@ impl Default for FileDialogConfig {
 
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
-            keep_focus: true,
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             allow_file_overwrite: true,
