@@ -440,6 +440,21 @@ impl FileDialog {
         &mut self.config.labels
     }
 
+    /// If the file dialog window should be displayed as a modal.
+    ///
+    /// If the window is displayed as modal, the area outside the dialog can no longer be
+    /// interacted with and an overlay is displayed.
+    pub fn as_modal(mut self, as_modal: bool) -> Self {
+        self.config.as_modal = as_modal;
+        self
+    }
+
+    /// Sets the color of the overlay when the dialog is displayed as a modal window.
+    pub fn modal_overlay_color(mut self, modal_overlay_color: egui::Color32) -> Self {
+        self.config.modal_overlay_color = modal_overlay_color;
+        self
+    }
+
     /// If the file dialog window should keep focus and appear on top of all other windows,
     /// even if the user clicks outside the window.
     /// However, this does not prevent the user from using other widgets outside of the
@@ -845,8 +860,27 @@ impl FileDialog {
     fn update_ui(&mut self, ctx: &egui::Context) {
         let mut is_open = true;
 
+        if self.config.as_modal {
+            let re_area = egui::Area::new(egui::Id::from("Test"))
+                .interactable(true)
+                .fixed_pos(egui::Pos2::ZERO)
+                .show(ctx, |ui| {
+                    let screen_rect = ctx.input(|i| i.screen_rect);
+
+                    ui.allocate_response(screen_rect.size(), egui::Sense::click());
+
+                    ui.painter().rect_filled(
+                        screen_rect,
+                        egui::Rounding::ZERO,
+                        self.config.modal_overlay_color,
+                    );
+                });
+
+            ctx.move_to_top(re_area.response.layer_id);
+        }
+
         self.create_window(&mut is_open).show(ctx, |ui| {
-            if self.config.keep_focus {
+            if self.config.keep_focus || self.config.as_modal {
                 ui.ctx().move_to_top(ui.layer_id());
             }
 
