@@ -455,15 +455,6 @@ impl FileDialog {
         self
     }
 
-    /// If the file dialog window should keep focus and appear on top of all other windows,
-    /// even if the user clicks outside the window.
-    /// However, this does not prevent the user from using other widgets outside of the
-    /// file dialog.
-    pub fn keep_focus(mut self, keep_focus: bool) -> Self {
-        self.config.keep_focus = keep_focus;
-        self
-    }
-
     /// Sets the first loaded directory when the dialog opens.
     /// If the path is a file, the file's parent directory is used. If the path then has no
     /// parent directory or cannot be loaded, the user will receive an error.
@@ -861,29 +852,11 @@ impl FileDialog {
         let mut is_open = true;
 
         if self.config.as_modal {
-            let re_area = egui::Area::new(egui::Id::from("Test"))
-                .interactable(true)
-                .fixed_pos(egui::Pos2::ZERO)
-                .show(ctx, |ui| {
-                    let screen_rect = ctx.input(|i| i.screen_rect);
-
-                    ui.allocate_response(screen_rect.size(), egui::Sense::click());
-
-                    ui.painter().rect_filled(
-                        screen_rect,
-                        egui::Rounding::ZERO,
-                        self.config.modal_overlay_color,
-                    );
-                });
-
-            ctx.move_to_top(re_area.response.layer_id);
+            let re = self.ui_update_modal_background(ctx);
+            ctx.move_to_top(re.response.layer_id);
         }
 
-        self.create_window(&mut is_open).show(ctx, |ui| {
-            if self.config.keep_focus || self.config.as_modal {
-                ui.ctx().move_to_top(ui.layer_id());
-            }
-
+        let re = self.create_window(&mut is_open).show(ctx, |ui| {
             if !self.modals.is_empty() {
                 self.ui_update_modals(ui);
                 return;
@@ -918,12 +891,36 @@ impl FileDialog {
             });
         });
 
+        if self.config.as_modal {
+            if let Some(inner_response) = re {
+                ctx.move_to_top(inner_response.response.layer_id);
+            }
+        }
+
         self.any_focused_last_frame = ctx.memory(|r| r.focused()).is_some();
 
         // User closed the window without finishing the dialog
         if !is_open {
             self.cancel();
         }
+    }
+
+    /// Updates the main modal background of the file dialog window.
+    fn ui_update_modal_background(&self, ctx: &egui::Context) -> egui::InnerResponse<()> {
+        egui::Area::new(egui::Id::from("fe_modal_overlay"))
+            .interactable(true)
+            .fixed_pos(egui::Pos2::ZERO)
+            .show(ctx, |ui| {
+                let screen_rect = ctx.input(|i| i.screen_rect);
+
+                ui.allocate_response(screen_rect.size(), egui::Sense::click());
+
+                ui.painter().rect_filled(
+                    screen_rect,
+                    egui::Rounding::ZERO,
+                    self.config.modal_overlay_color,
+                );
+            })
     }
 
     fn ui_update_modals(&mut self, ui: &mut egui::Ui) {
