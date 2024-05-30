@@ -31,6 +31,8 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 ## Features
 - Select a file or a directory
 - Save a file (Prompt user for a destination path)
+  - Dialog to ask the user if the existing file should be overwritten
+- Open the dialog in a normal or modal window
 - Create a new folder
 - Keyboard navigation
 - Option to show or hide hidden files and folders
