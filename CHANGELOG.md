@@ -12,6 +12,7 @@
 - Implemented customizable keyboard navigation using `FileDialogKeybindings` and `FileDialog::keybindings` [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110)
 - Implemented show hidden files and folders option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
 - The dialog is now displayed as a modal window by default. This can be disabled with `FileDialog::as_modal`. The color of the modal overlay can be adjusted using `FileDialog::modal_overlay_color`. [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
+- Added `FileDialog::add_file_filter` and `FileDialog::default_file_filter` to add file filters that can be selected by the user from a drop-down menu at the bottom [#124](https://github.com/fluxxcode/egui-file-dialog/pull/124)
 
 ### ☢️ Deprecated
 - Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)

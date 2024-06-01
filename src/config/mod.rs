@@ -366,7 +366,7 @@ pub struct FileFilter {
     pub id: egui::Id,
     /// The display name of the file filter
     pub name: String,
-    /// Sets a filter function that checks whether a given Path matches the criteria for this icon.
+    /// Sets a filter function that checks whether a given Path matches the criteria for this file.
     pub filter: Filter<Path>,
 }
 
