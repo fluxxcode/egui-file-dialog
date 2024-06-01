@@ -1330,8 +1330,6 @@ impl FileDialog {
             return;
         }
 
-        // Whether to activate the text input widget
-        let mut activate = false;
         ui.input(|inp| {
             // We stop if any modifier is active besides only shift
             if inp.modifiers.any() && !inp.modifiers.shift_only() {
@@ -1345,13 +1343,9 @@ impl FileDialog {
                 _ => None,
             }) {
                 self.search_value.push_str(text);
-                activate = true;
+                self.init_search = true;
             }
         });
-
-        if activate {
-            self.init_search = true;
-        }
     }
 
     /// Updates the left panel of the dialog. Including the list of the user directories (Places)
@@ -1988,6 +1982,15 @@ impl FileDialog {
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.edit_path, true) {
             self.open_path_edit();
+        }
+
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.home_edit_path, true) {
+            if let Some(dirs) = &self.user_directories {
+                if let Some(home) = dirs.home_dir() {
+                    let _ = self.load_directory(home.to_path_buf().as_path());
+                    self.open_path_edit();
+                }
+            }
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.selection_up, false) {
