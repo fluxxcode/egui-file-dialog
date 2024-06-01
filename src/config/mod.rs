@@ -105,6 +105,8 @@ pub struct FileDialogConfig {
     /// The icon used to display removable devices in the left panel.
     pub removable_device_icon: String,
 
+    /// File filters presented to the user in a dropdown.
+    pub file_filters: Vec<FileFilter>,
     /// Sets custom icons for different files or folders.
     /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
     pub file_icon_filters: Vec<IconFilter>,
@@ -203,6 +205,7 @@ impl Default for FileDialogConfig {
             device_icon: String::from("🖴"),
             removable_device_icon: String::from("💾"),
 
+            file_filters: Vec::new(),
             file_icon_filters: Vec::new(),
 
             quick_accesses: Vec::new(),
@@ -246,6 +249,37 @@ impl FileDialogConfig {
     /// file dialog instances.
     pub fn storage(mut self, storage: FileDialogStorage) -> Self {
         self.storage = storage;
+        self
+    }
+
+    /// Adds a new file filter the user can select from a dropdown widget.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the filter
+    /// * `filter` - Sets a filter function that checks whether a given
+    ///   Path matches the criteria for this filter.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialogConfig;
+    ///
+    /// let config = FileDialogConfig::default()
+    ///     .add_file_filter(
+    ///         "PNG files",
+    ///         Arc::new(|path| path.extension().unwrap_or_default() == "png"))
+    ///     .add_file_filter(
+    ///         "JPG files",
+    ///         Arc::new(|path| path.extension().unwrap_or_default() == "jpg"))
+    /// ```
+    pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
+        self.file_filters.push(FileFilter {
+            name: name.to_string(),
+            filter,
+        });
+
         self
     }
 
@@ -310,6 +344,23 @@ impl FileDialogConfig {
 
 /// Function that returns true if the specific item matches the filter.
 pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
+
+/// Defines a specific file filter that the user can select from a dropdown.
+#[derive(Clone)]
+pub struct FileFilter {
+    /// The display name of the file filter
+    pub name: String,
+    /// Sets a filter function that checks whether a given Path matches the criteria for this icon.
+    pub filter: Filter<Path>,
+}
+
+impl std::fmt::Debug for FileFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FileFilter")
+            .field("name", &self.name)
+            .finish()
+    }
+}
 
 /// Sets a specific icon for directory entries.
 #[derive(Clone)]

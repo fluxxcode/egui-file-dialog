@@ -4,8 +4,8 @@ use std::{fs, io};
 use egui::text::{CCursor, CCursorRange};
 
 use crate::config::{
-    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, Filter,
-    QuickAccess,
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
+    Filter, QuickAccess,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
@@ -131,6 +131,8 @@ pub struct FileDialog {
     file_name_input_error: Option<String>,
     /// If the file name input text field should request focus in the next frame.
     file_name_input_request_focus: bool,
+    /// The file filter the user selected
+    selected_file_filter: Option<FileFilter>,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
@@ -187,6 +189,12 @@ impl FileDialog {
             file_name_input: String::new(),
             file_name_input_error: None,
             file_name_input_request_focus: true,
+            selected_file_filter: Some(
+                FileFilter {
+                    name: "RS files".to_string(),
+                    filter: std::sync::Arc::new(|p| p.extension().unwrap_or_default() == "rs")
+                }
+            ),
 
             scroll_to_selection: false,
             search_value: String::new(),
@@ -539,6 +547,33 @@ impl FileDialog {
     /// Sets the icon that is used to display removable devices in the left panel.
     pub fn removable_device_icon(mut self, icon: &str) -> Self {
         self.config.removable_device_icon = icon.to_string();
+        self
+    }
+
+    /// Adds a new file filter the user can select from a dropdown widget.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the filter
+    /// * `filter` - Sets a filter function that checks whether a given
+    ///   Path matches the criteria for this filter.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// FileDialog::new()
+    ///     .add_file_filter(
+    ///         "PNG files",
+    ///         Arc::new(|path| path.extension().unwrap_or_default() == "png"))
+    ///     .add_file_filter(
+    ///         "JPG files",
+    ///         Arc::new(|path| path.extension().unwrap_or_default() == "jpg"))
+    /// ```
+    pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
+        self.config = self.config.add_file_filter(name, filter);
         self
     }
 
@@ -1654,10 +1689,13 @@ impl FileDialog {
                     // otherwise the change will be overwritten with the last statement
                     // of the function.
                     let data = std::mem::take(&mut self.directory_content);
+                    let file_filter = std::mem::take(&mut self.selected_file_filter);
 
-                    for path in data
-                        .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
-                    {
+                    for path in data.filtered_iter(
+                        self.config.storage.show_hidden,
+                        &self.search_value.clone(),
+                        file_filter.as_ref(),
+                    ) {
                         let file_name = path.file_name();
 
                         let mut selected = false;
@@ -1694,6 +1732,7 @@ impl FileDialog {
 
                         if response.double_clicked() {
                             if path.is_dir() {
+                                self.selected_file_filter = file_filter.clone();
                                 let _ = self.load_directory(&path.to_path_buf());
                                 return;
                             }
@@ -1705,6 +1744,7 @@ impl FileDialog {
                     }
 
                     self.directory_content = data;
+                    self.selected_file_filter = file_filter;
 
                     if let Some(path) = self
                         .create_directory_dialog
@@ -1885,7 +1925,11 @@ impl FileDialog {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
-                .filtered_iter(self.config.storage.show_hidden, &self.search_value)
+                .filtered_iter(
+                    self.config.storage.show_hidden,
+                    &self.search_value,
+                    self.selected_file_filter.as_ref(),
+                )
                 .any(|p| p == item);
 
             if is_visible && item.is_dir() {
@@ -2166,15 +2210,24 @@ impl FileDialog {
         let mut return_val = false;
 
         let directory_content = std::mem::take(&mut self.directory_content);
-        let search_value = self.search_value.clone();
+        let search_value = std::mem::take(&mut self.search_value);
+        let file_filter = std::mem::take(&mut self.selected_file_filter);
 
         if let Some(index) = directory_content
-            .filtered_iter(self.config.storage.show_hidden, &search_value)
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &search_value,
+                file_filter.as_ref(),
+            )
             .position(|p| p == item)
         {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter(self.config.storage.show_hidden, &search_value)
+                    .filtered_iter(
+                        self.config.storage.show_hidden,
+                        &search_value,
+                        file_filter.as_ref(),
+                    )
                     .nth(index.saturating_sub(1))
                 {
                     self.select_item(item.clone());
@@ -2185,6 +2238,8 @@ impl FileDialog {
         }
 
         self.directory_content = directory_content;
+        self.search_value = search_value;
+        self.selected_file_filter = file_filter;
 
         return_val
     }
@@ -2197,14 +2252,23 @@ impl FileDialog {
         let mut return_val = false;
 
         let directory_content = std::mem::take(&mut self.directory_content);
-        let search_value = self.search_value.clone();
+        let search_value = std::mem::take(&mut self.search_value);
+        let file_filter = std::mem::take(&mut self.selected_file_filter);
 
         if let Some(index) = directory_content
-            .filtered_iter(self.config.storage.show_hidden, &search_value)
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &search_value,
+                file_filter.as_ref(),
+            )
             .position(|p| p == item)
         {
             if let Some(item) = directory_content
-                .filtered_iter(self.config.storage.show_hidden, &search_value)
+                .filtered_iter(
+                    self.config.storage.show_hidden,
+                    &search_value,
+                    file_filter.as_ref(),
+                )
                 .nth(index.saturating_add(1))
             {
                 self.select_item(item.clone());
@@ -2214,6 +2278,8 @@ impl FileDialog {
         }
 
         self.directory_content = directory_content;
+        self.search_value = search_value;
+        self.selected_file_filter = file_filter;
 
         return_val
     }
@@ -2221,9 +2287,14 @@ impl FileDialog {
     /// Tries to select the first visible item inside `directory_content`.
     fn select_first_visible_item(&mut self) {
         let directory_content = std::mem::take(&mut self.directory_content);
+        let file_filter = std::mem::take(&mut self.selected_file_filter);
 
         if let Some(item) = directory_content
-            .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value.clone(),
+                file_filter.as_ref(),
+            )
             .next()
         {
             self.select_item(item.clone());
@@ -2231,13 +2302,18 @@ impl FileDialog {
         }
 
         self.directory_content = directory_content;
+        self.selected_file_filter = file_filter;
     }
 
     /// Tries to select the last visible item inside `directory_content`.
     fn select_last_visible_item(&mut self) {
         if let Some(item) = self
             .directory_content
-            .filtered_iter(self.config.storage.show_hidden, &self.search_value)
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.selected_file_filter.as_ref(),
+            )
             .last()
         {
             self.select_item(item.clone());
