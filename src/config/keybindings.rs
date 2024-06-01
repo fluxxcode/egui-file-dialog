@@ -63,7 +63,7 @@ impl KeyBinding {
                 if any_focused {
                     return false;
                 }
-                
+
                 let mut found_item: Option<usize> = None;
 
                 for (i, text) in i
