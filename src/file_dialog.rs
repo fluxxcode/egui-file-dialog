@@ -284,6 +284,14 @@ impl FileDialog {
                 .clone_from(&self.config.default_file_name);
         }
 
+        if let Some(name) = &self.config.default_file_filter {
+            for filter in &self.config.file_filters {
+                if &filter.name == name.as_str() {
+                    self.selected_file_filter = Some(filter.id);
+                }
+            }
+        }
+
         self.mode = mode;
         self.state = DialogState::Open;
         self.show_files = show_files;
@@ -572,6 +580,14 @@ impl FileDialog {
     /// ```
     pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
         self.config = self.config.add_file_filter(name, filter);
+        self
+    }
+
+    /// Name of the file filter to be selected by default.
+    ///
+    /// No file filter is selected if there is no file filter with that name.
+    pub fn default_file_filter(mut self, name: &str) -> Self {
+        self.config.default_file_filter = Some(name.to_string());
         self
     }
 

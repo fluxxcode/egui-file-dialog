@@ -107,6 +107,8 @@ pub struct FileDialogConfig {
 
     /// File filters presented to the user in a dropdown.
     pub file_filters: Vec<FileFilter>,
+    /// Name of the file filter to be selected by default.
+    pub default_file_filter: Option<String>,
     /// Sets custom icons for different files or folders.
     /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
     pub file_icon_filters: Vec<IconFilter>,
@@ -206,6 +208,7 @@ impl Default for FileDialogConfig {
             removable_device_icon: String::from("💾"),
 
             file_filters: Vec::new(),
+            default_file_filter: None,
             file_icon_filters: Vec::new(),
 
             quick_accesses: Vec::new(),
