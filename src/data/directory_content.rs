@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use crate::FileDialogConfig;
+use crate::config::{FileDialogConfig, FileFilter};
 
 /// Contains the metadata of a directory item.
 /// This struct is mainly there so that the metadata can be loaded once and not that
@@ -95,6 +95,7 @@ impl DirectoryEntry {
             })
     }
 
+    /// Returns whether the path this DirectoryEntry points to is considered hidden.
     pub fn is_hidden(&self) -> bool {
         is_path_hidden(self)
     }
@@ -125,7 +126,12 @@ impl DirectoryContent {
     }
 
     /// Checks if the given directory entry is visible with the applied filters.
-    fn is_entry_visible(dir_entry: &DirectoryEntry, show_hidden: bool, search_value: &str) -> bool {
+    fn is_entry_visible(
+        dir_entry: &DirectoryEntry,
+        show_hidden: bool,
+        search_value: &str,
+        file_filter: Option<&FileFilter>,
+    ) -> bool {
         if !search_value.is_empty()
             && !dir_entry
                 .file_name()
@@ -139,6 +145,12 @@ impl DirectoryContent {
             return false;
         }
 
+        if let Some(file_filter) = file_filter {
+            if dir_entry.is_file() && !(file_filter.filter)(dir_entry.as_path()) {
+                return false;
+            }
+        }
+
         true
     }
 
@@ -146,10 +158,11 @@ impl DirectoryContent {
         &'s self,
         show_hidden: bool,
         search_value: &'s str,
+        file_filter: Option<&'s FileFilter>,
     ) -> impl Iterator<Item = &DirectoryEntry> + 's {
         self.content
             .iter()
-            .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value))
+            .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value, file_filter))
     }
 
     /// Returns the number of elements inside the directory.

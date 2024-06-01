@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use eframe::egui;
 use egui_file_dialog::{DialogMode, FileDialog};
@@ -19,6 +19,18 @@ impl MyApp {
                 s.add_path("📷  Media", "media");
                 s.add_path("📂  Source", "src");
             })
+            .add_file_filter(
+                "PNG files",
+                Arc::new(|p| p.extension().unwrap_or_default() == "png"),
+            )
+            .add_file_filter(
+                "RS files",
+                Arc::new(|p| p.extension().unwrap_or_default() == "rs"),
+            )
+            .add_file_filter(
+                "TOML files",
+                Arc::new(|p| p.extension().unwrap_or_default() == "toml"),
+            )
             .id("egui_file_dialog");
 
         if let Some(storage) = cc.storage {
