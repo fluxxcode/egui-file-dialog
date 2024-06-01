@@ -576,7 +576,7 @@ impl FileDialog {
     ///         Arc::new(|path| path.extension().unwrap_or_default() == "png"))
     ///     .add_file_filter(
     ///         "JPG files",
-    ///         Arc::new(|path| path.extension().unwrap_or_default() == "jpg"))
+    ///         Arc::new(|path| path.extension().unwrap_or_default() == "jpg"));
     /// ```
     pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
         self.config = self.config.add_file_filter(name, filter);
