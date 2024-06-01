@@ -1565,17 +1565,26 @@ impl FileDialog {
     fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
         ui.add_space(5.0);
 
-        self.ui_update_selection_preview(ui);
+        // The size of the action buttons "cancel" and "open"/"save"
+        const ACTION_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
+
+        self.ui_update_selection_preview(ui, ACTION_BUTTON_SIZE);
 
         if self.mode == DialogMode::SaveFile {
             ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
         }
 
-        self.ui_update_action_buttons(ui);
+        self.ui_update_action_buttons(ui, ACTION_BUTTON_SIZE);
     }
 
     /// Updates the selection preview like "Selected directory: X"
-    fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui) {
+    fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
+        const SELECTION_PREVIEW_MIN_WIDTH: f32 = 100.0;
+
+        let item_spacing = ui.style().spacing.item_spacing;
+        let dropdown_width = button_size.x * 2.0 + item_spacing.x * 2.0;
+        let mut dropdown_separate_line = false;
+
         ui.horizontal(|ui| {
             match &self.mode {
                 DialogMode::SelectDirectory => {
@@ -1585,24 +1594,36 @@ impl FileDialog {
                 DialogMode::SaveFile => ui.label(self.config.labels.file_name.as_str()),
             };
 
+            // Make sure there is enough available width for the selection preview.
+            // If there is not enough available width, render the dropdown to select a
+            // file filter on a separate line.
+            let mut scroll_bar_width: f32 = ui.available_width() - dropdown_width - item_spacing.x;
+            // The file filter dropdown is only rendered when the dialog is in `SelectFile` mode.
+            if scroll_bar_width < SELECTION_PREVIEW_MIN_WIDTH
+              || self.mode != DialogMode::SelectFile {
+                dropdown_separate_line = true;
+                scroll_bar_width = ui.available_width();
+            }
+
             match &self.mode {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
-                    if self.is_selection_valid() {
-                        if let Some(item) = &self.selected_item {
-                            use egui::containers::scroll_area::ScrollBarVisibility;
+                    use egui::containers::scroll_area::ScrollBarVisibility;
 
-                            egui::containers::ScrollArea::horizontal()
-                                .auto_shrink([false, false])
-                                .stick_to_right(true)
-                                .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
-                                .show(ui, |ui| {
+                    egui::containers::ScrollArea::horizontal()
+                        .auto_shrink([false, false])
+                        .max_width(scroll_bar_width)
+                        .stick_to_right(true)
+                        .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
+                        .show(ui, |ui| {
+                            if self.is_selection_valid() {
+                                if let Some(item) = &self.selected_item {
                                     ui.colored_label(
                                         ui.style().visuals.selection.bg_fill,
                                         item.file_name(),
                                     );
-                                });
-                        }
-                    }
+                                }
+                            }
+                        });
                 }
                 DialogMode::SaveFile => {
                     let response = ui.add(
@@ -1625,47 +1646,56 @@ impl FileDialog {
                 }
             };
 
-            if self.mode == DialogMode::SelectFile && !self.config.file_filters.is_empty() {
-                let selected_filter = self.get_selected_file_filter();
-                let selected_text = match selected_filter {
-                    Some(f) => &f.name,
-                    None => "All files",
-                };
-
-                // The item that the user selected inside the drop down.
-                // If none, no item was selected by the user.
-                let mut select_filter: Option<Option<egui::Id>> = None;
-
-                egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
-                    .selected_text(selected_text)
-                    .show_ui(ui, |ui| {
-                        for filter in self.config.file_filters.iter() {
-                            let selected = match selected_filter {
-                                Some(f) => f.id == filter.id,
-                                None => false,
-                            };
-
-                            if ui.selectable_label(selected, &filter.name).clicked() {
-                                select_filter = Some(Some(filter.id));
-                            }
-                        }
-
-                        if ui.selectable_label(selected_filter.is_none(), "All files").clicked() {
-                            select_filter = Some(None);
-                        }
-                    });
-
-                if let Some(i) = select_filter {
-                    self.selected_file_filter = i;
-                }
+            if !dropdown_separate_line && self.mode == DialogMode::SelectFile {
+                self.ui_update_file_filter_selection(ui, dropdown_width);
             }
         });
+
+        if dropdown_separate_line && self.mode == DialogMode::SelectFile {
+            self.ui_update_file_filter_selection(ui, dropdown_width);
+        }
+    }
+
+    fn ui_update_file_filter_selection(&mut self, ui: &mut egui::Ui, width: f32) {
+        if self.mode == DialogMode::SelectFile && !self.config.file_filters.is_empty() {
+            let selected_filter = self.get_selected_file_filter();
+            let selected_text = match selected_filter {
+                Some(f) => &f.name,
+                None => "All files",
+            };
+
+            // The item that the user selected inside the drop down.
+            // If none, no item was selected by the user.
+            let mut select_filter: Option<Option<egui::Id>> = None;
+
+            egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
+                .width(width)
+                .selected_text(selected_text)
+                .show_ui(ui, |ui| {
+                    for filter in self.config.file_filters.iter() {
+                        let selected = match selected_filter {
+                            Some(f) => f.id == filter.id,
+                            None => false,
+                        };
+
+                        if ui.selectable_label(selected, &filter.name).clicked() {
+                            select_filter = Some(Some(filter.id));
+                        }
+                    }
+
+                    if ui.selectable_label(selected_filter.is_none(), "All files").clicked() {
+                        select_filter = Some(None);
+                    }
+                });
+
+            if let Some(i) = select_filter {
+                self.selected_file_filter = i;
+            }
+        }
     }
 
     /// Updates the action buttons like save, open and cancel
-    fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui) {
-        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
-
+    fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
@@ -1677,7 +1707,7 @@ impl FileDialog {
             if self.ui_button_sized(
                 ui,
                 self.is_selection_valid(),
-                BUTTON_SIZE,
+                button_size,
                 label,
                 self.file_name_input_error.as_deref(),
             ) {
@@ -1688,7 +1718,7 @@ impl FileDialog {
 
             if ui
                 .add_sized(
-                    BUTTON_SIZE,
+                    button_size,
                     egui::Button::new(self.config.labels.cancel_button.as_str()),
                 )
                 .clicked()
