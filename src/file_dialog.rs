@@ -4,8 +4,8 @@ use std::{fs, io};
 use egui::text::{CCursor, CCursorRange};
 
 use crate::config::{
-    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, Filter,
-    QuickAccess,
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
+    Filter, QuickAccess,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
@@ -131,6 +131,8 @@ pub struct FileDialog {
     file_name_input_error: Option<String>,
     /// If the file name input text field should request focus in the next frame.
     file_name_input_request_focus: bool,
+    /// The file filter the user selected
+    selected_file_filter: Option<egui::Id>,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
@@ -187,6 +189,7 @@ impl FileDialog {
             file_name_input: String::new(),
             file_name_input_error: None,
             file_name_input_request_focus: true,
+            selected_file_filter: None,
 
             scroll_to_selection: false,
             search_value: String::new(),
@@ -279,6 +282,14 @@ impl FileDialog {
         if mode == DialogMode::SaveFile {
             self.file_name_input
                 .clone_from(&self.config.default_file_name);
+        }
+
+        if let Some(name) = &self.config.default_file_filter {
+            for filter in &self.config.file_filters {
+                if filter.name == name.as_str() {
+                    self.selected_file_filter = Some(filter.id);
+                }
+            }
         }
 
         self.mode = mode;
@@ -539,6 +550,44 @@ impl FileDialog {
     /// Sets the icon that is used to display removable devices in the left panel.
     pub fn removable_device_icon(mut self, icon: &str) -> Self {
         self.config.removable_device_icon = icon.to_string();
+        self
+    }
+
+    /// Adds a new file filter the user can select from a dropdown widget.
+    ///
+    /// NOTE: The name must be unique. If a filter with the same name already exists,
+    ///       it will be overwritten.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the filter
+    /// * `filter` - Sets a filter function that checks whether a given
+    ///   Path matches the criteria for this filter.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// FileDialog::new()
+    ///     .add_file_filter(
+    ///         "PNG files",
+    ///         Arc::new(|path| path.extension().unwrap_or_default() == "png"))
+    ///     .add_file_filter(
+    ///         "JPG files",
+    ///         Arc::new(|path| path.extension().unwrap_or_default() == "jpg"));
+    /// ```
+    pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
+        self.config = self.config.add_file_filter(name, filter);
+        self
+    }
+
+    /// Name of the file filter to be selected by default.
+    ///
+    /// No file filter is selected if there is no file filter with that name.
+    pub fn default_file_filter(mut self, name: &str) -> Self {
+        self.config.default_file_filter = Some(name.to_string());
         self
     }
 
@@ -1532,17 +1581,46 @@ impl FileDialog {
     fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
         ui.add_space(5.0);
 
-        self.ui_update_selection_preview(ui);
+        const BUTTON_HEIGHT: f32 = 20.0;
+
+        // Calculate the width of the action buttons
+        let label_submit_width = match self.mode {
+            DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                Self::calc_text_width(ui, &self.config.labels.open_button)
+            }
+            DialogMode::SaveFile => Self::calc_text_width(ui, &self.config.labels.save_button),
+        };
+
+        let mut btn_width = Self::calc_text_width(ui, &self.config.labels.cancel_button);
+        if label_submit_width > btn_width {
+            btn_width = label_submit_width;
+        }
+
+        btn_width += ui.spacing().button_padding.x * 4.0;
+
+        // The size of the action buttons "cancel" and "open"/"save"
+        let button_size: egui::Vec2 = egui::Vec2::new(btn_width, BUTTON_HEIGHT);
+
+        self.ui_update_selection_preview(ui, button_size);
 
         if self.mode == DialogMode::SaveFile {
             ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
         }
 
-        self.ui_update_action_buttons(ui);
+        self.ui_update_action_buttons(ui, button_size);
     }
 
     /// Updates the selection preview like "Selected directory: X"
-    fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui) {
+    fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
+        const SELECTION_PREVIEW_MIN_WIDTH: f32 = 50.0;
+        let item_spacing = ui.style().spacing.item_spacing;
+
+        let render_filter_selection =
+            !self.config.file_filters.is_empty() && self.mode == DialogMode::SelectFile;
+
+        let filter_selection_width = button_size.x * 2.0 + item_spacing.x;
+        let mut filter_selection_separate_line = false;
+
         ui.horizontal(|ui| {
             match &self.mode {
                 DialogMode::SelectDirectory => {
@@ -1552,24 +1630,36 @@ impl FileDialog {
                 DialogMode::SaveFile => ui.label(self.config.labels.file_name.as_str()),
             };
 
+            // Make sure there is enough width for the selection preview. If the available
+            // width is not enough, render the drop-down menu to select a file filter on
+            // a separate line and give the selection preview the entire available width.
+            let mut scroll_bar_width: f32 =
+                ui.available_width() - filter_selection_width - item_spacing.x;
+
+            if scroll_bar_width < SELECTION_PREVIEW_MIN_WIDTH || !render_filter_selection {
+                filter_selection_separate_line = true;
+                scroll_bar_width = ui.available_width();
+            }
+
             match &self.mode {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
-                    if self.is_selection_valid() {
-                        if let Some(item) = &self.selected_item {
-                            use egui::containers::scroll_area::ScrollBarVisibility;
+                    use egui::containers::scroll_area::ScrollBarVisibility;
 
-                            egui::containers::ScrollArea::horizontal()
-                                .auto_shrink([false, false])
-                                .stick_to_right(true)
-                                .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
-                                .show(ui, |ui| {
+                    egui::containers::ScrollArea::horizontal()
+                        .auto_shrink([false, false])
+                        .max_width(scroll_bar_width)
+                        .stick_to_right(true)
+                        .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
+                        .show(ui, |ui| {
+                            if self.is_selection_valid() {
+                                if let Some(item) = &self.selected_item {
                                     ui.colored_label(
                                         ui.style().visuals.selection.bg_fill,
                                         item.file_name(),
                                     );
-                                });
-                        }
-                    }
+                                }
+                            }
+                        });
                 }
                 DialogMode::SaveFile => {
                     let response = ui.add(
@@ -1591,13 +1681,64 @@ impl FileDialog {
                     }
                 }
             };
+
+            if !filter_selection_separate_line && render_filter_selection {
+                self.ui_update_file_filter_selection(ui, filter_selection_width);
+            }
         });
+
+        if filter_selection_separate_line && render_filter_selection {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                self.ui_update_file_filter_selection(ui, filter_selection_width);
+            });
+        }
+    }
+
+    fn ui_update_file_filter_selection(&mut self, ui: &mut egui::Ui, width: f32) {
+        let selected_filter = self.get_selected_file_filter();
+        let selected_text = match selected_filter {
+            Some(f) => &f.name,
+            None => &self.config.labels.file_filter_all_files,
+        };
+
+        // The item that the user selected inside the drop down.
+        // If none, no item was selected by the user.
+        let mut select_filter: Option<Option<egui::Id>> = None;
+
+        egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
+            .width(width)
+            .selected_text(selected_text)
+            .show_ui(ui, |ui| {
+                for filter in self.config.file_filters.iter() {
+                    let selected = match selected_filter {
+                        Some(f) => f.id == filter.id,
+                        None => false,
+                    };
+
+                    if ui.selectable_label(selected, &filter.name).clicked() {
+                        select_filter = Some(Some(filter.id));
+                    }
+                }
+
+                if ui
+                    .selectable_label(
+                        selected_filter.is_none(),
+                        &self.config.labels.file_filter_all_files,
+                    )
+                    .clicked()
+                {
+                    select_filter = Some(None);
+                }
+            });
+
+        if let Some(i) = select_filter {
+            self.selected_file_filter = i;
+            self.selected_item = None;
+        }
     }
 
     /// Updates the action buttons like save, open and cancel
-    fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui) {
-        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
-
+    fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
                 DialogMode::SelectDirectory | DialogMode::SelectFile => {
@@ -1609,18 +1750,16 @@ impl FileDialog {
             if self.ui_button_sized(
                 ui,
                 self.is_selection_valid(),
-                BUTTON_SIZE,
+                button_size,
                 label,
                 self.file_name_input_error.as_deref(),
             ) {
                 self.submit();
             }
 
-            ui.add_space(ui.ctx().style().spacing.item_spacing.y);
-
             if ui
                 .add_sized(
-                    BUTTON_SIZE,
+                    button_size,
                     egui::Button::new(self.config.labels.cancel_button.as_str()),
                 )
                 .clicked()
@@ -1646,18 +1785,14 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    // Temporarily take ownership of the directory contents to be able to
-                    // update it in the for loop using load_directory.
-                    // Otherwise we would get an error that `*self` cannot be borrowed as mutable
-                    // more than once at a time.
-                    // Make sure to return the function after updating the directory_content,
-                    // otherwise the change will be overwritten with the last statement
-                    // of the function.
                     let data = std::mem::take(&mut self.directory_content);
+                    let file_filter = self.get_selected_file_filter().cloned();
 
-                    for path in data
-                        .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
-                    {
+                    for path in data.filtered_iter(
+                        self.config.storage.show_hidden,
+                        &self.search_value.clone(),
+                        file_filter.as_ref(),
+                    ) {
                         let file_name = path.file_name();
 
                         let mut selected = false;
@@ -1798,6 +1933,16 @@ impl FileDialog {
             state.store(&re.ctx, re.id);
         }
     }
+
+    /// Calculate the width of the specified text using the current font configuration.
+    fn calc_text_width(ui: &egui::Ui, text: &str) -> f32 {
+        let mut width = 0.0;
+        for char in text.chars() {
+            width += ui.fonts(|f| f.glyph_width(&egui::TextStyle::Body.resolve(ui.style()), char));
+        }
+
+        width
+    }
 }
 
 /// Keybindings
@@ -1885,7 +2030,11 @@ impl FileDialog {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
                 .directory_content
-                .filtered_iter(self.config.storage.show_hidden, &self.search_value)
+                .filtered_iter(
+                    self.config.storage.show_hidden,
+                    &self.search_value,
+                    self.get_selected_file_filter(),
+                )
                 .any(|p| p == item);
 
             if is_visible && item.is_dir() {
@@ -1963,6 +2112,14 @@ impl FileDialog {
 
 /// Implementation
 impl FileDialog {
+    /// Get the file filter the user currently selected.
+    fn get_selected_file_filter(&self) -> Option<&FileFilter> {
+        match self.selected_file_filter {
+            Some(id) => self.config.file_filters.iter().find(|p| p.id == id),
+            None => None,
+        }
+    }
+
     /// Opens the dialog to create a new folder.
     fn open_new_folder_dialog(&mut self) {
         if let Some(x) = self.current_directory() {
@@ -2166,15 +2323,24 @@ impl FileDialog {
         let mut return_val = false;
 
         let directory_content = std::mem::take(&mut self.directory_content);
-        let search_value = self.search_value.clone();
+        let search_value = std::mem::take(&mut self.search_value);
+        let file_filter = self.get_selected_file_filter().cloned();
 
         if let Some(index) = directory_content
-            .filtered_iter(self.config.storage.show_hidden, &search_value)
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &search_value,
+                file_filter.as_ref(),
+            )
             .position(|p| p == item)
         {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter(self.config.storage.show_hidden, &search_value)
+                    .filtered_iter(
+                        self.config.storage.show_hidden,
+                        &search_value,
+                        file_filter.as_ref(),
+                    )
                     .nth(index.saturating_sub(1))
                 {
                     self.select_item(item.clone());
@@ -2185,6 +2351,7 @@ impl FileDialog {
         }
 
         self.directory_content = directory_content;
+        self.search_value = search_value;
 
         return_val
     }
@@ -2197,14 +2364,23 @@ impl FileDialog {
         let mut return_val = false;
 
         let directory_content = std::mem::take(&mut self.directory_content);
-        let search_value = self.search_value.clone();
+        let search_value = std::mem::take(&mut self.search_value);
+        let file_filter = self.get_selected_file_filter().cloned();
 
         if let Some(index) = directory_content
-            .filtered_iter(self.config.storage.show_hidden, &search_value)
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &search_value,
+                file_filter.as_ref(),
+            )
             .position(|p| p == item)
         {
             if let Some(item) = directory_content
-                .filtered_iter(self.config.storage.show_hidden, &search_value)
+                .filtered_iter(
+                    self.config.storage.show_hidden,
+                    &search_value,
+                    file_filter.as_ref(),
+                )
                 .nth(index.saturating_add(1))
             {
                 self.select_item(item.clone());
@@ -2214,6 +2390,7 @@ impl FileDialog {
         }
 
         self.directory_content = directory_content;
+        self.search_value = search_value;
 
         return_val
     }
@@ -2221,9 +2398,14 @@ impl FileDialog {
     /// Tries to select the first visible item inside `directory_content`.
     fn select_first_visible_item(&mut self) {
         let directory_content = std::mem::take(&mut self.directory_content);
+        let file_filter = self.get_selected_file_filter().cloned();
 
         if let Some(item) = directory_content
-            .filtered_iter(self.config.storage.show_hidden, &self.search_value.clone())
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value.clone(),
+                file_filter.as_ref(),
+            )
             .next()
         {
             self.select_item(item.clone());
@@ -2237,7 +2419,11 @@ impl FileDialog {
     fn select_last_visible_item(&mut self) {
         if let Some(item) = self
             .directory_content
-            .filtered_iter(self.config.storage.show_hidden, &self.search_value)
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter(),
+            )
             .last()
         {
             self.select_item(item.clone());
