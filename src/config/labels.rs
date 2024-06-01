@@ -83,6 +83,8 @@ pub struct FileDialogLabels {
     pub selected_file: String,
     /// Text that appears in front of the file name input in the bottom panel.
     pub file_name: String,
+    /// Text displayed in the file filter dropdown for the "All Files" option.
+    pub file_filter_all_files: String,
 
     /// Button text to open the selected item.
     pub open_button: String,
@@ -141,6 +143,7 @@ impl Default for FileDialogLabels {
             selected_directory: "Selected directory:".to_string(),
             selected_file: "Selected file:".to_string(),
             file_name: "File name:".to_string(),
+            file_filter_all_files: "All Files".to_string(),
 
             open_button: "🗀  Open".to_string(),
             save_button: "📥  Save".to_string(),

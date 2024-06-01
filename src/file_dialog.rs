@@ -1665,7 +1665,7 @@ impl FileDialog {
         let selected_filter = self.get_selected_file_filter();
         let selected_text = match selected_filter {
             Some(f) => &f.name,
-            None => "All files",
+            None => &self.config.labels.file_filter_all_files,
         };
 
         // The item that the user selected inside the drop down.
@@ -1688,7 +1688,10 @@ impl FileDialog {
                 }
 
                 if ui
-                    .selectable_label(selected_filter.is_none(), "All files")
+                    .selectable_label(
+                        selected_filter.is_none(),
+                        &self.config.labels.file_filter_all_files,
+                    )
                     .clicked()
                 {
                     select_filter = Some(None);
@@ -1697,6 +1700,7 @@ impl FileDialog {
 
         if let Some(i) = select_filter {
             self.selected_file_filter = i;
+            self.selected_item = None;
         }
     }
 
