@@ -1566,24 +1566,27 @@ impl FileDialog {
         ui.add_space(5.0);
 
         // The size of the action buttons "cancel" and "open"/"save"
-        const ACTION_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
+        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
 
-        self.ui_update_selection_preview(ui, ACTION_BUTTON_SIZE);
+        self.ui_update_selection_preview(ui, BUTTON_SIZE);
 
         if self.mode == DialogMode::SaveFile {
             ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
         }
 
-        self.ui_update_action_buttons(ui, ACTION_BUTTON_SIZE);
+        self.ui_update_action_buttons(ui, BUTTON_SIZE);
     }
 
     /// Updates the selection preview like "Selected directory: X"
     fn ui_update_selection_preview(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
-        const SELECTION_PREVIEW_MIN_WIDTH: f32 = 100.0;
-
+        const SELECTION_PREVIEW_MIN_WIDTH: f32 = 50.0;
         let item_spacing = ui.style().spacing.item_spacing;
-        let dropdown_width = button_size.x * 2.0 + item_spacing.x * 2.0;
-        let mut dropdown_separate_line = false;
+
+        let render_filter_selection =
+            !self.config.file_filters.is_empty() && self.mode == DialogMode::SelectFile;
+
+        let filter_selection_width = button_size.x * 2.0 + item_spacing.x;
+        let mut filter_selection_separate_line = false;
 
         ui.horizontal(|ui| {
             match &self.mode {
@@ -1594,14 +1597,14 @@ impl FileDialog {
                 DialogMode::SaveFile => ui.label(self.config.labels.file_name.as_str()),
             };
 
-            // Make sure there is enough available width for the selection preview.
-            // If there is not enough available width, render the dropdown to select a
-            // file filter on a separate line.
-            let mut scroll_bar_width: f32 = ui.available_width() - dropdown_width - item_spacing.x;
-            // The file filter dropdown is only rendered when the dialog is in `SelectFile` mode.
-            if scroll_bar_width < SELECTION_PREVIEW_MIN_WIDTH
-              || self.mode != DialogMode::SelectFile {
-                dropdown_separate_line = true;
+            // Make sure there is enough width for the selection preview. If the available
+            // width is not enough, render the drop-down menu to select a file filter on
+            // a separate line and give the selection preview the entire available width.
+            let mut scroll_bar_width: f32 =
+                ui.available_width() - filter_selection_width - item_spacing.x;
+
+            if scroll_bar_width < SELECTION_PREVIEW_MIN_WIDTH || !render_filter_selection {
+                filter_selection_separate_line = true;
                 scroll_bar_width = ui.available_width();
             }
 
@@ -1646,51 +1649,54 @@ impl FileDialog {
                 }
             };
 
-            if !dropdown_separate_line && self.mode == DialogMode::SelectFile {
-                self.ui_update_file_filter_selection(ui, dropdown_width);
+            if !filter_selection_separate_line && render_filter_selection {
+                self.ui_update_file_filter_selection(ui, filter_selection_width);
             }
         });
 
-        if dropdown_separate_line && self.mode == DialogMode::SelectFile {
-            self.ui_update_file_filter_selection(ui, dropdown_width);
+        if filter_selection_separate_line && render_filter_selection {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                self.ui_update_file_filter_selection(ui, filter_selection_width);
+            });
         }
     }
 
     fn ui_update_file_filter_selection(&mut self, ui: &mut egui::Ui, width: f32) {
-        if self.mode == DialogMode::SelectFile && !self.config.file_filters.is_empty() {
-            let selected_filter = self.get_selected_file_filter();
-            let selected_text = match selected_filter {
-                Some(f) => &f.name,
-                None => "All files",
-            };
+        let selected_filter = self.get_selected_file_filter();
+        let selected_text = match selected_filter {
+            Some(f) => &f.name,
+            None => "All files",
+        };
 
-            // The item that the user selected inside the drop down.
-            // If none, no item was selected by the user.
-            let mut select_filter: Option<Option<egui::Id>> = None;
+        // The item that the user selected inside the drop down.
+        // If none, no item was selected by the user.
+        let mut select_filter: Option<Option<egui::Id>> = None;
 
-            egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
-                .width(width)
-                .selected_text(selected_text)
-                .show_ui(ui, |ui| {
-                    for filter in self.config.file_filters.iter() {
-                        let selected = match selected_filter {
-                            Some(f) => f.id == filter.id,
-                            None => false,
-                        };
+        egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
+            .width(width)
+            .selected_text(selected_text)
+            .show_ui(ui, |ui| {
+                for filter in self.config.file_filters.iter() {
+                    let selected = match selected_filter {
+                        Some(f) => f.id == filter.id,
+                        None => false,
+                    };
 
-                        if ui.selectable_label(selected, &filter.name).clicked() {
-                            select_filter = Some(Some(filter.id));
-                        }
+                    if ui.selectable_label(selected, &filter.name).clicked() {
+                        select_filter = Some(Some(filter.id));
                     }
+                }
 
-                    if ui.selectable_label(selected_filter.is_none(), "All files").clicked() {
-                        select_filter = Some(None);
-                    }
-                });
+                if ui
+                    .selectable_label(selected_filter.is_none(), "All files")
+                    .clicked()
+                {
+                    select_filter = Some(None);
+                }
+            });
 
-            if let Some(i) = select_filter {
-                self.selected_file_filter = i;
-            }
+        if let Some(i) = select_filter {
+            self.selected_file_filter = i;
         }
     }
 
@@ -1713,8 +1719,6 @@ impl FileDialog {
             ) {
                 self.submit();
             }
-
-            ui.add_space(ui.ctx().style().spacing.item_spacing.y);
 
             if ui
                 .add_sized(
