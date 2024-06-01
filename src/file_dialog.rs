@@ -1565,16 +1565,33 @@ impl FileDialog {
     fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
         ui.add_space(5.0);
 
-        // The size of the action buttons "cancel" and "open"/"save"
-        const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(78.0, 20.0);
+        const BUTTON_HEIGHT: f32 = 20.0;
 
-        self.ui_update_selection_preview(ui, BUTTON_SIZE);
+        // Calculate the width of the action buttons
+        let label_submit_width = match self.mode {
+            DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                Self::calc_text_width(ui, &self.config.labels.open_button)
+            }
+            DialogMode::SaveFile => Self::calc_text_width(ui, &self.config.labels.save_button),
+        };
+
+        let mut btn_width = Self::calc_text_width(ui, &self.config.labels.cancel_button);
+        if label_submit_width > btn_width {
+            btn_width = label_submit_width;
+        }
+
+        btn_width += ui.spacing().button_padding.x * 4.0;
+
+        // The size of the action buttons "cancel" and "open"/"save"
+        let button_size: egui::Vec2 = egui::Vec2::new(btn_width, BUTTON_HEIGHT);
+
+        self.ui_update_selection_preview(ui, button_size);
 
         if self.mode == DialogMode::SaveFile {
             ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
         }
 
-        self.ui_update_action_buttons(ui, BUTTON_SIZE);
+        self.ui_update_action_buttons(ui, button_size);
     }
 
     /// Updates the selection preview like "Selected directory: X"
@@ -1899,6 +1916,16 @@ impl FileDialog {
                 .set_char_range(Some(CCursorRange::one(CCursor::new(data.len()))));
             state.store(&re.ctx, re.id);
         }
+    }
+
+    /// Calculate the width of the specified text using the current font configuration.
+    fn calc_text_width(ui: &egui::Ui, text: &str) -> f32 {
+        let mut width = 0.0;
+        for char in text.chars() {
+            width += ui.fonts(|f| f.glyph_width(&egui::TextStyle::Body.resolve(ui.style()), char));
+        }
+
+        width
     }
 }
 
