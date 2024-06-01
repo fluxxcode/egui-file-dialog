@@ -123,6 +123,7 @@ The following table lists all available keybindings and their default values.
 | reload | Reload the file dialog data and the currently open directory | `F5` |
 | new_folder | Open the dialog to create a new folder | `CTRL` + `N` |
 | edit_path | Text edit the current path | `/` |
+| home_edit_path | Open the home directory and start text editing the path | `~` |
 | selection_up | Move the selection one item up | `↑` |
 | selection_down | Move the selection one item down | `↓` |
 
