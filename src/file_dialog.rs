@@ -286,7 +286,7 @@ impl FileDialog {
 
         if let Some(name) = &self.config.default_file_filter {
             for filter in &self.config.file_filters {
-                if &filter.name == name.as_str() {
+                if filter.name == name.as_str() {
                     self.selected_file_filter = Some(filter.id);
                 }
             }
@@ -1786,7 +1786,7 @@ impl FileDialog {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     let data = std::mem::take(&mut self.directory_content);
-                    let file_filter = self.get_selected_file_filter().map(|f| f.clone());
+                    let file_filter = self.get_selected_file_filter().cloned();
 
                     for path in data.filtered_iter(
                         self.config.storage.show_hidden,
@@ -2324,7 +2324,7 @@ impl FileDialog {
 
         let directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
-        let file_filter = self.get_selected_file_filter().map(|f| f.clone());
+        let file_filter = self.get_selected_file_filter().cloned();
 
         if let Some(index) = directory_content
             .filtered_iter(
@@ -2365,7 +2365,7 @@ impl FileDialog {
 
         let directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
-        let file_filter = self.get_selected_file_filter().map(|f| f.clone());
+        let file_filter = self.get_selected_file_filter().cloned();
 
         if let Some(index) = directory_content
             .filtered_iter(
@@ -2398,7 +2398,7 @@ impl FileDialog {
     /// Tries to select the first visible item inside `directory_content`.
     fn select_first_visible_item(&mut self) {
         let directory_content = std::mem::take(&mut self.directory_content);
-        let file_filter = self.get_selected_file_filter().map(|f| f.clone());
+        let file_filter = self.get_selected_file_filter().cloned();
 
         if let Some(item) = directory_content
             .filtered_iter(
