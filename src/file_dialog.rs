@@ -132,7 +132,7 @@ pub struct FileDialog {
     /// If the file name input text field should request focus in the next frame.
     file_name_input_request_focus: bool,
     /// The file filter the user selected
-    selected_file_filter: Option<FileFilter>,
+    selected_file_filter: Option<egui::Id>,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
@@ -189,12 +189,7 @@ impl FileDialog {
             file_name_input: String::new(),
             file_name_input_error: None,
             file_name_input_request_focus: true,
-            selected_file_filter: Some(
-                FileFilter {
-                    name: "RS files".to_string(),
-                    filter: std::sync::Arc::new(|p| p.extension().unwrap_or_default() == "rs")
-                }
-            ),
+            selected_file_filter: None,
 
             scroll_to_selection: false,
             search_value: String::new(),
@@ -551,6 +546,9 @@ impl FileDialog {
     }
 
     /// Adds a new file filter the user can select from a dropdown widget.
+    ///
+    /// NOTE: The name must be unique. If a filter with the same name already exists,
+    ///       it will be overwritten.
     ///
     /// # Arguments
     ///
@@ -1626,6 +1624,41 @@ impl FileDialog {
                     }
                 }
             };
+
+            if self.mode == DialogMode::SelectFile && !self.config.file_filters.is_empty() {
+                let selected_filter = self.get_selected_file_filter();
+                let selected_text = match selected_filter {
+                    Some(f) => &f.name,
+                    None => "All files",
+                };
+
+                // The item that the user selected inside the drop down.
+                // If none, no item was selected by the user.
+                let mut select_filter: Option<Option<egui::Id>> = None;
+
+                egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
+                    .selected_text(selected_text)
+                    .show_ui(ui, |ui| {
+                        for filter in self.config.file_filters.iter() {
+                            let selected = match selected_filter {
+                                Some(f) => f.id == filter.id,
+                                None => false,
+                            };
+
+                            if ui.selectable_label(selected, &filter.name).clicked() {
+                                select_filter = Some(Some(filter.id));
+                            }
+                        }
+
+                        if ui.selectable_label(selected_filter.is_none(), "All files").clicked() {
+                            select_filter = Some(None);
+                        }
+                    });
+
+                if let Some(i) = select_filter {
+                    self.selected_file_filter = i;
+                }
+            }
         });
     }
 
@@ -1681,15 +1714,8 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    // Temporarily take ownership of the directory contents to be able to
-                    // update it in the for loop using load_directory.
-                    // Otherwise we would get an error that `*self` cannot be borrowed as mutable
-                    // more than once at a time.
-                    // Make sure to return the function after updating the directory_content,
-                    // otherwise the change will be overwritten with the last statement
-                    // of the function.
                     let data = std::mem::take(&mut self.directory_content);
-                    let file_filter = std::mem::take(&mut self.selected_file_filter);
+                    let file_filter = self.get_selected_file_filter().map(|f| f.clone());
 
                     for path in data.filtered_iter(
                         self.config.storage.show_hidden,
@@ -1732,7 +1758,6 @@ impl FileDialog {
 
                         if response.double_clicked() {
                             if path.is_dir() {
-                                self.selected_file_filter = file_filter.clone();
                                 let _ = self.load_directory(&path.to_path_buf());
                                 return;
                             }
@@ -1744,7 +1769,6 @@ impl FileDialog {
                     }
 
                     self.directory_content = data;
-                    self.selected_file_filter = file_filter;
 
                     if let Some(path) = self
                         .create_directory_dialog
@@ -1928,7 +1952,7 @@ impl FileDialog {
                 .filtered_iter(
                     self.config.storage.show_hidden,
                     &self.search_value,
-                    self.selected_file_filter.as_ref(),
+                    self.get_selected_file_filter(),
                 )
                 .any(|p| p == item);
 
@@ -2007,6 +2031,14 @@ impl FileDialog {
 
 /// Implementation
 impl FileDialog {
+    /// Get the file filter the user currently selected.
+    fn get_selected_file_filter(&self) -> Option<&FileFilter> {
+        match self.selected_file_filter {
+            Some(id) => self.config.file_filters.iter().find(|p| p.id == id),
+            None => None,
+        }
+    }
+
     /// Opens the dialog to create a new folder.
     fn open_new_folder_dialog(&mut self) {
         if let Some(x) = self.current_directory() {
@@ -2211,7 +2243,7 @@ impl FileDialog {
 
         let directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
-        let file_filter = std::mem::take(&mut self.selected_file_filter);
+        let file_filter = self.get_selected_file_filter().map(|f| f.clone());
 
         if let Some(index) = directory_content
             .filtered_iter(
@@ -2239,7 +2271,6 @@ impl FileDialog {
 
         self.directory_content = directory_content;
         self.search_value = search_value;
-        self.selected_file_filter = file_filter;
 
         return_val
     }
@@ -2253,7 +2284,7 @@ impl FileDialog {
 
         let directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
-        let file_filter = std::mem::take(&mut self.selected_file_filter);
+        let file_filter = self.get_selected_file_filter().map(|f| f.clone());
 
         if let Some(index) = directory_content
             .filtered_iter(
@@ -2279,7 +2310,6 @@ impl FileDialog {
 
         self.directory_content = directory_content;
         self.search_value = search_value;
-        self.selected_file_filter = file_filter;
 
         return_val
     }
@@ -2287,7 +2317,7 @@ impl FileDialog {
     /// Tries to select the first visible item inside `directory_content`.
     fn select_first_visible_item(&mut self) {
         let directory_content = std::mem::take(&mut self.directory_content);
-        let file_filter = std::mem::take(&mut self.selected_file_filter);
+        let file_filter = self.get_selected_file_filter().map(|f| f.clone());
 
         if let Some(item) = directory_content
             .filtered_iter(
@@ -2302,7 +2332,6 @@ impl FileDialog {
         }
 
         self.directory_content = directory_content;
-        self.selected_file_filter = file_filter;
     }
 
     /// Tries to select the last visible item inside `directory_content`.
@@ -2312,7 +2341,7 @@ impl FileDialog {
             .filtered_iter(
                 self.config.storage.show_hidden,
                 &self.search_value,
-                self.selected_file_filter.as_ref(),
+                self.get_selected_file_filter(),
             )
             .last()
         {

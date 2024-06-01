@@ -254,6 +254,9 @@ impl FileDialogConfig {
 
     /// Adds a new file filter the user can select from a dropdown widget.
     ///
+    /// NOTE: The name must be unique. If a filter with the same name already exists,
+    ///       it will be overwritten.
+    ///
     /// # Arguments
     ///
     /// * `name` - Display name of the filter
@@ -275,7 +278,15 @@ impl FileDialogConfig {
     ///         Arc::new(|path| path.extension().unwrap_or_default() == "jpg"))
     /// ```
     pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
+        let id = egui::Id::new(name);
+
+        if let Some(item) = self.file_filters.iter_mut().find(|p| p.id == id) {
+            item.filter = filter.clone();
+            return self;
+        }
+
         self.file_filters.push(FileFilter {
+            id,
             name: name.to_string(),
             filter,
         });
@@ -348,6 +359,8 @@ pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
 /// Defines a specific file filter that the user can select from a dropdown.
 #[derive(Clone)]
 pub struct FileFilter {
+    /// The ID of the file filter, used internally for identification.
+    pub id: egui::Id,
     /// The display name of the file filter
     pub name: String,
     /// Sets a filter function that checks whether a given Path matches the criteria for this icon.
