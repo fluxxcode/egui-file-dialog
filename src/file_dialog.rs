@@ -2580,6 +2580,8 @@ impl FileDialog {
     fn select_next_visible_item_before(&mut self, item: &DirectoryEntry) -> bool {
         let mut return_val = false;
 
+        self.directory_content.reset_multi_selection();
+
         let mut directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
         let file_filter = self.get_selected_file_filter().cloned();
@@ -2622,6 +2624,8 @@ impl FileDialog {
     fn select_next_visible_item_after(&mut self, item: &DirectoryEntry) -> bool {
         let mut return_val = false;
 
+        self.directory_content.reset_multi_selection();
+
         let mut directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
         let file_filter = self.get_selected_file_filter().cloned();
@@ -2657,6 +2661,8 @@ impl FileDialog {
 
     /// Tries to select the first visible item inside `directory_content`.
     fn select_first_visible_item(&mut self) {
+        self.directory_content.reset_multi_selection();
+
         let mut directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
@@ -2676,6 +2682,8 @@ impl FileDialog {
 
     /// Tries to select the last visible item inside `directory_content`.
     fn select_last_visible_item(&mut self) {
+        self.directory_content.reset_multi_selection();
+
         let mut directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
