@@ -27,6 +27,8 @@ pub struct FileDialogLabels {
     pub title_select_directory: String,
     /// The default window title used when the dialog is in `DialogMode::SelectFile` mode.
     pub title_select_file: String,
+    /// The default window title used when the dialog is in `DialogMode::SelectMultiple` mode.
+    pub title_select_multiple: String,
     /// The default window title used when the dialog is in `DialogMode::SaveFile` mode.
     pub title_save_file: String,
 
@@ -116,6 +118,7 @@ impl Default for FileDialogLabels {
         Self {
             title_select_directory: "📁 Select Folder".to_string(),
             title_select_file: "📂 Open File".to_string(),
+            title_select_multiple: "🗐 Select Multiple".to_string(),
             title_save_file: "📥 Save File".to_string(),
 
             cancel: "Cancel".to_string(),

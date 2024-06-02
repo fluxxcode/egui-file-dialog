@@ -13,6 +13,7 @@ fn get_labels_german() -> FileDialogLabels {
     FileDialogLabels {
         title_select_directory: "📁 Ordner Öffnen".to_string(),
         title_select_file: "📂 Datei Öffnen".to_string(),
+        title_select_multiple: "🗐 Mehrere Öffnen".to_string(),
         title_save_file: "📥 Datei Speichern".to_string(),
 
         cancel: "Abbrechen".to_string(),
