@@ -2616,8 +2616,7 @@ impl FileDialog {
                 &search_value,
                 file_filter.as_ref(),
             )
-            .position(|p| p.path_eq(item))
-            .clone();
+            .position(|p| p.path_eq(item));
 
         if let Some(index) = index {
             if let Some(item) = directory_content
