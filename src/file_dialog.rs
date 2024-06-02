@@ -1359,6 +1359,7 @@ impl FileDialog {
                     if self.init_search {
                         re.request_focus();
                         Self::set_cursor_to_end(&re, &self.search_value);
+                        self.directory_content.reset_multi_selection();
 
                         self.init_search = false;
                     }
@@ -1830,19 +1831,21 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    let data = std::mem::take(&mut self.directory_content);
+                    let mut data = std::mem::take(&mut self.directory_content);
                     let file_filter = self.get_selected_file_filter().cloned();
 
-                    for path in data.filtered_iter(
+                    let mut reset_multi_selection = false;
+
+                    for path in data.filtered_iter_mut(
                         self.config.storage.show_hidden,
                         &self.search_value.clone(),
                         file_filter.as_ref(),
                     ) {
                         let file_name = path.file_name();
 
-                        let mut selected = false;
+                        let mut primary_selected = false;
                         if let Some(x) = &self.selected_item {
-                            selected = x == path;
+                            primary_selected = x == path;
                         }
 
                         let pinned = self.is_pinned(path);
@@ -1853,7 +1856,8 @@ impl FileDialog {
                             false => format!("{} {}", path.icon(), file_name),
                         };
 
-                        let response = ui.selectable_label(selected, label);
+                        let response =
+                            ui.selectable_label(primary_selected || path.selected, label);
 
                         if path.is_dir() {
                             self.ui_update_path_context_menu(&response, path);
@@ -1863,16 +1867,32 @@ impl FileDialog {
                             }
                         }
 
-                        if selected && self.scroll_to_selection {
+                        if primary_selected && self.scroll_to_selection {
                             response.scroll_to_me(Some(egui::Align::Center));
                             self.scroll_to_selection = false;
                         }
 
-                        if response.clicked() {
+                        // The user wants to select the item as the primary selected item
+                        if response.clicked() && !ui.input(|i| i.modifiers.ctrl) {
                             self.select_item(path.clone());
+                            reset_multi_selection = true;
                         }
 
-                        if response.double_clicked() {
+                        // The user wants to select or unselect the item as part of a
+                        // multi selection
+                        if self.mode == DialogMode::SelectMultiple
+                            && response.clicked()
+                            && ui.input(|i| i.modifiers.ctrl)
+                        {
+                            if primary_selected {
+                                path.selected = false;
+                                self.selected_item = None;
+                            } else {
+                                path.selected = !path.selected;
+                            }
+                        }
+
+                        if response.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
                             if path.is_dir() {
                                 let _ = self.load_directory(&path.to_path_buf());
                                 return;
@@ -1884,7 +1904,12 @@ impl FileDialog {
                         }
                     }
 
+                    if reset_multi_selection && self.mode == DialogMode::SelectMultiple {
+                        data.reset_multi_selection();
+                    }
+
                     self.directory_content = data;
+                    self.scroll_to_selection = false;
 
                     if let Some(path) = self
                         .create_directory_dialog
@@ -2135,6 +2160,8 @@ impl FileDialog {
             return;
         }
 
+        self.directory_content.reset_multi_selection();
+
         if let Some(item) = &self.selected_item {
             if self.select_next_visible_item_before(&item.clone()) {
                 return;
@@ -2151,6 +2178,8 @@ impl FileDialog {
         if self.directory_content.len() == 0 {
             return;
         }
+
+        self.directory_content.reset_multi_selection();
 
         if let Some(item) = &self.selected_item {
             if self.select_next_visible_item_after(&item.clone()) {
@@ -2259,7 +2288,26 @@ impl FileDialog {
                 }
             }
             DialogMode::SelectMultiple => {
-                // TODO: Get the selected items and finish the dialog
+                let mut result: Vec<PathBuf> = self
+                    .directory_content
+                    .filtered_iter(
+                        self.config.storage.show_hidden,
+                        &self.search_value,
+                        self.get_selected_file_filter(),
+                    )
+                    .filter(|p| p.selected == true)
+                    .map(|p| p.to_path_buf())
+                    .collect();
+
+                // Make sure the primary selected item is also included in the list,
+                // if it was selected from the directory content view
+                if let Some(item) = &self.selected_item {
+                    if self.is_item_visible(item) && !result.iter().any(|p| p == item.as_path()) {
+                        result.push(item.to_path_buf());
+                    }
+                }
+
+                self.state = DialogState::SelectedMultiple(result);
             }
             DialogMode::SaveFile => {
                 // Should always contain a value since `is_selection_valid` is used to
@@ -2313,23 +2361,56 @@ impl FileDialog {
     /// Checks whether the selection or the file name entered is valid.
     /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
-        if let Some(item) = &self.selected_item {
-            return match &self.mode {
-                DialogMode::SelectDirectory => item.is_dir(),
-                DialogMode::SelectFile => item.is_file(),
-                DialogMode::SelectMultiple => {
-                    // TODO: Validate multi selection
+        match &self.mode {
+            DialogMode::SelectDirectory => {
+                if let Some(item) = &self.selected_item {
+                    item.is_dir()
+                } else {
                     false
                 }
-                DialogMode::SaveFile => self.file_name_input_error.is_none(),
-            };
-        }
+            }
+            DialogMode::SelectFile => {
+                if let Some(item) = &self.selected_item {
+                    item.is_file()
+                } else {
+                    false
+                }
+            },
+            DialogMode::SelectMultiple => {
+                // Check if any item is marked as selected as part of the multi selection.
+                if self
+                    .directory_content
+                    .filtered_iter(
+                        self.config.storage.show_hidden,
+                        &self.search_value,
+                        self.get_selected_file_filter(),
+                    )
+                    .any(|p| p.selected == true)
+                {
+                    return true;
+                }
 
-        if self.mode == DialogMode::SaveFile && self.file_name_input_error.is_none() {
-            return true;
-        }
+                // If no item is marked as part of the multi selection,
+                // check if the primary selected item is visible inside the directory content.
+                if let Some(item) = &self.selected_item {
+                    return self.is_item_visible(item);
+                }
 
-        false
+                false
+            }
+            DialogMode::SaveFile => self.file_name_input_error.is_none(),
+        }
+    }
+
+    /// Checks if the given item is visible inside the directory content view.
+    fn is_item_visible(&self, item: &DirectoryEntry) -> bool {
+        self.directory_content
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter(),
+            )
+            .any(|p| p == item)
     }
 
     /// Validates the file name entered by the user.
