@@ -1836,34 +1836,34 @@ impl FileDialog {
 
                     let mut reset_multi_selection = false;
 
-                    for path in data.filtered_iter_mut(
+                    for item in data.filtered_iter_mut(
                         self.config.storage.show_hidden,
                         &self.search_value.clone(),
                         file_filter.as_ref(),
                     ) {
-                        let file_name = path.file_name();
+                        let file_name = item.file_name();
 
                         let mut primary_selected = false;
                         if let Some(x) = &self.selected_item {
-                            primary_selected = x == path;
+                            primary_selected = x == item;
                         }
 
-                        let pinned = self.is_pinned(path);
+                        let pinned = self.is_pinned(item);
                         let label = match pinned {
                             true => {
-                                format!("{} {} {}", path.icon(), self.config.pinned_icon, file_name)
+                                format!("{} {} {}", item.icon(), self.config.pinned_icon, file_name)
                             }
-                            false => format!("{} {}", path.icon(), file_name),
+                            false => format!("{} {}", item.icon(), file_name),
                         };
 
                         let response =
-                            ui.selectable_label(primary_selected || path.selected, label);
+                            ui.selectable_label(primary_selected || item.selected, label);
 
-                        if path.is_dir() {
-                            self.ui_update_path_context_menu(&response, path);
+                        if item.is_dir() {
+                            self.ui_update_path_context_menu(&response, item);
 
                             if response.context_menu_opened() {
-                                self.select_item(path.clone());
+                                self.select_item(item.clone());
                             }
                         }
 
@@ -1874,7 +1874,7 @@ impl FileDialog {
 
                         // The user wants to select the item as the primary selected item
                         if response.clicked() && !ui.input(|i| i.modifiers.ctrl) {
-                            self.select_item(path.clone());
+                            self.select_item(item.clone());
                             reset_multi_selection = true;
                         }
 
@@ -1885,20 +1885,20 @@ impl FileDialog {
                             && ui.input(|i| i.modifiers.ctrl)
                         {
                             if primary_selected {
-                                path.selected = false;
+                                item.selected = false;
                                 self.selected_item = None;
                             } else {
-                                path.selected = !path.selected;
+                                item.selected = !item.selected;
                             }
                         }
 
                         if response.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
-                            if path.is_dir() {
-                                let _ = self.load_directory(&path.to_path_buf());
+                            if item.is_dir() {
+                                let _ = self.load_directory(&item.to_path_buf());
                                 return;
                             }
 
-                            self.select_item(path.clone());
+                            self.select_item(item.clone());
 
                             self.submit();
                         }
