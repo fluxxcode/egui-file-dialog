@@ -1665,12 +1665,10 @@ impl FileDialog {
 
         ui.horizontal(|ui| {
             match &self.mode {
-                DialogMode::SelectDirectory => {
-                    ui.label(self.config.labels.selected_directory.as_str())
-                }
-                DialogMode::SelectFile => ui.label(self.config.labels.selected_file.as_str()),
-                DialogMode::SelectMultiple => ui.label("Selected items:"),
-                DialogMode::SaveFile => ui.label(self.config.labels.file_name.as_str()),
+                DialogMode::SelectDirectory => ui.label(&self.config.labels.selected_directory),
+                DialogMode::SelectFile => ui.label(&self.config.labels.selected_file),
+                DialogMode::SelectMultiple => ui.label(&self.config.labels.selected_items),
+                DialogMode::SaveFile => ui.label(&self.config.labels.file_name),
             };
 
             // Make sure there is enough width for the selection preview. If the available
@@ -1685,8 +1683,48 @@ impl FileDialog {
             }
 
             match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                DialogMode::SelectDirectory
+                | DialogMode::SelectFile
+                | DialogMode::SelectMultiple => {
                     use egui::containers::scroll_area::ScrollBarVisibility;
+
+                    let text = if self.is_selection_valid() {
+                        match &self.mode {
+                            DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                                if let Some(item) = &self.selected_item {
+                                    item.file_name().to_string()
+                                } else {
+                                    String::new()
+                                }
+                            }
+                            DialogMode::SelectMultiple => {
+                                let mut result = String::new();
+
+                                for (i, item) in self
+                                    .directory_content
+                                    .filtered_iter(
+                                        self.config.storage.show_hidden,
+                                        &self.search_value,
+                                        self.get_selected_file_filter(),
+                                    )
+                                    .filter(|p| p.selected)
+                                    .enumerate()
+                                {
+                                    if i == 0 {
+                                        result += item.file_name();
+                                        continue;
+                                    }
+
+                                    result += format!(", {}", item.file_name()).as_str();
+                                }
+
+                                result
+                            }
+                            _ => String::new(),
+                        }
+                    } else {
+                        String::new()
+                    };
 
                     egui::containers::ScrollArea::horizontal()
                         .auto_shrink([false, false])
@@ -1694,18 +1732,8 @@ impl FileDialog {
                         .stick_to_right(true)
                         .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
                         .show(ui, |ui| {
-                            if self.is_selection_valid() {
-                                if let Some(item) = &self.selected_item {
-                                    ui.colored_label(
-                                        ui.style().visuals.selection.bg_fill,
-                                        item.file_name(),
-                                    );
-                                }
-                            }
+                            ui.colored_label(ui.style().visuals.selection.bg_fill, text);
                         });
-                }
-                DialogMode::SelectMultiple => {
-                    ui.label("<TODO>");
                 }
                 DialogMode::SaveFile => {
                     let response = ui.add(
