@@ -6,7 +6,7 @@ use crate::config::{FileDialogConfig, FileFilter};
 /// Contains the metadata of a directory item.
 /// This struct is mainly there so that the metadata can be loaded once and not that
 /// a request has to be sent to the OS every frame using, for example, `path.is_file()`.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct DirectoryEntry {
     path: PathBuf,
@@ -27,6 +27,11 @@ impl DirectoryEntry {
             icon: gen_path_icon(config, path),
             selected: false,
         }
+    }
+
+    /// Checks if the path of the current directory entry matches the other directory entry.
+    pub fn path_eq(&self, other: &DirectoryEntry) -> bool {
+        other.as_path() == self.as_path()
     }
 
     /// Returns true if the item is a directory.
