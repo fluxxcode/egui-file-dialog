@@ -2230,6 +2230,16 @@ impl FileDialog {
             }
         }
 
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.select_all, true) {
+            for item in self.directory_content.filtered_iter_mut(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter().cloned().as_ref(),
+            ) {
+                item.selected = true;
+            }
+        }
+
         self.config.keybindings = keybindings;
     }
 

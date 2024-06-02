@@ -117,6 +117,8 @@ pub struct FileDialogKeyBindings {
     pub selection_up: Vec<KeyBinding>,
     /// Shortcut to move the selection one item down
     pub selection_down: Vec<KeyBinding>,
+    /// Shortcut to select every item when the dialog is in `DialogMode::SelectMultiple` mode
+    pub select_all: Vec<KeyBinding>,
 }
 
 impl FileDialogKeyBindings {
@@ -162,6 +164,7 @@ impl Default for FileDialogKeyBindings {
             ],
             selection_up: vec![KeyBinding::key(Key::ArrowUp)],
             selection_down: vec![KeyBinding::key(Key::ArrowDown)],
+            select_all: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::A)],
         }
     }
 }
