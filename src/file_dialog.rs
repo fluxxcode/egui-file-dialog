@@ -1786,9 +1786,9 @@ impl FileDialog {
     fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile | DialogMode::SelectMultiple => {
-                    self.config.labels.open_button.as_str()
-                }
+                DialogMode::SelectDirectory
+                | DialogMode::SelectFile
+                | DialogMode::SelectMultiple => self.config.labels.open_button.as_str(),
                 DialogMode::SaveFile => self.config.labels.save_button.as_str(),
             };
 
