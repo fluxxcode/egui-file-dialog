@@ -6,13 +6,15 @@ use crate::config::{FileDialogConfig, FileFilter};
 /// Contains the metadata of a directory item.
 /// This struct is mainly there so that the metadata can be loaded once and not that
 /// a request has to be sent to the OS every frame using, for example, `path.is_file()`.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct DirectoryEntry {
     path: PathBuf,
     is_directory: bool,
     is_system_file: bool,
     icon: String,
+    /// If the item is marked as selected as part of a multi selection.
+    pub selected: bool,
 }
 
 impl DirectoryEntry {
@@ -23,7 +25,13 @@ impl DirectoryEntry {
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
             icon: gen_path_icon(config, path),
+            selected: false,
         }
+    }
+
+    /// Checks if the path of the current directory entry matches the other directory entry.
+    pub fn path_eq(&self, other: &DirectoryEntry) -> bool {
+        other.as_path() == self.as_path()
     }
 
     /// Returns true if the item is a directory.
@@ -163,6 +171,23 @@ impl DirectoryContent {
         self.content
             .iter()
             .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value, file_filter))
+    }
+
+    pub fn filtered_iter_mut<'s>(
+        &'s mut self,
+        show_hidden: bool,
+        search_value: &'s str,
+        file_filter: Option<&'s FileFilter>,
+    ) -> impl Iterator<Item = &mut DirectoryEntry> + 's {
+        self.content
+            .iter_mut()
+            .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value, file_filter))
+    }
+
+    pub fn reset_multi_selection(&mut self) {
+        for item in self.content.iter_mut() {
+            item.selected = false;
+        }
     }
 
     /// Returns the number of elements inside the directory.
