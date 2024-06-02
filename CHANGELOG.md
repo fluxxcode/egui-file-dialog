@@ -14,7 +14,7 @@
 - Implemented show hidden files and folders option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
 - The dialog is now displayed as a modal window by default. This can be disabled with `FileDialog::as_modal`. The color of the modal overlay can be adjusted using `FileDialog::modal_overlay_color`. [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
 - Added `FileDialog::add_file_filter` and `FileDialog::default_file_filter` to add file filters that can be selected by the user from a drop-down menu at the bottom [#124](https://github.com/fluxxcode/egui-file-dialog/pull/124)
-- Implemented selection of multiple files and folders at once, using `FileDialog::select_multiple`, `FileDialog::selected_multiple` and `FileDialog::take_selected_multiple` [#127]([#127](https://github.com/fluxxcode/egui-file-dialog/pull/127))
+- Implemented selection of multiple files and folders at once, using `FileDialog::select_multiple`, `FileDialog::selected_multiple` and `FileDialog::take_selected_multiple` [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
 
 ### ☢️ Deprecated
 - Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)
