@@ -1658,8 +1658,7 @@ impl FileDialog {
         let item_spacing = ui.style().spacing.item_spacing;
 
         let render_filter_selection = !self.config.file_filters.is_empty()
-            && self.mode == DialogMode::SelectFile
-            || self.mode == DialogMode::SelectMultiple;
+            && (self.mode == DialogMode::SelectFile || self.mode == DialogMode::SelectMultiple);
 
         let filter_selection_width = button_size.x * 2.0 + item_spacing.x;
         let mut filter_selection_separate_line = false;
