@@ -1808,6 +1808,7 @@ impl FileDialog {
         if let Some(i) = select_filter {
             self.selected_file_filter = i;
             self.selected_item = None;
+            self.directory_content.reset_multi_selection();
         }
     }
 
