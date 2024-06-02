@@ -2250,7 +2250,9 @@ impl FileDialog {
         // Check if there is a directory selected we can open
         if let Some(item) = &self.selected_item {
             // Make sure the selected item is visible inside the directory view.
-            let is_visible = self.get_dir_content_filtered_iter().any(|p| p.path_eq(item));
+            let is_visible = self
+                .get_dir_content_filtered_iter()
+                .any(|p| p.path_eq(item));
 
             if is_visible && item.is_dir() {
                 let _ = self.load_directory(&item.to_path_buf());
@@ -2440,7 +2442,8 @@ impl FileDialog {
                 }
             }
             DialogMode::SelectMultiple => {
-                let result: Vec<PathBuf> = self.get_dir_content_filtered_iter()
+                let result: Vec<PathBuf> = self
+                    .get_dir_content_filtered_iter()
                     .filter(|p| p.selected)
                     .map(|p| p.to_path_buf())
                     .collect();
@@ -2514,9 +2517,7 @@ impl FileDialog {
                     false
                 }
             }
-            DialogMode::SelectMultiple => {
-                self.get_dir_content_filtered_iter().any(|p| p.selected)
-            }
+            DialogMode::SelectMultiple => self.get_dir_content_filtered_iter().any(|p| p.selected),
             DialogMode::SaveFile => self.file_name_input_error.is_none(),
         }
     }
