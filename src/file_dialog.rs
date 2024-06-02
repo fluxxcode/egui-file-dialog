@@ -1835,6 +1835,7 @@ impl FileDialog {
                     let file_filter = self.get_selected_file_filter().cloned();
 
                     let mut reset_multi_selection = false;
+                    let mut batch_select_item_b: Option<DirectoryEntry> = None;
 
                     for item in data.filtered_iter_mut(
                         self.config.storage.show_hidden,
@@ -1873,7 +1874,10 @@ impl FileDialog {
                         }
 
                         // The user wants to select the item as the primary selected item
-                        if response.clicked() && !ui.input(|i| i.modifiers.ctrl) {
+                        if response.clicked()
+                            && !ui.input(|i| i.modifiers.ctrl)
+                            && !ui.input(|i| i.modifiers.shift_only())
+                        {
                             self.select_item(item);
 
                             if self.mode == DialogMode::SelectMultiple {
@@ -1897,6 +1901,20 @@ impl FileDialog {
                                 if item.selected {
                                     self.select_item(item);
                                 }
+                            }
+                        }
+
+                        // The user wants to select every item between the last selected item
+                        // and the current item
+                        if self.mode == DialogMode::SelectMultiple
+                            && response.clicked()
+                            && ui.input(|i| i.modifiers.shift_only())
+                        {
+                            if let Some(selected_item) = self.selected_item.clone() {
+                                batch_select_item_b = Some(selected_item);
+
+                                item.selected = true;
+                                self.select_item(item);
                             }
                         }
 
@@ -1929,6 +1947,12 @@ impl FileDialog {
                         }
                     }
 
+                    if let Some(item_b) = batch_select_item_b {
+                        if let Some(item_a) = &self.selected_item {
+                            self.batch_select_between(&mut data, item_a, &item_b);
+                        }
+                    }
+
                     self.directory_content = data;
                     self.scroll_to_selection = false;
 
@@ -1941,6 +1965,60 @@ impl FileDialog {
                     }
                 });
         });
+    }
+
+    fn batch_select_between(
+        &self,
+        directory_content: &mut DirectoryContent,
+        item_a: &DirectoryEntry,
+        item_b: &DirectoryEntry,
+    ) {
+        // Get the position of item a and item b
+        let pos_a = directory_content
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter(),
+            )
+            .position(|p| p.path_eq(item_a));
+        let pos_b = directory_content
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter(),
+            )
+            .position(|p| p.path_eq(item_b));
+
+        // If both items where found inside the directory entry, mark every item between
+        // them as selected
+        if let Some(pos_a) = pos_a {
+            if let Some(pos_b) = pos_b {
+                if pos_a == pos_b {
+                    return;
+                }
+
+                let mut min = pos_a;
+                let mut max = pos_b;
+
+                if min > max {
+                    min = pos_b;
+                    max = pos_a;
+                }
+
+                for item in directory_content
+                    .filtered_iter_mut(
+                        self.config.storage.show_hidden,
+                        &self.search_value,
+                        self.get_selected_file_filter(),
+                    )
+                    .enumerate()
+                    .filter(|(i, _)| i > &min && i < &max)
+                    .map(|(_, p)| p)
+                {
+                    item.selected = true;
+                }
+            }
+        }
     }
 
     /// Helper function to add a sized button that can be enabled or disabled
