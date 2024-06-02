@@ -1862,7 +1862,11 @@ impl FileDialog {
                     let mut data = std::mem::take(&mut self.directory_content);
                     let file_filter = self.get_selected_file_filter().cloned();
 
+                    // If the multi selection should be reset, excluding the currently
+                    // selected primary item
                     let mut reset_multi_selection = false;
+                    // The item the user wants to make a batch selection from.
+                    // The primary selected item is used for item a.
                     let mut batch_select_item_b: Option<DirectoryEntry> = None;
 
                     for item in data.filtered_iter_mut(
@@ -1885,29 +1889,29 @@ impl FileDialog {
                             false => format!("{} {}", item.icon(), file_name),
                         };
 
-                        let response =
-                            ui.selectable_label(primary_selected || item.selected, label);
+                        let re = ui.selectable_label(primary_selected || item.selected, label);
 
                         if item.is_dir() {
-                            self.ui_update_path_context_menu(&response, item);
+                            self.ui_update_path_context_menu(&re, item);
 
-                            if response.context_menu_opened() {
+                            if re.context_menu_opened() {
                                 self.select_item(item);
                             }
                         }
 
                         if primary_selected && self.scroll_to_selection {
-                            response.scroll_to_me(Some(egui::Align::Center));
+                            re.scroll_to_me(Some(egui::Align::Center));
                             self.scroll_to_selection = false;
                         }
 
                         // The user wants to select the item as the primary selected item
-                        if response.clicked()
+                        if re.clicked()
                             && !ui.input(|i| i.modifiers.ctrl)
                             && !ui.input(|i| i.modifiers.shift_only())
                         {
                             self.select_item(item);
 
+                            // Mark the item as part of the multi selection
                             if self.mode == DialogMode::SelectMultiple {
                                 reset_multi_selection = true;
                             }
@@ -1916,10 +1920,12 @@ impl FileDialog {
                         // The user wants to select or unselect the item as part of a
                         // multi selection
                         if self.mode == DialogMode::SelectMultiple
-                            && response.clicked()
+                            && re.clicked()
                             && ui.input(|i| i.modifiers.ctrl)
                         {
                             if primary_selected {
+                                // If the clicked item is the primary selected item,
+                                // deselect it and remove it from the multi selection
                                 item.selected = false;
                                 self.selected_item = None;
                             } else {
@@ -1935,18 +1941,23 @@ impl FileDialog {
                         // The user wants to select every item between the last selected item
                         // and the current item
                         if self.mode == DialogMode::SelectMultiple
-                            && response.clicked()
+                            && re.clicked()
                             && ui.input(|i| i.modifiers.shift_only())
                         {
                             if let Some(selected_item) = self.selected_item.clone() {
+                                // We perform a batch selection from the item that was
+                                // primarily selected before the user clicked on this item.
                                 batch_select_item_b = Some(selected_item);
 
+                                // And now make this item the primary selected item
                                 item.selected = true;
                                 self.select_item(item);
                             }
                         }
 
-                        if response.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
+                        // The user double clicked on the directory entry.
+                        // Either open the directory of submit the dialog.
+                        if re.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
                             if item.is_dir() {
                                 let _ = self.load_directory(&item.to_path_buf());
                                 return;
@@ -1958,8 +1969,8 @@ impl FileDialog {
                         }
                     }
 
+                    // Reset the multi selection except the currently selected primary item
                     if reset_multi_selection {
-                        // Reset the multi selection except the currently selected primary item
                         for item in data.filtered_iter_mut(
                             self.config.storage.show_hidden,
                             &self.search_value.clone(),
@@ -1975,6 +1986,7 @@ impl FileDialog {
                         }
                     }
 
+                    // Check if we should perform a batch selection
                     if let Some(item_b) = batch_select_item_b {
                         if let Some(item_a) = &self.selected_item {
                             self.batch_select_between(&mut data, item_a, &item_b);
@@ -1995,6 +2007,8 @@ impl FileDialog {
         });
     }
 
+    /// Selects every item inside the directory_content between item_a and item_b,
+    /// excluding both given items.
     fn batch_select_between(
         &self,
         directory_content: &mut DirectoryContent,
@@ -2025,6 +2039,8 @@ impl FileDialog {
                     return;
                 }
 
+                // Get the min and max of both positions.
+                // We will iterate from min to max.
                 let mut min = pos_a;
                 let mut max = pos_b;
 
