@@ -1688,43 +1688,7 @@ impl FileDialog {
                 | DialogMode::SelectMultiple => {
                     use egui::containers::scroll_area::ScrollBarVisibility;
 
-                    let text = if self.is_selection_valid() {
-                        match &self.mode {
-                            DialogMode::SelectDirectory | DialogMode::SelectFile => {
-                                if let Some(item) = &self.selected_item {
-                                    item.file_name().to_string()
-                                } else {
-                                    String::new()
-                                }
-                            }
-                            DialogMode::SelectMultiple => {
-                                let mut result = String::new();
-
-                                for (i, item) in self
-                                    .directory_content
-                                    .filtered_iter(
-                                        self.config.storage.show_hidden,
-                                        &self.search_value,
-                                        self.get_selected_file_filter(),
-                                    )
-                                    .filter(|p| p.selected)
-                                    .enumerate()
-                                {
-                                    if i == 0 {
-                                        result += item.file_name();
-                                        continue;
-                                    }
-
-                                    result += format!(", {}", item.file_name()).as_str();
-                                }
-
-                                result
-                            }
-                            _ => String::new(),
-                        }
-                    } else {
-                        String::new()
-                    };
+                    let text = self.get_selection_preview_text();
 
                     egui::containers::ScrollArea::horizontal()
                         .auto_shrink([false, false])
@@ -1765,6 +1729,41 @@ impl FileDialog {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                 self.ui_update_file_filter_selection(ui, filter_selection_width);
             });
+        }
+    }
+
+    fn get_selection_preview_text(&self) -> String {
+        if self.is_selection_valid() {
+            match &self.mode {
+                DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                    if let Some(item) = &self.selected_item {
+                        item.file_name().to_string()
+                    } else {
+                        String::new()
+                    }
+                }
+                DialogMode::SelectMultiple => {
+                    let mut result = String::new();
+
+                    for (i, item) in self
+                        .get_dir_content_filtered_iter()
+                        .filter(|p| p.selected)
+                        .enumerate()
+                    {
+                        if i == 0 {
+                            result += item.file_name();
+                            continue;
+                        }
+
+                        result += format!(", {}", item.file_name()).as_str();
+                    }
+
+                    result
+                }
+                _ => String::new(),
+            }
+        } else {
+            String::new()
         }
     }
 
@@ -2251,14 +2250,7 @@ impl FileDialog {
         // Check if there is a directory selected we can open
         if let Some(item) = &self.selected_item {
             // Make sure the selected item is visible inside the directory view.
-            let is_visible = self
-                .directory_content
-                .filtered_iter(
-                    self.config.storage.show_hidden,
-                    &self.search_value,
-                    self.get_selected_file_filter(),
-                )
-                .any(|p| p.path_eq(item));
+            let is_visible = self.get_dir_content_filtered_iter().any(|p| p.path_eq(item));
 
             if is_visible && item.is_dir() {
                 let _ = self.load_directory(&item.to_path_buf());
@@ -2345,6 +2337,15 @@ impl FileDialog {
             Some(id) => self.config.file_filters.iter().find(|p| p.id == id),
             None => None,
         }
+    }
+
+    /// Gets a filtered iterator of the directory content of this object.
+    fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item = &DirectoryEntry> {
+        self.directory_content.filtered_iter(
+            self.config.storage.show_hidden,
+            &self.search_value,
+            self.get_selected_file_filter(),
+        )
     }
 
     /// Opens the dialog to create a new folder.
@@ -2439,13 +2440,7 @@ impl FileDialog {
                 }
             }
             DialogMode::SelectMultiple => {
-                let result: Vec<PathBuf> = self
-                    .directory_content
-                    .filtered_iter(
-                        self.config.storage.show_hidden,
-                        &self.search_value,
-                        self.get_selected_file_filter(),
-                    )
+                let result: Vec<PathBuf> = self.get_dir_content_filtered_iter()
                     .filter(|p| p.selected)
                     .map(|p| p.to_path_buf())
                     .collect();
@@ -2520,14 +2515,7 @@ impl FileDialog {
                 }
             }
             DialogMode::SelectMultiple => {
-                // Check if any item is marked as selected as part of the multi selection.
-                self.directory_content
-                    .filtered_iter(
-                        self.config.storage.show_hidden,
-                        &self.search_value,
-                        self.get_selected_file_filter(),
-                    )
-                    .any(|p| p.selected)
+                self.get_dir_content_filtered_iter().any(|p| p.selected)
             }
             DialogMode::SaveFile => self.file_name_input_error.is_none(),
         }
