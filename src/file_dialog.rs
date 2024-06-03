@@ -95,8 +95,6 @@ pub struct FileDialog {
 
     /// The currently used window ID.
     window_id: egui::Id,
-    /// The currently used window title.
-    window_title: String,
 
     /// The user directories like Home or Documents.
     /// These are loaded once when the dialog is created or when the refresh() method is called.
@@ -182,7 +180,6 @@ impl FileDialog {
             operation_id: None,
 
             window_id: egui::Id::new("file_dialog"),
-            window_title: String::new(),
 
             user_directories: UserDirectories::new(true),
             system_disks: Disks::new_with_refreshed_list(true),
@@ -294,8 +291,7 @@ impl FileDialog {
         }
 
         if mode == DialogMode::SaveFile {
-            self.file_name_input
-                .clone_from(&self.config.default_file_name);
+            self.file_name_input.clone_from(&self.config.default_file_name);
         }
 
         // Select the default file filter
@@ -311,6 +307,11 @@ impl FileDialog {
         self.state = DialogState::Open;
         self.show_files = show_files;
         self.operation_id = operation_id.map(String::from);
+
+        self.window_id = match self.config.id {
+            Some(id) => id,
+            None => egui::Id::new(self.get_window_title())
+        };
 
         self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
     }
@@ -361,21 +362,6 @@ impl FileDialog {
         if self.state != DialogState::Open {
             return self;
         }
-
-        self.window_title = match &self.config.title {
-            Some(title) => title.clone(),
-            None => match &self.mode {
-                DialogMode::SelectDirectory => self.config.labels.title_select_directory.clone(),
-                DialogMode::SelectFile => self.config.labels.title_select_file.clone(),
-                DialogMode::SelectMultiple => self.config.labels.title_select_multiple.clone(),
-                DialogMode::SaveFile => self.config.labels.title_save_file.clone(),
-            },
-        };
-
-        self.window_id = match self.config.id {
-            Some(id) => id,
-            None => egui::Id::new(&self.window_title)
-        };
 
         self.update_keybindings(ctx);
         self.update_ui(ctx);
@@ -1070,7 +1056,7 @@ impl FileDialog {
 
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
-        let mut window = egui::Window::new(&self.window_title)
+        let mut window = egui::Window::new(self.get_window_title())
             .id(self.window_id)
             .open(is_open)
             .default_size(self.config.default_size)
@@ -1097,6 +1083,20 @@ impl FileDialog {
         }
 
         window
+    }
+
+    /// Gets the window title to use.
+    /// This is either one of the default window titles or the configured window title.
+    fn get_window_title(&self) -> &String {
+        match &self.config.title {
+            Some(title) => title,
+            None => match &self.mode {
+                DialogMode::SelectDirectory => &self.config.labels.title_select_directory,
+                DialogMode::SelectFile => &self.config.labels.title_select_file,
+                DialogMode::SelectMultiple => &self.config.labels.title_select_multiple,
+                DialogMode::SaveFile => &self.config.labels.title_save_file,
+            },
+        }
     }
 
     /// Updates the top panel of the dialog. Including the navigation buttons,
