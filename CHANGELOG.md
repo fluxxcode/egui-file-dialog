@@ -27,6 +27,7 @@
 - The reload button has been changed to a menu button. This menu contains the reload button and the “Show hidden" option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
 - Minor navigation improvements [#113](https://github.com/fluxxcode/egui-file-dialog/pull/113)
 - Made `DirectoryEntry` public reachable [#119](https://github.com/fluxxcode/egui-file-dialog/pull/119) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Improved handling of internal IDs [#128](https://github.com/fluxxcode/egui-file-dialog/pull/128)
 
 ### 📚 Documentation
 - Added `persistence` example showing how to save the persistent data of the file dialog [#107](https://github.com/fluxxcode/egui-file-dialog/pull/107)
