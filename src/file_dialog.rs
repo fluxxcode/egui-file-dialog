@@ -93,6 +93,11 @@ pub struct FileDialog {
     /// This ID is not used internally.
     operation_id: Option<String>,
 
+    /// The currently used window ID.
+    window_id: egui::Id,
+    /// The currently used window title.
+    window_title: String,
+
     /// The user directories like Home or Documents.
     /// These are loaded once when the dialog is created or when the refresh() method is called.
     user_directories: Option<UserDirectories>,
@@ -175,6 +180,9 @@ impl FileDialog {
             state: DialogState::Closed,
             show_files: true,
             operation_id: None,
+
+            window_id: egui::Id::new("file_dialog"),
+            window_title: String::new(),
 
             user_directories: UserDirectories::new(true),
             system_disks: Disks::new_with_refreshed_list(true),
@@ -290,6 +298,7 @@ impl FileDialog {
                 .clone_from(&self.config.default_file_name);
         }
 
+        // Select the default file filter
         if let Some(name) = &self.config.default_file_filter {
             for filter in &self.config.file_filters {
                 if filter.name == name.as_str() {
@@ -352,6 +361,21 @@ impl FileDialog {
         if self.state != DialogState::Open {
             return self;
         }
+
+        self.window_title = match &self.config.title {
+            Some(title) => title.clone(),
+            None => match &self.mode {
+                DialogMode::SelectDirectory => self.config.labels.title_select_directory.clone(),
+                DialogMode::SelectFile => self.config.labels.title_select_file.clone(),
+                DialogMode::SelectMultiple => self.config.labels.title_select_multiple.clone(),
+                DialogMode::SaveFile => self.config.labels.title_save_file.clone(),
+            },
+        };
+
+        self.window_id = match self.config.id {
+            Some(id) => id,
+            None => egui::Id::new(&self.window_title)
+        };
 
         self.update_keybindings(ctx);
         self.update_ui(ctx);
@@ -958,7 +982,7 @@ impl FileDialog {
             }
 
             if self.config.show_top_panel {
-                egui::TopBottomPanel::top("fe_top_panel")
+                egui::TopBottomPanel::top(self.window_id.with("top_panel"))
                     .resizable(false)
                     .show_inside(ui, |ui| {
                         self.ui_update_top_panel(ui);
@@ -966,7 +990,7 @@ impl FileDialog {
             }
 
             if self.config.show_left_panel {
-                egui::SidePanel::left("fe_left_panel")
+                egui::SidePanel::left(self.window_id.with("left_panel"))
                     .resizable(true)
                     .default_width(150.0)
                     .width_range(90.0..=250.0)
@@ -975,7 +999,7 @@ impl FileDialog {
                     });
             }
 
-            egui::TopBottomPanel::bottom("fe_bottom_panel")
+            egui::TopBottomPanel::bottom(self.window_id.with("bottom_panel"))
                 .resizable(false)
                 .show_inside(ui, |ui| {
                     self.ui_update_bottom_panel(ui);
@@ -1002,7 +1026,7 @@ impl FileDialog {
 
     /// Updates the main modal background of the file dialog window.
     fn ui_update_modal_background(&self, ctx: &egui::Context) -> egui::InnerResponse<()> {
-        egui::Area::new(egui::Id::from("fe_modal_overlay"))
+        egui::Area::new(egui::Id::from(self.window_id.with("modal_overlay")))
             .interactable(true)
             .fixed_pos(egui::Pos2::ZERO)
             .show(ctx, |ui| {
@@ -1023,7 +1047,7 @@ impl FileDialog {
         // inside a window. Therefore, when rendering a modal, we render an invisible bottom panel,
         // which prevents the error.
         // This is currently a bit hacky and should be adjusted again in the future.
-        egui::TopBottomPanel::bottom("fe_modal_bottom_panel")
+        egui::TopBottomPanel::bottom(self.window_id.with("modal_bottom_panel"))
             .resizable(false)
             .show_separator_line(false)
             .show_inside(ui, |_| {});
@@ -1046,17 +1070,8 @@ impl FileDialog {
 
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
-        let window_title = match &self.config.title {
-            Some(title) => title,
-            None => match &self.mode {
-                DialogMode::SelectDirectory => &self.config.labels.title_select_directory,
-                DialogMode::SelectFile => &self.config.labels.title_select_file,
-                DialogMode::SelectMultiple => &self.config.labels.title_select_multiple,
-                DialogMode::SaveFile => &self.config.labels.title_save_file,
-            },
-        };
-
-        let mut window = egui::Window::new(window_title)
+        let mut window = egui::Window::new(&self.window_title)
+            .id(self.window_id)
             .open(is_open)
             .default_size(self.config.default_size)
             .min_size(self.config.min_size)
@@ -1064,10 +1079,6 @@ impl FileDialog {
             .movable(self.config.movable)
             .title_bar(self.config.title_bar)
             .collapsible(false);
-
-        if let Some(id) = self.config.id {
-            window = window.id(id);
-        }
 
         if let Some(pos) = self.config.default_pos {
             window = window.default_pos(pos);
@@ -1778,7 +1789,7 @@ impl FileDialog {
         // If none, no item was selected by the user.
         let mut select_filter: Option<Option<egui::Id>> = None;
 
-        egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
+        egui::containers::ComboBox::from_id_source(self.window_id.with("file_filter_selection"))
             .width(width)
             .selected_text(selected_text)
             .show_ui(ui, |ui| {
