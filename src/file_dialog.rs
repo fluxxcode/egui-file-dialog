@@ -291,7 +291,8 @@ impl FileDialog {
         }
 
         if mode == DialogMode::SaveFile {
-            self.file_name_input.clone_from(&self.config.default_file_name);
+            self.file_name_input
+                .clone_from(&self.config.default_file_name);
         }
 
         // Select the default file filter
@@ -310,7 +311,7 @@ impl FileDialog {
 
         self.window_id = match self.config.id {
             Some(id) => id,
-            None => egui::Id::new(self.get_window_title())
+            None => egui::Id::new(self.get_window_title()),
         };
 
         self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
