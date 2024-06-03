@@ -1013,7 +1013,7 @@ impl FileDialog {
 
     /// Updates the main modal background of the file dialog window.
     fn ui_update_modal_background(&self, ctx: &egui::Context) -> egui::InnerResponse<()> {
-        egui::Area::new(egui::Id::from(self.window_id.with("modal_overlay")))
+        egui::Area::new(self.window_id.with("modal_overlay"))
             .interactable(true)
             .fixed_pos(egui::Pos2::ZERO)
             .show(ctx, |ui| {
