@@ -27,6 +27,8 @@ pub struct FileDialogLabels {
     pub title_select_directory: String,
     /// The default window title used when the dialog is in `DialogMode::SelectFile` mode.
     pub title_select_file: String,
+    /// The default window title used when the dialog is in `DialogMode::SelectMultiple` mode.
+    pub title_select_multiple: String,
     /// The default window title used when the dialog is in `DialogMode::SaveFile` mode.
     pub title_save_file: String,
 
@@ -81,6 +83,8 @@ pub struct FileDialogLabels {
     pub selected_directory: String,
     /// Text that appears in front of the selected file preview in the bottom panel.
     pub selected_file: String,
+    /// Text that appears in front of the selected items preview in the bottom panel.
+    pub selected_items: String,
     /// Text that appears in front of the file name input in the bottom panel.
     pub file_name: String,
     /// Text displayed in the file filter dropdown for the "All Files" option.
@@ -116,6 +120,7 @@ impl Default for FileDialogLabels {
         Self {
             title_select_directory: "📁 Select Folder".to_string(),
             title_select_file: "📂 Open File".to_string(),
+            title_select_multiple: "🗐 Select Multiple".to_string(),
             title_save_file: "📥 Save File".to_string(),
 
             cancel: "Cancel".to_string(),
@@ -142,6 +147,7 @@ impl Default for FileDialogLabels {
 
             selected_directory: "Selected directory:".to_string(),
             selected_file: "Selected file:".to_string(),
+            selected_items: "Selected items:".to_string(),
             file_name: "File name:".to_string(),
             file_filter_all_files: "All Files".to_string(),
 

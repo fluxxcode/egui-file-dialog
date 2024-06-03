@@ -14,13 +14,16 @@ use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DialogMode {
-    /// When the dialog is currently used to select a file
+    /// When the dialog is currently used to select a single file.
     SelectFile,
 
-    /// When the dialog is currently used to select a directory
+    /// When the dialog is currently used to select a single directory.
     SelectDirectory,
 
-    /// When the dialog is currently used to save a file
+    /// When the dialog is currently used to select multiple files and directories.
+    SelectMultiple,
+
+    /// When the dialog is currently used to save a file.
     SaveFile,
 }
 
@@ -35,6 +38,9 @@ pub enum DialogState {
 
     /// The user has selected a folder or file or specified a destination path for saving a file.
     Selected(PathBuf),
+
+    /// The user has finished selecting multiple files and folders.
+    SelectedMultiple(Vec<PathBuf>),
 
     /// The user cancelled the dialog and didn't select anything.
     Cancelled,
@@ -86,6 +92,9 @@ pub struct FileDialog {
     /// for which action the user has selected an item.
     /// This ID is not used internally.
     operation_id: Option<String>,
+
+    /// The currently used window ID.
+    window_id: egui::Id,
 
     /// The user directories like Home or Documents.
     /// These are loaded once when the dialog is created or when the refresh() method is called.
@@ -169,6 +178,8 @@ impl FileDialog {
             state: DialogState::Closed,
             show_files: true,
             operation_id: None,
+
+            window_id: egui::Id::new("file_dialog"),
 
             user_directories: UserDirectories::new(true),
             system_disks: Disks::new_with_refreshed_list(true),
@@ -284,6 +295,7 @@ impl FileDialog {
                 .clone_from(&self.config.default_file_name);
         }
 
+        // Select the default file filter
         if let Some(name) = &self.config.default_file_filter {
             for filter in &self.config.file_filters {
                 if filter.name == name.as_str() {
@@ -296,6 +308,11 @@ impl FileDialog {
         self.state = DialogState::Open;
         self.show_files = show_files;
         self.operation_id = operation_id.map(String::from);
+
+        self.window_id = match self.config.id {
+            Some(id) => id,
+            None => egui::Id::new(self.get_window_title()),
+        };
 
         self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
     }
@@ -317,7 +334,17 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn select_file(&mut self) {
-        let _ = self.open(DialogMode::SelectFile, false, None);
+        let _ = self.open(DialogMode::SelectFile, true, None);
+    }
+
+    /// Shortcut function to open the file dialog to prompt the user to select multiple
+    /// files and folders.
+    /// This function resets the file dialog. Configuration variables such as `initial_directory`
+    /// are retained.
+    ///
+    /// The function ignores the result of the initial directory loading operation.
+    pub fn select_multiple(&mut self) {
+        let _ = self.open(DialogMode::SelectMultiple, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -876,6 +903,36 @@ impl FileDialog {
         }
     }
 
+    /// Returns a list of the files and folders the user selected, when the dialog is in
+    /// `DialogMode::SelectMultiple` mode.
+    ///
+    /// None is returned when the user has not yet selected an item.
+    pub fn selected_multiple(&self) -> Option<Vec<&Path>> {
+        match &self.state {
+            DialogState::SelectedMultiple(items) => {
+                Some(items.iter().map(|f| f.as_path()).collect())
+            }
+            _ => None,
+        }
+    }
+
+    /// Returns a list of the files and folders the user selected, when the dialog is in
+    /// `DialogMode::SelectMultiple` mode.
+    /// Unlike `FileDialog::selected_multiple`, this method returns the selected paths only once
+    /// and sets the dialog's state to `DialogState::Closed`.
+    ///
+    /// None is returned when the user has not yet selected an item.
+    pub fn take_selected_multiple(&mut self) -> Option<Vec<PathBuf>> {
+        match &mut self.state {
+            DialogState::SelectedMultiple(items) => {
+                let items = std::mem::take(items);
+                self.state = DialogState::Closed;
+                Some(items)
+            }
+            _ => None,
+        }
+    }
+
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
     /// See `FileDialog::open` for more information.
@@ -912,7 +969,7 @@ impl FileDialog {
             }
 
             if self.config.show_top_panel {
-                egui::TopBottomPanel::top("fe_top_panel")
+                egui::TopBottomPanel::top(self.window_id.with("top_panel"))
                     .resizable(false)
                     .show_inside(ui, |ui| {
                         self.ui_update_top_panel(ui);
@@ -920,7 +977,7 @@ impl FileDialog {
             }
 
             if self.config.show_left_panel {
-                egui::SidePanel::left("fe_left_panel")
+                egui::SidePanel::left(self.window_id.with("left_panel"))
                     .resizable(true)
                     .default_width(150.0)
                     .width_range(90.0..=250.0)
@@ -929,7 +986,7 @@ impl FileDialog {
                     });
             }
 
-            egui::TopBottomPanel::bottom("fe_bottom_panel")
+            egui::TopBottomPanel::bottom(self.window_id.with("bottom_panel"))
                 .resizable(false)
                 .show_inside(ui, |ui| {
                     self.ui_update_bottom_panel(ui);
@@ -956,7 +1013,7 @@ impl FileDialog {
 
     /// Updates the main modal background of the file dialog window.
     fn ui_update_modal_background(&self, ctx: &egui::Context) -> egui::InnerResponse<()> {
-        egui::Area::new(egui::Id::from("fe_modal_overlay"))
+        egui::Area::new(self.window_id.with("modal_overlay"))
             .interactable(true)
             .fixed_pos(egui::Pos2::ZERO)
             .show(ctx, |ui| {
@@ -977,7 +1034,7 @@ impl FileDialog {
         // inside a window. Therefore, when rendering a modal, we render an invisible bottom panel,
         // which prevents the error.
         // This is currently a bit hacky and should be adjusted again in the future.
-        egui::TopBottomPanel::bottom("fe_modal_bottom_panel")
+        egui::TopBottomPanel::bottom(self.window_id.with("modal_bottom_panel"))
             .resizable(false)
             .show_separator_line(false)
             .show_inside(ui, |_| {});
@@ -1000,16 +1057,8 @@ impl FileDialog {
 
     /// Creates a new egui window with the configured options.
     fn create_window<'a>(&self, is_open: &'a mut bool) -> egui::Window<'a> {
-        let window_title = match &self.config.title {
-            Some(title) => title,
-            None => match &self.mode {
-                DialogMode::SelectDirectory => &self.config.labels.title_select_directory,
-                DialogMode::SelectFile => &self.config.labels.title_select_file,
-                DialogMode::SaveFile => &self.config.labels.title_save_file,
-            },
-        };
-
-        let mut window = egui::Window::new(window_title)
+        let mut window = egui::Window::new(self.get_window_title())
+            .id(self.window_id)
             .open(is_open)
             .default_size(self.config.default_size)
             .min_size(self.config.min_size)
@@ -1017,10 +1066,6 @@ impl FileDialog {
             .movable(self.config.movable)
             .title_bar(self.config.title_bar)
             .collapsible(false);
-
-        if let Some(id) = self.config.id {
-            window = window.id(id);
-        }
 
         if let Some(pos) = self.config.default_pos {
             window = window.default_pos(pos);
@@ -1039,6 +1084,20 @@ impl FileDialog {
         }
 
         window
+    }
+
+    /// Gets the window title to use.
+    /// This is either one of the default window titles or the configured window title.
+    fn get_window_title(&self) -> &String {
+        match &self.config.title {
+            Some(title) => title,
+            None => match &self.mode {
+                DialogMode::SelectDirectory => &self.config.labels.title_select_directory,
+                DialogMode::SelectFile => &self.config.labels.title_select_file,
+                DialogMode::SelectMultiple => &self.config.labels.title_select_multiple,
+                DialogMode::SaveFile => &self.config.labels.title_save_file,
+            },
+        }
     }
 
     /// Updates the top panel of the dialog. Including the navigation buttons,
@@ -1312,6 +1371,7 @@ impl FileDialog {
                     if self.init_search {
                         re.request_focus();
                         Self::set_cursor_to_end(&re, &self.search_value);
+                        self.directory_content.reset_multi_selection();
 
                         self.init_search = false;
                     }
@@ -1579,7 +1639,7 @@ impl FileDialog {
 
         // Calculate the width of the action buttons
         let label_submit_width = match self.mode {
-            DialogMode::SelectDirectory | DialogMode::SelectFile => {
+            DialogMode::SelectDirectory | DialogMode::SelectFile | DialogMode::SelectMultiple => {
                 Self::calc_text_width(ui, &self.config.labels.open_button)
             }
             DialogMode::SaveFile => Self::calc_text_width(ui, &self.config.labels.save_button),
@@ -1609,19 +1669,18 @@ impl FileDialog {
         const SELECTION_PREVIEW_MIN_WIDTH: f32 = 50.0;
         let item_spacing = ui.style().spacing.item_spacing;
 
-        let render_filter_selection =
-            !self.config.file_filters.is_empty() && self.mode == DialogMode::SelectFile;
+        let render_filter_selection = !self.config.file_filters.is_empty()
+            && (self.mode == DialogMode::SelectFile || self.mode == DialogMode::SelectMultiple);
 
         let filter_selection_width = button_size.x * 2.0 + item_spacing.x;
         let mut filter_selection_separate_line = false;
 
         ui.horizontal(|ui| {
             match &self.mode {
-                DialogMode::SelectDirectory => {
-                    ui.label(self.config.labels.selected_directory.as_str())
-                }
-                DialogMode::SelectFile => ui.label(self.config.labels.selected_file.as_str()),
-                DialogMode::SaveFile => ui.label(self.config.labels.file_name.as_str()),
+                DialogMode::SelectDirectory => ui.label(&self.config.labels.selected_directory),
+                DialogMode::SelectFile => ui.label(&self.config.labels.selected_file),
+                DialogMode::SelectMultiple => ui.label(&self.config.labels.selected_items),
+                DialogMode::SaveFile => ui.label(&self.config.labels.file_name),
             };
 
             // Make sure there is enough width for the selection preview. If the available
@@ -1636,8 +1695,12 @@ impl FileDialog {
             }
 
             match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                DialogMode::SelectDirectory
+                | DialogMode::SelectFile
+                | DialogMode::SelectMultiple => {
                     use egui::containers::scroll_area::ScrollBarVisibility;
+
+                    let text = self.get_selection_preview_text();
 
                     egui::containers::ScrollArea::horizontal()
                         .auto_shrink([false, false])
@@ -1645,14 +1708,7 @@ impl FileDialog {
                         .stick_to_right(true)
                         .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
                         .show(ui, |ui| {
-                            if self.is_selection_valid() {
-                                if let Some(item) = &self.selected_item {
-                                    ui.colored_label(
-                                        ui.style().visuals.selection.bg_fill,
-                                        item.file_name(),
-                                    );
-                                }
-                            }
+                            ui.colored_label(ui.style().visuals.selection.bg_fill, text);
                         });
                 }
                 DialogMode::SaveFile => {
@@ -1688,6 +1744,41 @@ impl FileDialog {
         }
     }
 
+    fn get_selection_preview_text(&self) -> String {
+        if self.is_selection_valid() {
+            match &self.mode {
+                DialogMode::SelectDirectory | DialogMode::SelectFile => {
+                    if let Some(item) = &self.selected_item {
+                        item.file_name().to_string()
+                    } else {
+                        String::new()
+                    }
+                }
+                DialogMode::SelectMultiple => {
+                    let mut result = String::new();
+
+                    for (i, item) in self
+                        .get_dir_content_filtered_iter()
+                        .filter(|p| p.selected)
+                        .enumerate()
+                    {
+                        if i == 0 {
+                            result += item.file_name();
+                            continue;
+                        }
+
+                        result += format!(", {}", item.file_name()).as_str();
+                    }
+
+                    result
+                }
+                _ => String::new(),
+            }
+        } else {
+            String::new()
+        }
+    }
+
     fn ui_update_file_filter_selection(&mut self, ui: &mut egui::Ui, width: f32) {
         let selected_filter = self.get_selected_file_filter();
         let selected_text = match selected_filter {
@@ -1699,7 +1790,7 @@ impl FileDialog {
         // If none, no item was selected by the user.
         let mut select_filter: Option<Option<egui::Id>> = None;
 
-        egui::containers::ComboBox::from_id_source("fe_file_filter_selection")
+        egui::containers::ComboBox::from_id_source(self.window_id.with("file_filter_selection"))
             .width(width)
             .selected_text(selected_text)
             .show_ui(ui, |ui| {
@@ -1728,6 +1819,7 @@ impl FileDialog {
         if let Some(i) = select_filter {
             self.selected_file_filter = i;
             self.selected_item = None;
+            self.directory_content.reset_multi_selection();
         }
     }
 
@@ -1735,9 +1827,9 @@ impl FileDialog {
     fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile => {
-                    self.config.labels.open_button.as_str()
-                }
+                DialogMode::SelectDirectory
+                | DialogMode::SelectFile
+                | DialogMode::SelectMultiple => self.config.labels.open_button.as_str(),
                 DialogMode::SaveFile => self.config.labels.save_button.as_str(),
             };
 
@@ -1779,61 +1871,142 @@ impl FileDialog {
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    let data = std::mem::take(&mut self.directory_content);
+                    let mut data = std::mem::take(&mut self.directory_content);
                     let file_filter = self.get_selected_file_filter().cloned();
 
-                    for path in data.filtered_iter(
+                    // If the multi selection should be reset, excluding the currently
+                    // selected primary item
+                    let mut reset_multi_selection = false;
+                    // The item the user wants to make a batch selection from.
+                    // The primary selected item is used for item a.
+                    let mut batch_select_item_b: Option<DirectoryEntry> = None;
+
+                    for item in data.filtered_iter_mut(
                         self.config.storage.show_hidden,
                         &self.search_value.clone(),
                         file_filter.as_ref(),
                     ) {
-                        let file_name = path.file_name();
+                        let file_name = item.file_name();
 
-                        let mut selected = false;
+                        let mut primary_selected = false;
                         if let Some(x) = &self.selected_item {
-                            selected = x == path;
+                            primary_selected = x.path_eq(item);
                         }
 
-                        let pinned = self.is_pinned(path);
+                        let pinned = self.is_pinned(item);
                         let label = match pinned {
                             true => {
-                                format!("{} {} {}", path.icon(), self.config.pinned_icon, file_name)
+                                format!("{} {} {}", item.icon(), self.config.pinned_icon, file_name)
                             }
-                            false => format!("{} {}", path.icon(), file_name),
+                            false => format!("{} {}", item.icon(), file_name),
                         };
 
-                        let response = ui.selectable_label(selected, label);
+                        let re = ui.selectable_label(primary_selected || item.selected, label);
 
-                        if path.is_dir() {
-                            self.ui_update_path_context_menu(&response, path);
+                        if item.is_dir() {
+                            self.ui_update_path_context_menu(&re, item);
 
-                            if response.context_menu_opened() {
-                                self.select_item(path.clone());
+                            if re.context_menu_opened() {
+                                self.select_item(item);
                             }
                         }
 
-                        if selected && self.scroll_to_selection {
-                            response.scroll_to_me(Some(egui::Align::Center));
+                        if primary_selected && self.scroll_to_selection {
+                            re.scroll_to_me(Some(egui::Align::Center));
                             self.scroll_to_selection = false;
                         }
 
-                        if response.clicked() {
-                            self.select_item(path.clone());
+                        // The user wants to select the item as the primary selected item
+                        if re.clicked()
+                            && !ui.input(|i| i.modifiers.ctrl)
+                            && !ui.input(|i| i.modifiers.shift_only())
+                        {
+                            self.select_item(item);
+
+                            // Mark the item as part of the multi selection
+                            if self.mode == DialogMode::SelectMultiple {
+                                reset_multi_selection = true;
+                            }
                         }
 
-                        if response.double_clicked() {
-                            if path.is_dir() {
-                                let _ = self.load_directory(&path.to_path_buf());
+                        // The user wants to select or unselect the item as part of a
+                        // multi selection
+                        if self.mode == DialogMode::SelectMultiple
+                            && re.clicked()
+                            && ui.input(|i| i.modifiers.ctrl)
+                        {
+                            if primary_selected {
+                                // If the clicked item is the primary selected item,
+                                // deselect it and remove it from the multi selection
+                                item.selected = false;
+                                self.selected_item = None;
+                            } else {
+                                item.selected = !item.selected;
+
+                                // If the item was selected, make it the primary selected item
+                                if item.selected {
+                                    self.select_item(item);
+                                }
+                            }
+                        }
+
+                        // The user wants to select every item between the last selected item
+                        // and the current item
+                        if self.mode == DialogMode::SelectMultiple
+                            && re.clicked()
+                            && ui.input(|i| i.modifiers.shift_only())
+                        {
+                            if let Some(selected_item) = self.selected_item.clone() {
+                                // We perform a batch selection from the item that was
+                                // primarily selected before the user clicked on this item.
+                                batch_select_item_b = Some(selected_item);
+
+                                // And now make this item the primary selected item
+                                item.selected = true;
+                                self.select_item(item);
+                            }
+                        }
+
+                        // The user double clicked on the directory entry.
+                        // Either open the directory of submit the dialog.
+                        if re.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
+                            if item.is_dir() {
+                                let _ = self.load_directory(&item.to_path_buf());
                                 return;
                             }
 
-                            self.select_item(path.clone());
+                            self.select_item(item);
 
                             self.submit();
                         }
                     }
 
+                    // Reset the multi selection except the currently selected primary item
+                    if reset_multi_selection {
+                        for item in data.filtered_iter_mut(
+                            self.config.storage.show_hidden,
+                            &self.search_value.clone(),
+                            file_filter.as_ref(),
+                        ) {
+                            if let Some(selected_item) = &self.selected_item {
+                                if selected_item.path_eq(item) {
+                                    continue;
+                                }
+                            }
+
+                            item.selected = false;
+                        }
+                    }
+
+                    // Check if we should perform a batch selection
+                    if let Some(item_b) = batch_select_item_b {
+                        if let Some(item_a) = &self.selected_item {
+                            self.batch_select_between(&mut data, item_a, &item_b);
+                        }
+                    }
+
                     self.directory_content = data;
+                    self.scroll_to_selection = false;
 
                     if let Some(path) = self
                         .create_directory_dialog
@@ -1844,6 +2017,64 @@ impl FileDialog {
                     }
                 });
         });
+    }
+
+    /// Selects every item inside the directory_content between item_a and item_b,
+    /// excluding both given items.
+    fn batch_select_between(
+        &self,
+        directory_content: &mut DirectoryContent,
+        item_a: &DirectoryEntry,
+        item_b: &DirectoryEntry,
+    ) {
+        // Get the position of item a and item b
+        let pos_a = directory_content
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter(),
+            )
+            .position(|p| p.path_eq(item_a));
+        let pos_b = directory_content
+            .filtered_iter(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter(),
+            )
+            .position(|p| p.path_eq(item_b));
+
+        // If both items where found inside the directory entry, mark every item between
+        // them as selected
+        if let Some(pos_a) = pos_a {
+            if let Some(pos_b) = pos_b {
+                if pos_a == pos_b {
+                    return;
+                }
+
+                // Get the min and max of both positions.
+                // We will iterate from min to max.
+                let mut min = pos_a;
+                let mut max = pos_b;
+
+                if min > max {
+                    min = pos_b;
+                    max = pos_a;
+                }
+
+                for item in directory_content
+                    .filtered_iter_mut(
+                        self.config.storage.show_hidden,
+                        &self.search_value,
+                        self.get_selected_file_filter(),
+                    )
+                    .enumerate()
+                    .filter(|(i, _)| i > &min && i < &max)
+                    .map(|(_, p)| p)
+                {
+                    item.selected = true;
+                }
+            }
+        }
     }
 
     /// Helper function to add a sized button that can be enabled or disabled
@@ -2011,6 +2242,16 @@ impl FileDialog {
             }
         }
 
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.select_all, true) {
+            for item in self.directory_content.filtered_iter_mut(
+                self.config.storage.show_hidden,
+                &self.search_value,
+                self.get_selected_file_filter().cloned().as_ref(),
+            ) {
+                item.selected = true;
+            }
+        }
+
         self.config.keybindings = keybindings;
     }
 
@@ -2032,13 +2273,8 @@ impl FileDialog {
         if let Some(item) = &self.selected_item {
             // Make sure the selected item is visible inside the directory view.
             let is_visible = self
-                .directory_content
-                .filtered_iter(
-                    self.config.storage.show_hidden,
-                    &self.search_value,
-                    self.get_selected_file_filter(),
-                )
-                .any(|p| p == item);
+                .get_dir_content_filtered_iter()
+                .any(|p| p.path_eq(item));
 
             if is_visible && item.is_dir() {
                 let _ = self.load_directory(&item.to_path_buf());
@@ -2084,6 +2320,8 @@ impl FileDialog {
             return;
         }
 
+        self.directory_content.reset_multi_selection();
+
         if let Some(item) = &self.selected_item {
             if self.select_next_visible_item_before(&item.clone()) {
                 return;
@@ -2100,6 +2338,8 @@ impl FileDialog {
         if self.directory_content.len() == 0 {
             return;
         }
+
+        self.directory_content.reset_multi_selection();
 
         if let Some(item) = &self.selected_item {
             if self.select_next_visible_item_after(&item.clone()) {
@@ -2123,6 +2363,15 @@ impl FileDialog {
         }
     }
 
+    /// Gets a filtered iterator of the directory content of this object.
+    fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item = &DirectoryEntry> {
+        self.directory_content.filtered_iter(
+            self.config.storage.show_hidden,
+            &self.search_value,
+            self.get_selected_file_filter(),
+        )
+    }
+
     /// Opens the dialog to create a new folder.
     fn open_new_folder_dialog(&mut self) {
         if let Some(x) = self.current_directory() {
@@ -2132,11 +2381,11 @@ impl FileDialog {
 
     /// Function that processes a newly created folder.
     fn process_new_folder(&mut self, created_dir: &Path) {
-        let entry = DirectoryEntry::from_path(&self.config, created_dir);
+        let mut entry = DirectoryEntry::from_path(&self.config, created_dir);
 
         self.directory_content.push(entry.clone());
 
-        self.select_item(entry);
+        self.select_item(&mut entry);
     }
 
     /// Opens a new modal window.
@@ -2148,7 +2397,7 @@ impl FileDialog {
     fn exec_modal_action(&mut self, action: ModalAction) {
         match action {
             ModalAction::None => {}
-            ModalAction::SaveFile(path) => self.finish(path),
+            ModalAction::SaveFile(path) => self.state = DialogState::Selected(path),
         };
     }
 
@@ -2168,12 +2417,19 @@ impl FileDialog {
 
     /// Unpins a path from the left sidebar.
     fn unpin_path(&mut self, path: &DirectoryEntry) {
-        self.config.storage.pinned_folders.retain(|p| p != path);
+        self.config
+            .storage
+            .pinned_folders
+            .retain(|p| !p.path_eq(path));
     }
 
     /// Checks if the path is pinned to the left sidebar.
     fn is_pinned(&self, path: &DirectoryEntry) -> bool {
-        self.config.storage.pinned_folders.iter().any(|p| path == p)
+        self.config
+            .storage
+            .pinned_folders
+            .iter()
+            .any(|p| path.path_eq(p))
     }
 
     /// Resets the dialog to use default values.
@@ -2204,8 +2460,17 @@ impl FileDialog {
                 // Should always contain a value since `is_selection_valid` is used to
                 // validate the selection.
                 if let Some(item) = self.selected_item.clone() {
-                    self.finish(item.to_path_buf());
+                    self.state = DialogState::Selected(item.to_path_buf());
                 }
+            }
+            DialogMode::SelectMultiple => {
+                let result: Vec<PathBuf> = self
+                    .get_dir_content_filtered_iter()
+                    .filter(|p| p.selected)
+                    .map(|p| p.to_path_buf())
+                    .collect();
+
+                self.state = DialogState::SelectedMultiple(result);
             }
             DialogMode::SaveFile => {
                 // Should always contain a value since `is_selection_valid` is used to
@@ -2220,16 +2485,10 @@ impl FileDialog {
                         return;
                     }
 
-                    self.finish(full_path);
+                    self.state = DialogState::Selected(full_path);
                 }
             }
         }
-    }
-
-    /// Finishes the dialog.
-    /// `selected_item` is the item that was selected by the user.
-    fn finish(&mut self, selected_item: PathBuf) {
-        self.state = DialogState::Selected(selected_item);
     }
 
     /// Cancels the dialog.
@@ -2265,19 +2524,24 @@ impl FileDialog {
     /// Checks whether the selection or the file name entered is valid.
     /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
-        if let Some(item) = &self.selected_item {
-            return match &self.mode {
-                DialogMode::SelectDirectory => item.is_dir(),
-                DialogMode::SelectFile => item.is_file(),
-                DialogMode::SaveFile => self.file_name_input_error.is_none(),
-            };
+        match &self.mode {
+            DialogMode::SelectDirectory => {
+                if let Some(item) = &self.selected_item {
+                    item.is_dir()
+                } else {
+                    false
+                }
+            }
+            DialogMode::SelectFile => {
+                if let Some(item) = &self.selected_item {
+                    item.is_file()
+                } else {
+                    false
+                }
+            }
+            DialogMode::SelectMultiple => self.get_dir_content_filtered_iter().any(|p| p.selected),
+            DialogMode::SaveFile => self.file_name_input_error.is_none(),
         }
-
-        if self.mode == DialogMode::SaveFile && self.file_name_input_error.is_none() {
-            return true;
-        }
-
-        false
     }
 
     /// Validates the file name entered by the user.
@@ -2309,7 +2573,10 @@ impl FileDialog {
 
     /// Marks the given item as the selected directory item.
     /// Also updates the file_name_input to the name of the selected item.
-    fn select_item(&mut self, item: DirectoryEntry) {
+    fn select_item(&mut self, item: &mut DirectoryEntry) {
+        if self.mode == DialogMode::SelectMultiple {
+            item.selected = true;
+        }
         self.selected_item = Some(item.clone());
 
         if self.mode == DialogMode::SaveFile && item.is_file() {
@@ -2325,28 +2592,31 @@ impl FileDialog {
     fn select_next_visible_item_before(&mut self, item: &DirectoryEntry) -> bool {
         let mut return_val = false;
 
-        let directory_content = std::mem::take(&mut self.directory_content);
+        self.directory_content.reset_multi_selection();
+
+        let mut directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
         let file_filter = self.get_selected_file_filter().cloned();
 
-        if let Some(index) = directory_content
+        let index = directory_content
             .filtered_iter(
                 self.config.storage.show_hidden,
                 &search_value,
                 file_filter.as_ref(),
             )
-            .position(|p| p == item)
-        {
+            .position(|p| p.path_eq(item));
+
+        if let Some(index) = index {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter(
+                    .filtered_iter_mut(
                         self.config.storage.show_hidden,
-                        &search_value,
+                        &search_value.clone(),
                         file_filter.as_ref(),
                     )
                     .nth(index.saturating_sub(1))
                 {
-                    self.select_item(item.clone());
+                    self.select_item(item);
                     self.scroll_to_selection = true;
                     return_val = true;
                 }
@@ -2366,27 +2636,30 @@ impl FileDialog {
     fn select_next_visible_item_after(&mut self, item: &DirectoryEntry) -> bool {
         let mut return_val = false;
 
-        let directory_content = std::mem::take(&mut self.directory_content);
+        self.directory_content.reset_multi_selection();
+
+        let mut directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
         let file_filter = self.get_selected_file_filter().cloned();
 
-        if let Some(index) = directory_content
+        let index = directory_content
             .filtered_iter(
                 self.config.storage.show_hidden,
                 &search_value,
                 file_filter.as_ref(),
             )
-            .position(|p| p == item)
-        {
+            .position(|p| p.path_eq(item));
+
+        if let Some(index) = index {
             if let Some(item) = directory_content
-                .filtered_iter(
+                .filtered_iter_mut(
                     self.config.storage.show_hidden,
-                    &search_value,
+                    &search_value.clone(),
                     file_filter.as_ref(),
                 )
                 .nth(index.saturating_add(1))
             {
-                self.select_item(item.clone());
+                self.select_item(item);
                 self.scroll_to_selection = true;
                 return_val = true;
             }
@@ -2400,18 +2673,19 @@ impl FileDialog {
 
     /// Tries to select the first visible item inside `directory_content`.
     fn select_first_visible_item(&mut self) {
-        let directory_content = std::mem::take(&mut self.directory_content);
-        let file_filter = self.get_selected_file_filter().cloned();
+        self.directory_content.reset_multi_selection();
+
+        let mut directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
-            .filtered_iter(
+            .filtered_iter_mut(
                 self.config.storage.show_hidden,
                 &self.search_value.clone(),
-                file_filter.as_ref(),
+                self.get_selected_file_filter().cloned().as_ref(),
             )
             .next()
         {
-            self.select_item(item.clone());
+            self.select_item(item);
             self.scroll_to_selection = true;
         }
 
@@ -2420,18 +2694,23 @@ impl FileDialog {
 
     /// Tries to select the last visible item inside `directory_content`.
     fn select_last_visible_item(&mut self) {
-        if let Some(item) = self
-            .directory_content
-            .filtered_iter(
+        self.directory_content.reset_multi_selection();
+
+        let mut directory_content = std::mem::take(&mut self.directory_content);
+
+        if let Some(item) = directory_content
+            .filtered_iter_mut(
                 self.config.storage.show_hidden,
-                &self.search_value,
-                self.get_selected_file_filter(),
+                &self.search_value.clone(),
+                self.get_selected_file_filter().cloned().as_ref(),
             )
             .last()
         {
-            self.select_item(item.clone());
+            self.select_item(item);
             self.scroll_to_selection = true;
         }
+
+        self.directory_content = directory_content;
     }
 
     /// Opens the text field in the top panel to text edit the current path.
@@ -2548,8 +2827,8 @@ impl FileDialog {
 
         self.load_directory_content(path)?;
 
-        let dir_entry = DirectoryEntry::from_path(&self.config, path);
-        self.select_item(dir_entry);
+        let mut dir_entry = DirectoryEntry::from_path(&self.config, path);
+        self.select_item(&mut dir_entry);
 
         // Clear the entry filter buffer.
         // It's unlikely the user wants to keep the current filter when entering a new directory.

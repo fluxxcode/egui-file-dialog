@@ -2,7 +2,8 @@
 
 ## Unreleased - v0.6.0
 ### 🚨 Breaking Changes
-- Added new labels to `FileDialogLabels` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
+- Added `DialogMode::SelectMultiple` and `DialogState::SelectedMultiple` [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
+- Added new labels to `FileDialogLabels` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
 - Added new configuration values to `FileDialogConfig` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104), [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106), [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
 
 ### ✨ Features
@@ -13,6 +14,7 @@
 - Implemented show hidden files and folders option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
 - The dialog is now displayed as a modal window by default. This can be disabled with `FileDialog::as_modal`. The color of the modal overlay can be adjusted using `FileDialog::modal_overlay_color`. [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
 - Added `FileDialog::add_file_filter` and `FileDialog::default_file_filter` to add file filters that can be selected by the user from a drop-down menu at the bottom [#124](https://github.com/fluxxcode/egui-file-dialog/pull/124)
+- Implemented selection of multiple files and folders at once, using `FileDialog::select_multiple`, `FileDialog::selected_multiple` and `FileDialog::take_selected_multiple` [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
 
 ### ☢️ Deprecated
 - Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)
@@ -25,10 +27,12 @@
 - The reload button has been changed to a menu button. This menu contains the reload button and the “Show hidden" option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
 - Minor navigation improvements [#113](https://github.com/fluxxcode/egui-file-dialog/pull/113)
 - Made `DirectoryEntry` public reachable [#119](https://github.com/fluxxcode/egui-file-dialog/pull/119) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Improved handling of internal IDs [#128](https://github.com/fluxxcode/egui-file-dialog/pull/128)
 
 ### 📚 Documentation
 - Added `persistence` example showing how to save the persistent data of the file dialog [#107](https://github.com/fluxxcode/egui-file-dialog/pull/107)
 - Added `Persistent data` section and table of contents to `README.md` [#108](https://github.com/fluxxcode/egui-file-dialog/pull/108https://github.com/fluxxcode/egui-file-dialog/pull/108)
+- Added `multi_selection` example showing how to select multiple files and folders at once [#129](https://github.com/fluxxcode/egui-file-dialog/pull/129)
 
 ## 2024-03-30 - v0.5.0 - egui update and QoL changes
 ### 🚨 Breaking Changes
