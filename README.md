@@ -32,6 +32,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Select a file or a directory
 - Save a file (Prompt user for a destination path)
   - Dialog to ask the user if the existing file should be overwritten
+- Select multiple files and folders at once (ctrl/shift + click)
 - Open the dialog in a normal or modal window
 - Create a new folder
 - Keyboard navigation
@@ -126,6 +127,7 @@ The following table lists all available keybindings and their default values.
 | home_edit_path | Open the home directory and start text editing the path | `~` |
 | selection_up | Move the selection one item up | `↑` |
 | selection_down | Move the selection one item down | `↓` |
+| select_all | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` |
 
 ## Customization
 Many things can be customized so that the dialog can be used in different situations. \
@@ -160,26 +162,24 @@ FileDialog::new()
         s.add_path("📷  Media", "media");
         s.add_path("📂  Source", "src");
     })
-    // Markdown and text files should use the "document with text (U+1F5B9)" icon
+    // Markdown files should use the "document with text (U+1F5B9)" icon
     .set_file_icon(
         "🖹",
-        Arc::new(|path| {
-            match path
-                .extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-            {
-                "md" => true,
-                "txt" => true,
-                _ => false,
-            }
-        }),
+        Arc::new(|path| path.extension().unwrap_or_default() == "md"),
     )
     // .gitignore files should use the "web-github (U+E624)" icon
     .set_file_icon(
         "",
         Arc::new(|path| path.file_name().unwrap_or_default() == ".gitignore"),
+    )
+    // Add file filters the user can select in the bottom right
+    .add_file_filter(
+        "PNG files",
+        Arc::new(|p| p.extension().unwrap_or_default() == "png"),
+    )
+    .add_file_filter(
+        "Rust source files",
+        Arc::new(|p| p.extension().unwrap_or_default() == "rs"),
     );
 ```
 With the options the dialog then looks like this:
