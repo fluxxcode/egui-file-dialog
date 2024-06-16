@@ -158,8 +158,8 @@ pub struct FileDialog {
 }
 
 /// this tests if file dialog is send.
-#[test]
 fn test_prop<T: Send>() {}
+#[test]
 fn test() {
     test_prop::<FileDialog>()
 }
