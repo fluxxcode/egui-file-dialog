@@ -77,7 +77,7 @@ pub struct FileDialog {
 
     /// Stack of modal windows to be displayed.
     /// The top element is what is currently being rendered.
-    modals: Vec<Box<dyn FileDialogModal>>,
+    modals: Vec<Box<dyn FileDialogModal + Send>>,
 
     /// The mode the dialog is currently in
     mode: DialogMode,
@@ -154,6 +154,14 @@ pub struct FileDialog {
     /// This is used to prevent the dialog from closing when pressing the escape key
     /// inside a text input.
     any_focused_last_frame: bool,
+}
+
+/// this tests if file dialog is send.
+#[cfg(test)]
+fn test_prop<T: Send>() {}
+#[test]
+fn test() {
+    test_prop::<FileDialog>()
 }
 
 impl Default for FileDialog {
@@ -2389,7 +2397,7 @@ impl FileDialog {
     }
 
     /// Opens a new modal window.
-    fn open_modal(&mut self, modal: Box<dyn FileDialogModal>) {
+    fn open_modal(&mut self, modal: Box<dyn FileDialogModal + Send>) {
         self.modals.push(modal);
     }
 
