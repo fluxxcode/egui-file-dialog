@@ -28,6 +28,7 @@
 - Minor navigation improvements [#113](https://github.com/fluxxcode/egui-file-dialog/pull/113)
 - Made `DirectoryEntry` public reachable [#119](https://github.com/fluxxcode/egui-file-dialog/pull/119) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Improved handling of internal IDs [#128](https://github.com/fluxxcode/egui-file-dialog/pull/128)
+- Made file dialog `Send` [#131](https://github.com/fluxxcode/egui-file-dialog/pull/131) (thanks [@nat3](https://github.com/nat3Github)!)
 
 ### 📚 Documentation
 - Added `persistence` example showing how to save the persistent data of the file dialog [#107](https://github.com/fluxxcode/egui-file-dialog/pull/107)
