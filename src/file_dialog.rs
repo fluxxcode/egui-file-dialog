@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use egui::text::{CCursor, CCursorRange};
-use sysinfo::User;
 
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
@@ -158,6 +157,7 @@ pub struct FileDialog {
 }
 
 /// this tests if file dialog is send.
+#[cfg(test)]
 fn test_prop<T: Send>() {}
 #[test]
 fn test() {
