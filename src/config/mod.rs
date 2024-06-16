@@ -357,7 +357,7 @@ impl FileDialogConfig {
 }
 
 /// Function that returns true if the specific item matches the filter.
-pub type Filter<T> = Arc<dyn Fn(&T) -> bool>;
+pub type Filter<T> = Arc<dyn Fn(&T) -> bool + Send + Sync>;
 
 /// Defines a specific file filter that the user can select from a dropdown.
 #[derive(Clone)]
