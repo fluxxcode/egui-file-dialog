@@ -4,7 +4,7 @@ members = [
 
 ]
 [workspace.dependencies]
-eframe = { version = "0.28.0", default-features = false, features = ["glow"] }
+eframe = { version = "0.28.0", default-features = false, features = ["glow", "persistence"] }
 
 [package]
 name = "egui-file-dialog"
