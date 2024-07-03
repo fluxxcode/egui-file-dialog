@@ -1,7 +1,10 @@
 [workspace]
 members = [
     "examples/*"
+
 ]
+[workspace.dependencies]
+eframe = { version = "0.28.0", default-features = false, features = ["glow"] }
 
 [package]
 name = "egui-file-dialog"
@@ -17,7 +20,7 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = "0.27.1"
+egui = "0.28.0"
 
 # Used to fetch user folders
 directories = "5.0"
