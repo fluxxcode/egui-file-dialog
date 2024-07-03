@@ -190,44 +190,7 @@
 //! All data that needs to be stored permanently is contained in the `FileDialogStorage` struct. This struct can be accessed using `FileDialog::storage` or `FileDialog::storage_mut` to save or load the persistent data. \
 //! By default the feature `serde` is enabled, which implements `serde::Serialize` and `serde::Deserialize` for the objects to be saved. However, the objects can also be accessed without the feature enabled.
 //!
-//! The following example shows how the data can be saved with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) and the `serde` feature enabled. \
-//! Checkout `examples/persistence` for the full example.
-//!
-//! ```rust
-//! use egui_file_dialog::FileDialog;
-//!
-//! struct MyApp {
-//!     file_dialog: FileDialog,
-//! }
-//!
-//! impl MyApp {
-//!     pub fn new(cc: &eframe::CreationContext) -> Self {
-//!         let mut file_dialog = FileDialog::default();
-//!
-//!         // Load the persistent data of the file dialog.
-//!         // Alternatively, you can also use the `FileDialog::storage` builder method.
-//!         if let Some(storage) = cc.storage {
-//!             *file_dialog.storage_mut() =
-//!                 eframe::get_value(storage, "file_dialog_storage").unwrap_or_default()
-//!         }
-//!
-//!         Self {
-//!             file_dialog,
-//!         }
-//!     }
-//! }
-//!
-//! impl eframe::App for MyApp {
-//!     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-//!         // Save the persistent data of the file dialog
-//!         eframe::set_value(
-//!             storage,
-//!             "file_dialog_storage",
-//!             self.file_dialog.storage_mut(),
-//!         );
-//!     }
-//! }
-//! ```
+//! Checkout `examples/persistence` for an example.
 
 #![warn(missing_docs)] // Let's keep the public API well documented!
 
