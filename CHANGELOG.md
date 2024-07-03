@@ -1,7 +1,8 @@
 # egui-file-dialog changelog
 
-## Unreleased - v0.6.0
+## 2024-07-03 - v0.6.0 - Keyboard navigation, multi selection, pinable folders and more
 ### 🚨 Breaking Changes
+- Updated `egui` from version `0.27.1` to version `0.28.0` [#133](https://github.com/fluxxcode/egui-file-dialog/pull/133) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Added `DialogMode::SelectMultiple` and `DialogState::SelectedMultiple` [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
 - Added new labels to `FileDialogLabels` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
 - Added new configuration values to `FileDialogConfig` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104), [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106), [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
@@ -35,6 +36,7 @@
 - Reworked `README.md` [#108](https://github.com/fluxxcode/egui-file-dialog/pull/108https://github.com/fluxxcode/egui-file-dialog/pull/108)
 - Added `multi_selection` example showing how to select multiple files and folders at once [#129](https://github.com/fluxxcode/egui-file-dialog/pull/129)
 - Updated crate documentation in `lib.rs` [#135](https://github.com/fluxxcode/egui-file-dialog/pull/135)
+- Use workspace dependencies in examples [#133](https://github.com/fluxxcode/egui-file-dialog/pull/133) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 
 ## 2024-03-30 - v0.5.0 - egui update and QoL changes
 ### 🚨 Breaking Changes
