@@ -125,6 +125,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "My egui application",
         options,
-        Box::new(|ctx| Box::new(MyApp::new(ctx))),
+        Box::new(|ctx| Ok(Box::new(MyApp::new(ctx)))),
     )
 }
