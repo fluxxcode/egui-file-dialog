@@ -88,22 +88,22 @@
 //! ### Customization
 //! Many things can be customized so that the dialog can be used in different situations. \
 //! A few highlights of the customization are listed below. For all possible customization options, see the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html).
-//! 
+//!
 //! - Set which areas and functions of the dialog are visible using `FileDialog::show_*` methods
 //! - Update the text labels that the dialog uses. See [Multilingual support](#multilingual-support)
 //! - Customize file and folder icons using `FileDialog::set_file_icon` (Currently only unicode is supported)
 //! - Customize keybindings used by the file dialog using `FileDialog::keybindings`. See [Keybindings](#keybindings)
-//! 
+//!
 //! Since the dialog uses the egui style to look like the rest of the application, the appearance can be customized with `egui::Style` and `egui::Context::set_style`.
-//! 
+//!
 //! The following example shows how a single file dialog can be customized. \
 //! If you need to configure multiple file dialog objects with the same or almost the same options, it is a good idea to use `FileDialogConfig` and `FileDialog::with_config` (See `FileDialogConfig` on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialogConfig.html)).
 //! ```rust
 //! use std::path::PathBuf;
 //! use std::sync::Arc;
-//! 
+//!
 //! use egui_file_dialog::FileDialog;
-//! 
+//!
 //! FileDialog::new()
 //!     .initial_directory(PathBuf::from("/path/to/app"))
 //!     .default_file_name("app.cfg")
@@ -178,45 +178,45 @@
 //!     };
 //! }
 //! ```
-//! 
+//!
 //! ### Persistent data
 //! The file dialog currently requires the following persistent data to be stored across multiple file dialog objects:
-//! 
+//!
 //! - Folders the user pinned to the left sidebar (`FileDialog::show_pinned_folders`)
 //! - If hidden files and folders should be visible (`FileDialog::show_hidden_option`)
-//! 
+//!
 //! If one of the above feature is activated, the data should be saved by the application. Otherwise, frustrating situations could arise for the user and the features would not offer much added value.
-//! 
+//!
 //! All data that needs to be stored permanently is contained in the `FileDialogStorage` struct. This struct can be accessed using `FileDialog::storage` or `FileDialog::storage_mut` to save or load the persistent data. \
 //! By default the feature `serde` is enabled, which implements `serde::Serialize` and `serde::Deserialize` for the objects to be saved. However, the objects can also be accessed without the feature enabled.
-//! 
+//!
 //! The following example shows how the data can be saved with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) and the `serde` feature enabled. \
 //! Checkout `examples/persistence` for the full example.
-//! 
+//!
 //! ```rust
 //! use egui_file_dialog::FileDialog;
-//! 
+//!
 //! struct MyApp {
 //!     file_dialog: FileDialog,
 //! }
-//! 
+//!
 //! impl MyApp {
 //!     pub fn new(cc: &eframe::CreationContext) -> Self {
 //!         let mut file_dialog = FileDialog::default();
-//! 
+//!
 //!         // Load the persistent data of the file dialog.
 //!         // Alternatively, you can also use the `FileDialog::storage` builder method.
 //!         if let Some(storage) = cc.storage {
 //!             *file_dialog.storage_mut() =
 //!                 eframe::get_value(storage, "file_dialog_storage").unwrap_or_default()
 //!         }
-//! 
+//!
 //!         Self {
 //!             file_dialog,
 //!         }
 //!     }
 //! }
-//! 
+//!
 //! impl eframe::App for MyApp {
 //!     fn save(&mut self, storage: &mut dyn eframe::Storage) {
 //!         // Save the persistent data of the file dialog
