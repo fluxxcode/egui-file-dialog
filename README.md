@@ -94,8 +94,11 @@ impl eframe::App for MyApp {
 
             ui.label(format!("Selected file: {:?}", self.selected_file));
 
-            // Update the dialog and check if the user selected a file
-            if let Some(path) = self.file_dialog.update(ctx).selected() {
+            // Update the dialog
+            self.file_dialog.update(ctx);
+
+            // Check if the user selected a file.
+            if let Some(path) = self.file_dialog.take_selected() {
                 self.selected_file = Some(path.to_path_buf());
             }
         });
