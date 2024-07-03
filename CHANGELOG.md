@@ -31,7 +31,7 @@
 
 ### 📚 Documentation
 - Added `persistence` example showing how to save the persistent data of the file dialog [#107](https://github.com/fluxxcode/egui-file-dialog/pull/107)
-- Added `Persistent data` section and table of contents to `README.md` [#108](https://github.com/fluxxcode/egui-file-dialog/pull/108https://github.com/fluxxcode/egui-file-dialog/pull/108)
+- Reworked `README.md` [#108](https://github.com/fluxxcode/egui-file-dialog/pull/108https://github.com/fluxxcode/egui-file-dialog/pull/108)
 - Added `multi_selection` example showing how to select multiple files and folders at once [#129](https://github.com/fluxxcode/egui-file-dialog/pull/129)
 
 ## 2024-03-30 - v0.5.0 - egui update and QoL changes
