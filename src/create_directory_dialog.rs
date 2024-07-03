@@ -44,6 +44,8 @@ pub struct CreateDirectoryDialog {
     error: Option<String>,
     /// If we should scroll to the error in the next frame
     scroll_to_error: bool,
+    /// If the text input should request focus in the next frame
+    request_focus: bool,
 }
 
 impl CreateDirectoryDialog {
@@ -57,6 +59,7 @@ impl CreateDirectoryDialog {
             input: String::new(),
             error: None,
             scroll_to_error: false,
+            request_focus: true,
         }
     }
 
@@ -69,9 +72,21 @@ impl CreateDirectoryDialog {
         self.directory = Some(directory);
     }
 
-    /// Closes and resets the dialog.
+    /// Closes and resets the dialog without creating the directory.
     pub fn close(&mut self) {
         self.reset();
+    }
+
+    /// Tries to create the given folder.
+    pub fn submit(&mut self) -> CreateDirectoryResponse {
+        // Only necessary in the event of an error
+        self.request_focus = true;
+
+        if self.error.is_none() {
+            return self.create_directory();
+        }
+
+        CreateDirectoryResponse::new_empty()
     }
 
     /// Main update function of the dialog. Should be called in every frame
@@ -90,28 +105,36 @@ impl CreateDirectoryDialog {
         ui.horizontal(|ui| {
             ui.label(&config.default_folder_icon);
 
-            let response = ui.text_edit_singleline(&mut self.input);
+            let text_edit_response = ui.text_edit_singleline(&mut self.input);
 
             if self.init {
-                response.scroll_to_me(Some(egui::Align::Center));
-                response.request_focus();
+                text_edit_response.scroll_to_me(Some(egui::Align::Center));
+                text_edit_response.request_focus();
 
                 self.error = self.validate_input(&config.labels);
                 self.init = false;
+                self.request_focus = false;
             }
 
-            if response.changed() {
+            if self.request_focus {
+                text_edit_response.request_focus();
+                self.request_focus = false;
+            }
+
+            if text_edit_response.changed() {
                 self.error = self.validate_input(&config.labels);
             }
 
-            if ui
-                .add_enabled(self.error.is_none(), egui::Button::new("✔"))
-                .clicked()
-            {
-                result = self.create_directory();
+            let apply_button_response =
+                ui.add_enabled(self.error.is_none(), egui::Button::new("✔"));
+
+            if apply_button_response.clicked() {
+                result = self.submit();
             }
 
-            if ui.button("✖").clicked() {
+            if ui.button("✖").clicked()
+                || (text_edit_response.lost_focus() && !apply_button_response.contains_pointer())
+            {
                 self.close();
             }
         });

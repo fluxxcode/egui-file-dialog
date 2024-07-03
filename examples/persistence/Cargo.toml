@@ -1,5 +1,5 @@
 [package]
-name = "multiple_actions"
+name = "persistence"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 eframe = { workspace = true }
-egui-file-dialog = { path = "../../"}
+egui-file-dialog = { path = "../../" }

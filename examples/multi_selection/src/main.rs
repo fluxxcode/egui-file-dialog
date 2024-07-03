@@ -5,14 +5,14 @@ use egui_file_dialog::FileDialog;
 
 struct MyApp {
     file_dialog: FileDialog,
-    selected_directory: Option<PathBuf>,
+    selected_items: Option<Vec<PathBuf>>,
 }
 
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
             file_dialog: FileDialog::new(),
-            selected_directory: None,
+            selected_items: None,
         }
     }
 }
@@ -20,14 +20,24 @@ impl MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Select directory").clicked() {
-                self.file_dialog.select_directory();
+            if ui.button("Select multiple").clicked() {
+                self.file_dialog.select_multiple();
             }
 
-            ui.label(format!("Selected directory: {:?}", self.selected_directory));
+            ui.label("Selected items:");
 
-            if let Some(path) = self.file_dialog.update(ctx).selected() {
-                self.selected_directory = Some(path.to_path_buf());
+            if let Some(items) = &self.selected_items {
+                for item in items {
+                    ui.label(format!("{:?}", item));
+                }
+            } else {
+                ui.label("None");
+            }
+
+            self.file_dialog.update(ctx);
+
+            if let Some(items) = self.file_dialog.take_selected_multiple() {
+                self.selected_items = Some(items);
             }
         });
     }

@@ -1,5 +1,43 @@
 # egui-file-dialog changelog
 
+## 2024-07-03 - v0.6.0 - Keyboard navigation, multi selection, pinable folders and more
+### 🚨 Breaking Changes
+- Updated `egui` from version `0.27.1` to version `0.28.0` [#133](https://github.com/fluxxcode/egui-file-dialog/pull/133) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Added `DialogMode::SelectMultiple` and `DialogState::SelectedMultiple` [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
+- Added new labels to `FileDialogLabels` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
+- Added new configuration values to `FileDialogConfig` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100), [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104), [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106), [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110), [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111), [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
+
+### ✨ Features
+- Added the ability to pin folders to the left sidebar and enable or disable the feature with `FileDialog::show_pinned_folders` [#100](https://github.com/fluxxcode/egui-file-dialog/pull/100)
+- Added `FileDialogConfig::storage`, `FileDialog::storage` and `FileDialog::storage_mut` to be able to save and load persistent data [#104](https://github.com/fluxxcode/egui-file-dialog/pull/104) and [#105](https://github.com/fluxxcode/egui-file-dialog/pull/105)
+- Added new modal and option `FileDialog::allow_file_overwrite` to allow overwriting an already existing file when the dialog is in `DialogMode::SaveFile` mode [#106](https://github.com/fluxxcode/egui-file-dialog/pull/106)
+- Implemented customizable keyboard navigation using `FileDialogKeybindings` and `FileDialog::keybindings` [#110](https://github.com/fluxxcode/egui-file-dialog/pull/110)
+- Implemented show hidden files and folders option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
+- The dialog is now displayed as a modal window by default. This can be disabled with `FileDialog::as_modal`. The color of the modal overlay can be adjusted using `FileDialog::modal_overlay_color`. [#118](https://github.com/fluxxcode/egui-file-dialog/pull/118)
+- Added `FileDialog::add_file_filter` and `FileDialog::default_file_filter` to add file filters that can be selected by the user from a drop-down menu at the bottom [#124](https://github.com/fluxxcode/egui-file-dialog/pull/124)
+- Implemented selection of multiple files and folders at once, using `FileDialog::select_multiple`, `FileDialog::selected_multiple` and `FileDialog::take_selected_multiple` [#127](https://github.com/fluxxcode/egui-file-dialog/pull/127)
+
+### ☢️ Deprecated
+- Deprecated `FileDialog::overwrite_config`. Use `FileDialog::with_config` and `FileDialog::config_mut` instead [#103](https://github.com/fluxxcode/egui-file-dialog/pull/103)
+
+### 🐛 Bug Fixes
+- Fixed the size of the path edit input box and fixed an issue where the path edit would not close when clicking the apply button [#102](https://github.com/fluxxcode/egui-file-dialog/pull/102)
+
+### 🔧 Changes
+- Restructured `config` module and fixed new `1.78` clippy warnings [#109](https://github.com/fluxxcode/egui-file-dialog/pull/109)
+- The reload button has been changed to a menu button. This menu contains the reload button and the “Show hidden" option [#111](https://github.com/fluxxcode/egui-file-dialog/pull/111)
+- Minor navigation improvements [#113](https://github.com/fluxxcode/egui-file-dialog/pull/113)
+- Made `DirectoryEntry` public reachable [#119](https://github.com/fluxxcode/egui-file-dialog/pull/119) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Improved handling of internal IDs [#128](https://github.com/fluxxcode/egui-file-dialog/pull/128)
+- Made file dialog `Send` [#131](https://github.com/fluxxcode/egui-file-dialog/pull/131) (thanks [@nat3](https://github.com/nat3Github)!)
+
+### 📚 Documentation
+- Added `persistence` example showing how to save the persistent data of the file dialog [#107](https://github.com/fluxxcode/egui-file-dialog/pull/107)
+- Reworked `README.md` [#108](https://github.com/fluxxcode/egui-file-dialog/pull/108https://github.com/fluxxcode/egui-file-dialog/pull/108)
+- Added `multi_selection` example showing how to select multiple files and folders at once [#129](https://github.com/fluxxcode/egui-file-dialog/pull/129)
+- Updated crate documentation in `lib.rs` [#135](https://github.com/fluxxcode/egui-file-dialog/pull/135)
+- Use workspace dependencies in examples [#133](https://github.com/fluxxcode/egui-file-dialog/pull/133) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+
 ## 2024-03-30 - v0.5.0 - egui update and QoL changes
 ### 🚨 Breaking Changes
 - Updated `egui` from version `0.26.0` to version `0.27.1` [#97](https://github.com/fluxxcode/egui-file-dialog/pull/97)

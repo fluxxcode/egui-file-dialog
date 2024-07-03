@@ -13,8 +13,16 @@ fn get_labels_german() -> FileDialogLabels {
     FileDialogLabels {
         title_select_directory: "📁 Ordner Öffnen".to_string(),
         title_select_file: "📂 Datei Öffnen".to_string(),
+        title_select_multiple: "🗐 Mehrere Öffnen".to_string(),
         title_save_file: "📥 Datei Speichern".to_string(),
 
+        cancel: "Abbrechen".to_string(),
+        overwrite: "Überschreiben".to_string(),
+
+        reload: "⟲  Neu laden".to_string(),
+        show_hidden: " Versteckte Dateien anzeigen".to_string(),
+
+        heading_pinned: "Angeheftet".to_string(),
         heading_places: "Orte".to_string(),
         heading_devices: "Medien".to_string(),
         heading_removable_devices: "Wechselmedien".to_string(),
@@ -27,13 +35,20 @@ fn get_labels_german() -> FileDialogLabels {
         pictures_dir: "🖼  Fotos".to_string(),
         videos_dir: "🎞  Videos".to_string(),
 
+        pin_folder: "📌 Ordner anheften".to_string(),
+        unpin_folder: "✖ Ordner loslösen".to_string(),
+
         selected_directory: "Ausgewählter Ordner:".to_string(),
         selected_file: "Ausgewählte Datei:".to_string(),
+        selected_items: "Ausgewählte Elemente:".to_string(),
         file_name: "Dateiname:".to_string(),
+        file_filter_all_files: "Alle Dateien".to_string(),
 
         open_button: "🗀  Öffnen".to_string(),
         save_button: "📥  Speichern".to_string(),
         cancel_button: "🚫 Abbrechen".to_string(),
+
+        overwrite_file_modal_text: "existiert bereits. Möchtest du es überschreiben?".to_string(),
 
         err_empty_folder_name: "Der Ordnername darf nicht leer sein".to_string(),
         err_empty_file_name: "Der Dateiname darf nicht leer sein".to_string(),
@@ -106,6 +121,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "My egui application",
         options,
-        Box::new(|ctx| Box::new(MyApp::new(ctx))),
+        Box::new(|ctx| Ok(Box::new(MyApp::new(ctx)))),
     )
 }
