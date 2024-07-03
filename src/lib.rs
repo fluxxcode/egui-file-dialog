@@ -69,6 +69,7 @@
 //! ### Keybindings
 //! Keybindings can be used in the file dialog for easier navigation. All keybindings can be configured from the backend with `FileDialogKeyBindings` and `FileDialog::keybindings`. \
 //! The following table lists all available keybindings and their default values.
+//!
 //! | Name | Description | Default |
 //! | --- | --- | --- |
 //! | submit | Submit the current action or open the currently selected folder | `Enter` |
