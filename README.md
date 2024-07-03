@@ -58,7 +58,7 @@ The following example shows the basic use of the file dialog with [eframe](https
 Cargo.toml:
 ```toml
 [dependencies]
-eframe = "0.27.1"
+eframe = "0.28.0"
 egui-file-dialog = "0.5.0"
 ```
 
