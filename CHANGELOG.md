@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## Unreleased
+### 🔧 Changes
+- Updated `sysinfo` from version `0.30.5` to `0.31` [#140](https://github.com/fluxxcode/egui-file-dialog/pull/140)
+
 ## 2024-07-03 - v0.6.0 - Keyboard navigation, multi selection, pinable folders and more
 ### 🚨 Breaking Changes
 - Updated `egui` from version `0.27.1` to version `0.28.0` [#133](https://github.com/fluxxcode/egui-file-dialog/pull/133) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
