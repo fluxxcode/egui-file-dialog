@@ -520,6 +520,12 @@ impl FileDialog {
         self
     }
 
+    /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
+    /// Mutates in-place.
+    pub fn set_default_file_name(&mut self, name: &str) {
+        self.config.default_file_name = name.to_string();
+    }
+
     /// Sets if the user is allowed to select an already existing file when the dialog is in
     /// `DialogMode::SaveFile` mode.
     ///
