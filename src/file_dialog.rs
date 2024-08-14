@@ -2250,7 +2250,9 @@ impl FileDialog {
             }
         }
 
-        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.select_all, true) {
+        if FileDialogKeyBindings::any_pressed(ctx, &keybindings.select_all, true)
+            && self.mode == DialogMode::SelectMultiple
+        {
             for item in self.directory_content.filtered_iter_mut(
                 self.config.storage.show_hidden,
                 &self.search_value,
