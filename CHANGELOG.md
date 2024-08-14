@@ -1,6 +1,7 @@
 # egui-file-dialog changelog
 
 ## Unreleased
+### 🐛 Bug Fixes
 - Fixed that the `select_all` keybinding can also be used in `DialogMode`'s in which only one item can be selected [#142](https://github.com/fluxxcode/egui-file-dialog/pull/142)
 
 ### 🔧 Changes
