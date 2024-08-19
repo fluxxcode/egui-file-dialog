@@ -77,7 +77,7 @@ pub struct FileDialog {
 
     /// Stack of modal windows to be displayed.
     /// The top element is what is currently being rendered.
-    modals: Vec<Box<dyn FileDialogModal + Send>>,
+    modals: Vec<Box<dyn FileDialogModal + Send + Sync>>,
 
     /// The mode the dialog is currently in
     mode: DialogMode,
@@ -2399,7 +2399,7 @@ impl FileDialog {
     }
 
     /// Opens a new modal window.
-    fn open_modal(&mut self, modal: Box<dyn FileDialogModal + Send>) {
+    fn open_modal(&mut self, modal: Box<dyn FileDialogModal + Send + Sync>) {
         self.modals.push(modal);
     }
 
