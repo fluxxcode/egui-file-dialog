@@ -3,6 +3,7 @@
 ## Unreleased
 ### 🐛 Bug Fixes
 - Fixed that the `select_all` keybinding can also be used in `DialogMode`'s in which only one item can be selected [#142](https://github.com/fluxxcode/egui-file-dialog/pull/142)
+- Fixed the file dialog window resizing endlessly if the name of the selected file filter is larger than the dropdown menu itself [#147](https://github.com/fluxxcode/egui-file-dialog/pull/147)
 
 ### 🔧 Changes
 - Updated `sysinfo` from version `0.30.5` to `0.31` [#140](https://github.com/fluxxcode/egui-file-dialog/pull/140)
