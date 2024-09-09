@@ -156,9 +156,10 @@ pub struct FileDialog {
     any_focused_last_frame: bool,
 }
 
-/// this tests if file dialog is send.
+/// This tests if file dialog is send and sync.
 #[cfg(test)]
-fn test_prop<T: Send>() {}
+fn test_prop<T: Send + Sync>() {}
+
 #[test]
 fn test() {
     test_prop::<FileDialog>()
