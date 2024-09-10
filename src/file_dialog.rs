@@ -1258,6 +1258,7 @@ impl FileDialog {
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.style_mut().spacing.item_spacing.x /= 2.5;
+                    ui.style_mut().spacing.button_padding = egui::Vec2::new(5.0, 3.0);
 
                     let mut path = PathBuf::new();
 
@@ -1364,7 +1365,9 @@ impl FileDialog {
             .show(ui, |ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                     ui.add_space(ui.ctx().style().spacing.item_spacing.y);
-                    ui.label("🔍");
+
+                    ui.label(egui::RichText::from("🔍").size(15.0));
+
                     let re = ui.add_sized(
                         egui::Vec2::new(ui.available_width(), 0.0),
                         egui::TextEdit::singleline(&mut self.search_value),
