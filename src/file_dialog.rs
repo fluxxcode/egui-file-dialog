@@ -1802,6 +1802,7 @@ impl FileDialog {
         egui::containers::ComboBox::from_id_source(self.window_id.with("file_filter_selection"))
             .width(width)
             .selected_text(selected_text)
+            .wrap_mode(egui::TextWrapMode::Truncate)
             .show_ui(ui, |ui| {
                 for filter in self.config.file_filters.iter() {
                     let selected = match selected_filter {
