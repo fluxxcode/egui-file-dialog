@@ -1258,6 +1258,7 @@ impl FileDialog {
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.style_mut().spacing.item_spacing.x /= 2.5;
+                    ui.style_mut().spacing.button_padding = egui::Vec2::new(5.0, 3.0);
 
                     let mut path = PathBuf::new();
 
