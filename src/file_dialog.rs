@@ -1790,33 +1790,10 @@ impl FileDialog {
 
     fn ui_update_file_filter_selection(&mut self, ui: &mut egui::Ui, width: f32) {
         let selected_filter = self.get_selected_file_filter();
-        let mut selected_text = match selected_filter {
+        let selected_text = match selected_filter {
             Some(f) => &f.name,
             None => &self.config.labels.file_filter_all_files,
         };
-
-        // Prevent the selected text to resize the drop down.
-        // We fix this by checking whether the selected text is larger than the drop down.
-        // If so, we reduce the text until it fits into the dropdown.
-
-        // 30.0 includes the width of the arrow within the drop-down menu and the spacing
-        // of the drop-down menu itself.
-        // TODO: Get the required margin dynamically.
-        let available_w = width - 30.0;
-        let mut temp_text: String;
-
-        if Self::calc_text_width(ui, &selected_text) > available_w {
-            temp_text = String::new();
-            for c in selected_text.chars() {
-                if Self::calc_text_width(ui, &temp_text) >= available_w {
-                    break;
-                }
-
-                temp_text.push(c);
-            }
-
-            selected_text = &temp_text;
-        }
 
         // The item that the user selected inside the drop down.
         // If none, no item was selected by the user.
@@ -1825,6 +1802,7 @@ impl FileDialog {
         egui::containers::ComboBox::from_id_source(self.window_id.with("file_filter_selection"))
             .width(width)
             .selected_text(selected_text)
+            .wrap_mode(egui::TextWrapMode::Truncate)
             .show_ui(ui, |ui| {
                 for filter in self.config.file_filters.iter() {
                     let selected = match selected_filter {
