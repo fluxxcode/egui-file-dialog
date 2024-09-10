@@ -1,15 +1,15 @@
 [workspace]
 members = [
     "examples/*"
-
 ]
+
 [workspace.dependencies]
 eframe = { version = "0.28.0", default-features = false, features = ["glow", "persistence"] }
 
 [package]
 name = "egui-file-dialog"
 description = "An easy-to-use file dialog for egui"
-version = "0.6.0"
+version = "0.6.1"
 edition = "2021"
 authors = ["fluxxcode"]
 repository = "https://github.com/fluxxcode/egui-file-dialog"
