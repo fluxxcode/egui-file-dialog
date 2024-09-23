@@ -31,7 +31,7 @@ impl Disk {
         &self.display_name
     }
 
-    pub fn is_removable(&self) -> bool {
+    pub const fn is_removable(&self) -> bool {
         self.is_removable
     }
 
@@ -39,7 +39,7 @@ impl Disk {
     /// Returns the input path in case of an error.
     fn canonicalize(path: &Path, canonicalize: bool) -> PathBuf {
         if canonicalize {
-            fs::canonicalize(path).unwrap_or(path.to_path_buf())
+            fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
         } else {
             path.to_path_buf()
         }

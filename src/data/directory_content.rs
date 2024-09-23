@@ -30,26 +30,26 @@ impl DirectoryEntry {
     }
 
     /// Checks if the path of the current directory entry matches the other directory entry.
-    pub fn path_eq(&self, other: &DirectoryEntry) -> bool {
+    pub fn path_eq(&self, other: &Self) -> bool {
         other.as_path() == self.as_path()
     }
 
     /// Returns true if the item is a directory.
     /// False is returned if the item is a file or the path did not exist when the
     /// `DirectoryEntry` object was created.
-    pub fn is_dir(&self) -> bool {
+    pub const fn is_dir(&self) -> bool {
         self.is_directory
     }
 
     /// Returns true if the item is a file.
     /// False is returned if the item is a directory or the path did not exist when the
     /// `DirectoryEntry` object was created.
-    pub fn is_file(&self) -> bool {
+    pub const fn is_file(&self) -> bool {
         !self.is_directory
     }
 
     /// Returns true if the item is a system file.
-    pub fn is_system_file(&self) -> bool {
+    pub const fn is_system_file(&self) -> bool {
         self.is_system_file
     }
 
@@ -117,7 +117,7 @@ pub struct DirectoryContent {
 
 impl DirectoryContent {
     /// Create a new object with empty content
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { content: vec![] }
     }
 

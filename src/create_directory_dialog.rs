@@ -17,7 +17,7 @@ impl CreateDirectoryResponse {
     }
 
     /// Creates a new response with no directory set.
-    pub fn new_empty() -> Self {
+    pub const fn new_empty() -> Self {
         Self { directory: None }
     }
 
@@ -51,7 +51,7 @@ pub struct CreateDirectoryDialog {
 
 impl CreateDirectoryDialog {
     /// Creates a new dialog with default values
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             open: false,
             init: false,
@@ -166,7 +166,7 @@ impl CreateDirectoryDialog {
     }
 
     /// Returns if the dialog is currently open
-    pub fn is_open(&self) -> bool {
+    pub const fn is_open(&self) -> bool {
         self.open
     }
 

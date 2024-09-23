@@ -70,10 +70,7 @@ impl UserDirectories {
         }
 
         if let Some(path) = path {
-            return match fs::canonicalize(path) {
-                Ok(p) => Some(p),
-                Err(_) => None,
-            };
+            return fs::canonicalize(path).ok();
         }
 
         None

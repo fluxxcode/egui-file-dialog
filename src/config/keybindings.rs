@@ -13,12 +13,12 @@ pub enum KeyBinding {
 
 impl KeyBinding {
     /// Creates a new keybinding where a single key is used.
-    pub fn key(key: egui::Key) -> Self {
+    pub const fn key(key: egui::Key) -> Self {
         Self::Key(key)
     }
 
     /// Creates a new keybinding where a keyboard shortcut is used.
-    pub fn keyboard_shortcut(modifiers: egui::Modifiers, logical_key: egui::Key) -> Self {
+    pub const fn keyboard_shortcut(modifiers: egui::Modifiers, logical_key: egui::Key) -> Self {
         Self::KeyboardShortcut(egui::KeyboardShortcut {
             modifiers,
             logical_key,
@@ -26,12 +26,12 @@ impl KeyBinding {
     }
 
     /// Creates a new keybinding where a pointer button is used.
-    pub fn pointer_button(pointer_button: egui::PointerButton) -> Self {
+    pub const fn pointer_button(pointer_button: egui::PointerButton) -> Self {
         Self::PointerButton(pointer_button)
     }
 
     /// Creates a new keybinding where a text event is used.
-    pub fn text(text: String) -> Self {
+    pub const fn text(text: String) -> Self {
         Self::Text(text)
     }
 
@@ -55,10 +55,10 @@ impl KeyBinding {
         }
 
         match self {
-            KeyBinding::Key(k) => ctx.input(|i| i.key_pressed(*k)),
-            KeyBinding::KeyboardShortcut(s) => ctx.input_mut(|i| i.consume_shortcut(s)),
-            KeyBinding::PointerButton(b) => ctx.input(|i| i.pointer.button_clicked(*b)),
-            KeyBinding::Text(s) => ctx.input_mut(|i| {
+            Self::Key(k) => ctx.input(|i| i.key_pressed(*k)),
+            Self::KeyboardShortcut(s) => ctx.input_mut(|i| i.consume_shortcut(s)),
+            Self::PointerButton(b) => ctx.input(|i| i.pointer.button_clicked(*b)),
+            Self::Text(s) => ctx.input_mut(|i| {
                 // We force to suppress the text events when any other widget has focus
                 if any_focused {
                     return false;

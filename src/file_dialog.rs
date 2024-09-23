@@ -331,10 +331,10 @@ impl FileDialog {
         self.show_files = show_files;
         self.operation_id = operation_id.map(String::from);
 
-        self.window_id = match self.config.id {
-            Some(id) => id,
-            None => egui::Id::new(self.get_window_title()),
-        };
+        self.window_id = self
+            .config
+            .id
+            .map_or_else(|| egui::Id::new(self.get_window_title()), |id| id);
 
         self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
     }
@@ -504,13 +504,13 @@ impl FileDialog {
     ///
     /// If the window is displayed as modal, the area outside the dialog can no longer be
     /// interacted with and an overlay is displayed.
-    pub fn as_modal(mut self, as_modal: bool) -> Self {
+    pub const fn as_modal(mut self, as_modal: bool) -> Self {
         self.config.as_modal = as_modal;
         self
     }
 
     /// Sets the color of the overlay when the dialog is displayed as a modal window.
-    pub fn modal_overlay_color(mut self, modal_overlay_color: egui::Color32) -> Self {
+    pub const fn modal_overlay_color(mut self, modal_overlay_color: egui::Color32) -> Self {
         self.config.modal_overlay_color = modal_overlay_color;
         self
     }
@@ -539,7 +539,7 @@ impl FileDialog {
     ///
     /// If this is enabled, the user will receive a modal asking whether the user really
     /// wants to overwrite an existing file.
-    pub fn allow_file_overwrite(mut self, allow_file_overwrite: bool) -> Self {
+    pub const fn allow_file_overwrite(mut self, allow_file_overwrite: bool) -> Self {
         self.config.allow_file_overwrite = allow_file_overwrite;
         self
     }
@@ -567,7 +567,7 @@ impl FileDialog {
     /// you know what you are doing and have a reason for it.
     /// Disabling canonicalization can lead to unexpected behavior, for example if an
     /// already canonicalized path is then set as the initial directory.
-    pub fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
+    pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
         self
     }
@@ -743,7 +743,7 @@ impl FileDialog {
     }
 
     /// Sets if the window is resizable.
-    pub fn resizable(mut self, resizable: bool) -> Self {
+    pub const fn resizable(mut self, resizable: bool) -> Self {
         self.config.resizable = resizable;
         self
     }
@@ -751,20 +751,20 @@ impl FileDialog {
     /// Sets if the window is movable.
     ///
     /// Has no effect if an anchor is set.
-    pub fn movable(mut self, movable: bool) -> Self {
+    pub const fn movable(mut self, movable: bool) -> Self {
         self.config.movable = movable;
         self
     }
 
     /// Sets if the title bar of the window is shown.
-    pub fn title_bar(mut self, title_bar: bool) -> Self {
+    pub const fn title_bar(mut self, title_bar: bool) -> Self {
         self.config.title_bar = title_bar;
         self
     }
 
     /// Sets if the top panel with the navigation buttons, current path display
     /// and search input should be visible.
-    pub fn show_top_panel(mut self, show_top_panel: bool) -> Self {
+    pub const fn show_top_panel(mut self, show_top_panel: bool) -> Self {
         self.config.show_top_panel = show_top_panel;
         self
     }
@@ -772,7 +772,7 @@ impl FileDialog {
     /// Sets whether the parent folder button should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_parent_button(mut self, show_parent_button: bool) -> Self {
+    pub const fn show_parent_button(mut self, show_parent_button: bool) -> Self {
         self.config.show_parent_button = show_parent_button;
         self
     }
@@ -780,7 +780,7 @@ impl FileDialog {
     /// Sets whether the back button should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_back_button(mut self, show_back_button: bool) -> Self {
+    pub const fn show_back_button(mut self, show_back_button: bool) -> Self {
         self.config.show_back_button = show_back_button;
         self
     }
@@ -788,7 +788,7 @@ impl FileDialog {
     /// Sets whether the forward button should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_forward_button(mut self, show_forward_button: bool) -> Self {
+    pub const fn show_forward_button(mut self, show_forward_button: bool) -> Self {
         self.config.show_forward_button = show_forward_button;
         self
     }
@@ -796,7 +796,7 @@ impl FileDialog {
     /// Sets whether the button to create a new folder should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_new_folder_button(mut self, show_new_folder_button: bool) -> Self {
+    pub const fn show_new_folder_button(mut self, show_new_folder_button: bool) -> Self {
         self.config.show_new_folder_button = show_new_folder_button;
         self
     }
@@ -804,7 +804,7 @@ impl FileDialog {
     /// Sets whether the current path should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_current_path(mut self, show_current_path: bool) -> Self {
+    pub const fn show_current_path(mut self, show_current_path: bool) -> Self {
         self.config.show_current_path = show_current_path;
         self
     }
@@ -812,7 +812,7 @@ impl FileDialog {
     /// Sets whether the button to text edit the current path should be visible in the top panel.
     ///
     /// has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_path_edit_button(mut self, show_path_edit_button: bool) -> Self {
+    pub const fn show_path_edit_button(mut self, show_path_edit_button: bool) -> Self {
         self.config.show_path_edit_button = show_path_edit_button;
         self
     }
@@ -821,7 +821,7 @@ impl FileDialog {
     /// inside the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_menu_button(mut self, show_menu_button: bool) -> Self {
+    pub const fn show_menu_button(mut self, show_menu_button: bool) -> Self {
         self.config.show_menu_button = show_menu_button;
         self
     }
@@ -830,7 +830,7 @@ impl FileDialog {
     ///
     /// Has no effect when `FileDialog::show_top_panel` or
     /// `FileDialog::show_menu_button` is disabled.
-    pub fn show_reload_button(mut self, show_reload_button: bool) -> Self {
+    pub const fn show_reload_button(mut self, show_reload_button: bool) -> Self {
         self.config.show_reload_button = show_reload_button;
         self
     }
@@ -840,7 +840,7 @@ impl FileDialog {
     ///
     /// Has no effect when `FileDialog::show_top_panel` or
     /// `FileDialog::show_menu_button` is disabled.
-    pub fn show_hidden_option(mut self, show_hidden_option: bool) -> Self {
+    pub const fn show_hidden_option(mut self, show_hidden_option: bool) -> Self {
         self.config.show_hidden_option = show_hidden_option;
         self
     }
@@ -848,21 +848,21 @@ impl FileDialog {
     /// Sets whether the search input should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
-    pub fn show_search(mut self, show_search: bool) -> Self {
+    pub const fn show_search(mut self, show_search: bool) -> Self {
         self.config.show_search = show_search;
         self
     }
 
     /// Sets if the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
-    pub fn show_left_panel(mut self, show_left_panel: bool) -> Self {
+    pub const fn show_left_panel(mut self, show_left_panel: bool) -> Self {
         self.config.show_left_panel = show_left_panel;
         self
     }
 
     /// Sets if pinned folders should be listed in the left sidebar.
     /// Disabling this will also disable the functionality to pin a folder.
-    pub fn show_pinned_folders(mut self, show_pinned_folders: bool) -> Self {
+    pub const fn show_pinned_folders(mut self, show_pinned_folders: bool) -> Self {
         self.config.show_pinned_folders = show_pinned_folders;
         self
     }
@@ -871,7 +871,7 @@ impl FileDialog {
     /// The Places section contains the user directories such as Home or Documents.
     ///
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
-    pub fn show_places(mut self, show_places: bool) -> Self {
+    pub const fn show_places(mut self, show_places: bool) -> Self {
         self.config.show_places = show_places;
         self
     }
@@ -880,7 +880,7 @@ impl FileDialog {
     /// The Devices section contains the non removable system disks.
     ///
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
-    pub fn show_devices(mut self, show_devices: bool) -> Self {
+    pub const fn show_devices(mut self, show_devices: bool) -> Self {
         self.config.show_devices = show_devices;
         self
     }
@@ -889,7 +889,7 @@ impl FileDialog {
     /// The Removable Devices section contains the removable disks like USB disks.
     ///
     /// Has no effect when `FileDialog::show_left_panel` is disabled.
-    pub fn show_removable_devices(mut self, show_removable_devices: bool) -> Self {
+    pub const fn show_removable_devices(mut self, show_removable_devices: bool) -> Self {
         self.config.show_removable_devices = show_removable_devices;
         self
     }
@@ -963,7 +963,7 @@ impl FileDialog {
     }
 
     /// Returns the mode the dialog is currently in.
-    pub fn mode(&self) -> DialogMode {
+    pub const fn mode(&self) -> DialogMode {
         self.mode
     }
 
@@ -1110,7 +1110,7 @@ impl FileDialog {
 
     /// Gets the window title to use.
     /// This is either one of the default window titles or the configured window title.
-    fn get_window_title(&self) -> &String {
+    const fn get_window_title(&self) -> &String {
         match &self.config.title {
             Some(title) => title,
             None => match &self.mode {
@@ -1134,7 +1134,12 @@ impl FileDialog {
 
             // Leave some area for the menu button and search input
             if self.config.show_reload_button {
-                path_display_width -= BUTTON_SIZE.x + ui.style().spacing.item_spacing.x * 2.5;
+                path_display_width -= ui
+                    .style()
+                    .spacing
+                    .item_spacing
+                    .x
+                    .mul_add(2.5, BUTTON_SIZE.x);
             }
 
             if self.config.show_search {
@@ -1259,11 +1264,15 @@ impl FileDialog {
         ui.style_mut().always_scroll_the_only_direction = true;
         ui.style_mut().spacing.scroll.bar_width = 8.0;
 
-        let mut max_width: f32 = width;
-
-        if self.config.show_path_edit_button {
-            max_width = width - edit_button_size.x - ui.style().spacing.item_spacing.x * 2.0;
-        }
+        let max_width = if self.config.show_path_edit_button {
+            ui.style()
+                .spacing
+                .item_spacing
+                .x
+                .mul_add(-2.0, width - edit_button_size.x)
+        } else {
+            width
+        };
 
         egui::ScrollArea::horizontal()
             .auto_shrink([false, false])
@@ -1337,8 +1346,12 @@ impl FileDialog {
 
     /// Updates the view when the user currently wants to text edit the current path.
     fn ui_update_path_edit(&mut self, ui: &mut egui::Ui, width: f32, edit_button_size: egui::Vec2) {
-        let desired_width: f32 =
-            width - edit_button_size.x - ui.style().spacing.item_spacing.x * 3.0;
+        let desired_width: f32 = ui
+            .style()
+            .spacing
+            .item_spacing
+            .x
+            .mul_add(-3.0, width - edit_button_size.x);
 
         let response = egui::TextEdit::singleline(&mut self.path_edit_value)
             .desired_width(desired_width)
@@ -1411,7 +1424,7 @@ impl FileDialog {
     /// # Arguments
     ///
     /// - `re`: The [`egui::Response`] returned by the filter text edit widget
-    fn edit_search_on_text_input(&mut self, ui: &mut egui::Ui) {
+    fn edit_search_on_text_input(&mut self, ui: &egui::Ui) {
         if ui.memory(|mem| mem.focused().is_some()) {
             return;
         }
@@ -1694,7 +1707,7 @@ impl FileDialog {
         let render_filter_selection = !self.config.file_filters.is_empty()
             && (self.mode == DialogMode::SelectFile || self.mode == DialogMode::SelectMultiple);
 
-        let filter_selection_width = button_size.x * 2.0 + item_spacing.x;
+        let filter_selection_width = button_size.x.mul_add(2.0, item_spacing.x);
         let mut filter_selection_separate_line = false;
 
         ui.horizontal(|ui| {
@@ -1769,13 +1782,10 @@ impl FileDialog {
     fn get_selection_preview_text(&self) -> String {
         if self.is_selection_valid() {
             match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile => {
-                    if let Some(item) = &self.selected_item {
-                        item.file_name().to_string()
-                    } else {
-                        String::new()
-                    }
-                }
+                DialogMode::SelectDirectory | DialogMode::SelectFile => self
+                    .selected_item
+                    .as_ref()
+                    .map_or_else(String::new, |item| item.file_name().to_string()),
                 DialogMode::SelectMultiple => {
                     let mut result = String::new();
 
@@ -1818,10 +1828,7 @@ impl FileDialog {
             .wrap_mode(egui::TextWrapMode::Truncate)
             .show_ui(ui, |ui| {
                 for filter in &self.config.file_filters {
-                    let selected = match selected_filter {
-                        Some(f) => f.id == filter.id,
-                        None => false,
-                    };
+                    let selected = selected_filter.map_or(false, |f| f.id == filter.id);
 
                     if ui.selectable_label(selected, &filter.name).clicked() {
                         select_filter = Some(Some(filter.id));
@@ -2382,10 +2389,8 @@ impl FileDialog {
 impl FileDialog {
     /// Get the file filter the user currently selected.
     fn get_selected_file_filter(&self) -> Option<&FileFilter> {
-        match self.selected_file_filter {
-            Some(id) => self.config.file_filters.iter().find(|p| p.id == id),
-            None => None,
-        }
+        self.selected_file_filter
+            .and_then(|id| self.config.file_filters.iter().find(|p| p.id == id))
     }
 
     /// Gets a filtered iterator of the directory content of this object.
@@ -2430,7 +2435,7 @@ impl FileDialog {
     /// Returns the input path if an error occurs or canonicalization is disabled.
     fn canonicalize_path(&self, path: &Path) -> PathBuf {
         if self.config.canonicalize_paths {
-            fs::canonicalize(path).unwrap_or(path.to_path_buf())
+            fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
         } else {
             path.to_path_buf()
         }
@@ -2462,7 +2467,7 @@ impl FileDialog {
     /// Configuration variables are retained.
     fn reset(&mut self) {
         let config = self.config.clone();
-        *self = FileDialog::with_config(config);
+        *self = Self::with_config(config);
     }
 
     /// Refreshes the dialog.
@@ -2551,20 +2556,14 @@ impl FileDialog {
     /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
         match &self.mode {
-            DialogMode::SelectDirectory => {
-                if let Some(item) = &self.selected_item {
-                    item.is_dir()
-                } else {
-                    false
-                }
-            }
-            DialogMode::SelectFile => {
-                if let Some(item) = &self.selected_item {
-                    item.is_file()
-                } else {
-                    false
-                }
-            }
+            DialogMode::SelectDirectory => self
+                .selected_item
+                .as_ref()
+                .map_or(false, crate::DirectoryEntry::is_dir),
+            DialogMode::SelectFile => self
+                .selected_item
+                .as_ref()
+                .map_or(false, DirectoryEntry::is_file),
             DialogMode::SelectMultiple => self.get_dir_content_filtered_iter().any(|p| p.selected),
             DialogMode::SaveFile => self.file_name_input_error.is_none(),
         }
@@ -2637,7 +2636,7 @@ impl FileDialog {
                 if let Some(item) = directory_content
                     .filtered_iter_mut(
                         self.config.storage.show_hidden,
-                        &search_value.clone(),
+                        &search_value,
                         file_filter.as_ref(),
                     )
                     .nth(index.saturating_sub(1))
@@ -2680,7 +2679,7 @@ impl FileDialog {
             if let Some(item) = directory_content
                 .filtered_iter_mut(
                     self.config.storage.show_hidden,
-                    &search_value.clone(),
+                    &search_value,
                     file_filter.as_ref(),
                 )
                 .nth(index.saturating_add(1))
@@ -2741,10 +2740,9 @@ impl FileDialog {
 
     /// Opens the text field in the top panel to text edit the current path.
     fn open_path_edit(&mut self) {
-        let path = match self.current_directory() {
-            Some(path) => path.to_str().unwrap_or_default().to_string(),
-            None => String::new(),
-        };
+        let path = self.current_directory().map_or_else(String::new, |path| {
+            path.to_str().unwrap_or_default().to_string()
+        });
 
         self.path_edit_value = path;
         self.path_edit_activate = true;

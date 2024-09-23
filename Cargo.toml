@@ -40,7 +40,7 @@ serde = ["dep:serde"]
 unsafe_code = "forbid"
 
 [lints.clippy]
-# nursery = { level = "deny", priority = 0 }
+nursery = { level = "deny", priority = 0 }
 pedantic = { level = "deny", priority = 1 }
 enum_glob_use = { level = "deny", priority = 2 }
 perf = { level = "warn", priority = 3 }
