@@ -2745,12 +2745,13 @@ impl FileDialog {
         self.close_path_edit();
 
         let path = self.canonicalize_path(&PathBuf::from(&self.path_edit_value));
+
         if self.mode == DialogMode::SelectFile && path.is_file() {
             self.state = DialogState::Selected(path);
             return;
         }
 
-        let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
+        let _ = self.load_directory(&path);
     }
 
     /// Closes the text field at the top to edit the current path without loading
