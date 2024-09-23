@@ -1,6 +1,6 @@
+use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
-use std::fmt::Debug;
 
 use egui::text::{CCursor, CCursorRange};
 
