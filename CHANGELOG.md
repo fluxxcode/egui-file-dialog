@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## Unreleased
+### 🔧 Changes
+- Path edit is now selected as the desired file if the path entered is an existing file and the dialog is in `DialogueMode::SelectFile` mode. [#151](https://github.com/fluxxcode/egui-file-dialog/pull/151)
+
 ## 2024-09-10 - v0.6.1 - Bug Fixes
 ### 🐛 Bug Fixes
 - Fixed that the `select_all` keybinding can also be used in `DialogMode`'s in which only one item can be selected [#142](https://github.com/fluxxcode/egui-file-dialog/pull/142)
