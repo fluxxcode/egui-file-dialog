@@ -2743,6 +2743,13 @@ impl FileDialog {
     /// Loads the directory from the path text edit.
     fn submit_path_edit(&mut self) {
         self.close_path_edit();
+
+        let path = self.canonicalize_path(&PathBuf::from(&self.path_edit_value));
+        if self.mode == DialogMode::SelectFile && path.is_file() {
+            self.state = DialogState::Selected(path);
+            return;
+        }
+
         let _ = self.load_directory(&self.canonicalize_path(&PathBuf::from(&self.path_edit_value)));
     }
 
