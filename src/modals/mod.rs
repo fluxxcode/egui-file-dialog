@@ -11,7 +11,7 @@ pub enum ModalAction {
     /// If no action should be executed.
     None,
     /// If the file dialog should save the specified path.
-    /// Should only be used if the FileDialog is in `FileDialogMode::SaveFile` mode.
+    /// Should only be used if the `FileDialog` is in `FileDialogMode::SaveFile` mode.
     SaveFile(PathBuf),
 }
 

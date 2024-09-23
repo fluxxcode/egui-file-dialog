@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use crate::data::DirectoryEntry;
 
-/// Contains data of the FileDialog that should be stored persistently.
+/// Contains data of the `FileDialog` that should be stored persistently.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileDialogStorage {
@@ -425,9 +425,10 @@ impl QuickAccess {
     pub fn add_path(&mut self, display_name: &str, path: impl Into<PathBuf>) {
         let path = path.into();
 
-        let canonicalized_path = match self.canonicalize_paths {
-            true => fs::canonicalize(&path).unwrap_or(path),
-            false => path,
+        let canonicalized_path = if self.canonicalize_paths {
+            fs::canonicalize(&path).unwrap_or(path)
+        } else {
+            path
         };
 
         self.paths.push(QuickAccessPath {

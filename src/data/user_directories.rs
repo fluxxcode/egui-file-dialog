@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Wrapper above directories::UserDirs.
+/// Wrapper above `directories::UserDirs`.
 /// Currently only used to canonicalize the paths.
 #[derive(Default, Clone, Debug)]
 pub struct UserDirectories {
@@ -16,7 +16,7 @@ pub struct UserDirectories {
 }
 
 impl UserDirectories {
-    /// Creates a new UserDirectories object.
+    /// Creates a new `UserDirectories` object.
     /// Returns None if no valid home directory path could be retrieved from the operating system.
     pub fn new(canonicalize_paths: bool) -> Option<Self> {
         if let Some(dirs) = directories::UserDirs::new() {

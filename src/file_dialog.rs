@@ -12,6 +12,10 @@ use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 
+// Spacing multiplier used between sections in the left sidebar
+const SPACING_MULTIPLIER: f32 = 4.0;
+const BUTTON_HEIGHT: f32 = 20.0;
+
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DialogMode {
@@ -86,7 +90,7 @@ pub struct FileDialog {
     /// The state the dialog is currently in
     state: DialogState,
     /// If files are displayed in addition to directories.
-    /// This option will be ignored when mode == DialogMode::SelectFile.
+    /// This option will be ignored when mode == `DialogMode::SelectFile`.
     show_files: bool,
     /// This is an optional ID that can be set when opening the dialog to determine which
     /// operation the dialog is used for. This is useful if the dialog is used multiple times
@@ -99,17 +103,17 @@ pub struct FileDialog {
     window_id: egui::Id,
 
     /// The user directories like Home or Documents.
-    /// These are loaded once when the dialog is created or when the refresh() method is called.
+    /// These are loaded once when the dialog is created or when the `refresh()` method is called.
     user_directories: Option<UserDirectories>,
     /// The currently mounted system disks.
-    /// These are loaded once when the dialog is created or when the refresh() method is called.
+    /// These are loaded once when the dialog is created or when the `refresh()` method is called.
     system_disks: Disks,
 
     /// Contains the directories that the user opened. Every newly opened directory
     /// is pushed to the vector.
     /// Used for the navigation buttons to load the previous or next directory.
     directory_stack: Vec<PathBuf>,
-    /// An offset from the back of directory_stack telling which directory is currently open.
+    /// An offset from the back of `directory_stack` telling which directory is currently open.
     /// If 0, the user is currently in the latest open directory.
     /// If not 0, the user has used the "Previous directory" button and has
     /// opened previously opened directories.
@@ -135,9 +139,9 @@ pub struct FileDialog {
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
     selected_item: Option<DirectoryEntry>,
-    /// Buffer for the input of the file name when the dialog is in "SaveFile" mode.
+    /// Buffer for the input of the file name when the dialog is in `SaveFile` mode.
     file_name_input: String,
-    /// This variables contains the error message if the file_name_input is invalid.
+    /// This variables contains the error message if the `file_name_input` is invalid.
     /// This can be the case, for example, if a file or folder with the name already exists.
     file_name_input_error: Option<String>,
     /// If the file name input text field should request focus in the next frame.
@@ -160,11 +164,11 @@ pub struct FileDialog {
 
 /// This tests if file dialog is send and sync.
 #[cfg(test)]
-fn test_prop<T: Send + Sync>() {}
+const fn test_prop<T: Send + Sync>() {}
 
 #[test]
-fn test() {
-    test_prop::<FileDialog>()
+const fn test() {
+    test_prop::<FileDialog>();
 }
 
 impl Default for FileDialog {
@@ -185,6 +189,7 @@ impl FileDialog {
     // Creation:
 
     /// Creates a new file dialog instance with default values.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             config: FileDialogConfig::default(),
@@ -396,7 +401,7 @@ impl FileDialog {
     /// it's probably easier to use the setter methods like `FileDialog::initial_directory`
     /// or `FileDialog::default_pos`.
     ///
-    /// If you want to create a new FileDialog object with a config,
+    /// If you want to create a new `FileDialog` object with a config,
     /// you probably want to use `FileDialog::with_config`.
     ///
     /// NOTE: Any configuration that was set before `FileDialog::overwrite_config`
@@ -518,8 +523,8 @@ impl FileDialog {
     ///
     /// Since `fs::canonicalize` is used, both absolute paths and relative paths are allowed.
     /// See `FileDialog::canonicalize_paths` for more information.
-    pub fn initial_directory(mut self, directory: PathBuf) -> Self {
-        self.config.initial_directory.clone_from(&directory);
+    pub fn initial_directory(mut self, directory: &PathBuf) -> Self {
+        self.config.initial_directory.clone_from(directory);
         self
     }
 
@@ -927,7 +932,7 @@ impl FileDialog {
     pub fn selected_multiple(&self) -> Option<Vec<&Path>> {
         match &self.state {
             DialogState::SelectedMultiple(items) => {
-                Some(items.iter().map(|f| f.as_path()).collect())
+                Some(items.iter().map(std::path::PathBuf::as_path).collect())
             }
             _ => None,
         }
@@ -1020,7 +1025,7 @@ impl FileDialog {
             }
         }
 
-        self.any_focused_last_frame = ctx.memory(|r| r.focused()).is_some();
+        self.any_focused_last_frame = ctx.memory(egui::Memory::focused).is_some();
 
         // User closed the window without finishing the dialog
         if !is_open {
@@ -1066,7 +1071,7 @@ impl FileDialog {
                         self.exec_modal_action(action);
                         self.modals.pop();
                     }
-                    _ => {}
+                    ModalState::Pending => {}
                 }
             }
         });
@@ -1123,7 +1128,7 @@ impl FileDialog {
         const BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(25.0, 25.0);
 
         ui.horizontal(|ui| {
-            self.ui_update_nav_buttons(ui, &BUTTON_SIZE);
+            self.ui_update_nav_buttons(ui, BUTTON_SIZE);
 
             let mut path_display_width = ui.available_width();
 
@@ -1180,14 +1185,14 @@ impl FileDialog {
     }
 
     /// Updates the navigation buttons like parent or previous directory
-    fn ui_update_nav_buttons(&mut self, ui: &mut egui::Ui, button_size: &egui::Vec2) {
+    fn ui_update_nav_buttons(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
         if self.config.show_parent_button {
             if let Some(x) = self.current_directory() {
-                if self.ui_button_sized(ui, x.parent().is_some(), *button_size, "⏶", None) {
+                if self.ui_button_sized(ui, x.parent().is_some(), button_size, "⏶", None) {
                     let _ = self.load_parent_directory();
                 }
             } else {
-                let _ = self.ui_button_sized(ui, false, *button_size, "⏶", None);
+                let _ = self.ui_button_sized(ui, false, button_size, "⏶", None);
             }
         }
 
@@ -1195,7 +1200,7 @@ impl FileDialog {
             && self.ui_button_sized(
                 ui,
                 self.directory_offset + 1 < self.directory_stack.len(),
-                *button_size,
+                button_size,
                 "⏴",
                 None,
             )
@@ -1204,7 +1209,7 @@ impl FileDialog {
         }
 
         if self.config.show_forward_button
-            && self.ui_button_sized(ui, self.directory_offset != 0, *button_size, "⏵", None)
+            && self.ui_button_sized(ui, self.directory_offset != 0, button_size, "⏵", None)
         {
             let _ = self.load_next_directory();
         }
@@ -1213,7 +1218,7 @@ impl FileDialog {
             && self.ui_button_sized(
                 ui,
                 !self.create_directory_dialog.is_open(),
-                *button_size,
+                button_size,
                 "+",
                 None,
             )
@@ -1236,9 +1241,10 @@ impl FileDialog {
             .show(ui, |ui| {
                 const EDIT_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(22.0, 20.0);
 
-                match self.path_edit_visible {
-                    true => self.ui_update_path_edit(ui, width, EDIT_BUTTON_SIZE),
-                    false => self.ui_update_path_display(ui, width, EDIT_BUTTON_SIZE),
+                if self.path_edit_visible {
+                    self.ui_update_path_edit(ui, width, EDIT_BUTTON_SIZE);
+                } else {
+                    self.ui_update_path_display(ui, width, EDIT_BUTTON_SIZE);
                 }
             });
     }
@@ -1438,9 +1444,6 @@ impl FileDialog {
                     // Spacing for the first section in the left sidebar
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
 
-                    // Spacing multiplier used between sections in the left sidebar
-                    const SPACING_MULTIPLIER: f32 = 4.0;
-
                     // Update paths pinned to the left sidebar by the user
                     if self.config.show_pinned_folders && self.ui_update_pinned_paths(ui, spacing) {
                         spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
@@ -1639,13 +1642,14 @@ impl FileDialog {
 
     /// Updates a device entry of a device list like "Devices" or "Removable Devices".
     fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
-        let label = match device.is_removable() {
-            true => format!(
-                "{}  {}",
+        let label = if device.is_removable() {
+            format!(
+                "{} {}",
                 self.config.removable_device_icon,
                 device.display_name()
-            ),
-            false => format!("{}  {}", self.config.device_icon, device.display_name()),
+            )
+        } else {
+            format!("{} {}", self.config.device_icon, device.display_name())
         };
 
         self.ui_update_left_panel_entry(ui, &label, device.mount_point());
@@ -1654,8 +1658,6 @@ impl FileDialog {
     /// Updates the bottom panel showing the selected item and main action buttons.
     fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
         ui.add_space(5.0);
-
-        const BUTTON_HEIGHT: f32 = 20.0;
 
         // Calculate the width of the action buttons
         let label_submit_width = match self.mode {
@@ -1678,7 +1680,7 @@ impl FileDialog {
         self.ui_update_selection_preview(ui, button_size);
 
         if self.mode == DialogMode::SaveFile {
-            ui.add_space(ui.style().spacing.item_spacing.y * 2.0)
+            ui.add_space(ui.style().spacing.item_spacing.y * 2.0);
         }
 
         self.ui_update_action_buttons(ui, button_size);
@@ -1792,7 +1794,7 @@ impl FileDialog {
 
                     result
                 }
-                _ => String::new(),
+                DialogMode::SaveFile => String::new(),
             }
         } else {
             String::new()
@@ -1815,7 +1817,7 @@ impl FileDialog {
             .selected_text(selected_text)
             .wrap_mode(egui::TextWrapMode::Truncate)
             .show_ui(ui, |ui| {
-                for filter in self.config.file_filters.iter() {
+                for filter in &self.config.file_filters {
                     let selected = match selected_filter {
                         Some(f) => f.id == filter.id,
                         None => false,
@@ -1877,6 +1879,7 @@ impl FileDialog {
     }
 
     /// Updates the central panel, including the list of items in the currently open directory.
+    #[allow(clippy::too_many_lines)] // TODO: Refactor
     fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
         if let Some(err) = &self.directory_error {
             ui.centered_and_justified(|ui| {
@@ -1915,11 +1918,10 @@ impl FileDialog {
                         }
 
                         let pinned = self.is_pinned(item);
-                        let label = match pinned {
-                            true => {
-                                format!("{} {} {}", item.icon(), self.config.pinned_icon, file_name)
-                            }
-                            false => format!("{} {}", item.icon(), file_name),
+                        let label = if pinned {
+                            format!("{} {} {}", item.icon(), self.config.pinned_icon, file_name)
+                        } else {
+                            format!("{} {}", item.icon(), file_name)
                         };
 
                         let re = ui.selectable_label(primary_selected || item.selected, label);
@@ -2040,7 +2042,7 @@ impl FileDialog {
         });
     }
 
-    /// Selects every item inside the directory_content between item_a and item_b,
+    /// Selects every item inside the `directory_content` between `item_a` and `item_b`,
     /// excluding both given items.
     fn batch_select_between(
         &self,
@@ -2249,7 +2251,7 @@ impl FileDialog {
             self.exec_keybinding_selection_up();
 
             // We want to break out of input fields like search when pressing selection keys
-            if let Some(id) = ctx.memory(|r| r.focused()) {
+            if let Some(id) = ctx.memory(egui::Memory::focused) {
                 ctx.memory_mut(|w| w.surrender_focus(id));
             }
         }
@@ -2258,7 +2260,7 @@ impl FileDialog {
             self.exec_keybinding_selection_down();
 
             // We want to break out of input fields like search when pressing selection keys
-            if let Some(id) = ctx.memory(|r| r.focused()) {
+            if let Some(id) = ctx.memory(egui::Memory::focused) {
                 ctx.memory_mut(|w| w.surrender_focus(id));
             }
         }
@@ -2330,7 +2332,7 @@ impl FileDialog {
         if self.create_directory_dialog.is_open() {
             self.create_directory_dialog.close();
         } else if self.path_edit_visible {
-            self.close_path_edit()
+            self.close_path_edit();
         } else if !self.any_focused_last_frame {
             self.cancel();
             return;
@@ -2427,9 +2429,10 @@ impl FileDialog {
     /// Canonicalizes the specified path if canonicalization is enabled.
     /// Returns the input path if an error occurs or canonicalization is disabled.
     fn canonicalize_path(&self, path: &Path) -> PathBuf {
-        match self.config.canonicalize_paths {
-            true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
-            false => path.to_path_buf(),
+        if self.config.canonicalize_paths {
+            fs::canonicalize(path).unwrap_or(path.to_path_buf())
+        } else {
+            path.to_path_buf()
         }
     }
 
@@ -2490,7 +2493,7 @@ impl FileDialog {
                 let result: Vec<PathBuf> = self
                     .get_dir_content_filtered_iter()
                     .filter(|p| p.selected)
-                    .map(|p| p.to_path_buf())
+                    .map(crate::DirectoryEntry::to_path_buf)
                     .collect();
 
                 self.state = DialogState::SelectedMultiple(result);
@@ -2595,7 +2598,7 @@ impl FileDialog {
     }
 
     /// Marks the given item as the selected directory item.
-    /// Also updates the file_name_input to the name of the selected item.
+    /// Also updates the `file_name_input` to the name of the selected item.
     fn select_item(&mut self, item: &mut DirectoryEntry) {
         if self.mode == DialogMode::SelectMultiple {
             item.selected = true;
@@ -2768,8 +2771,8 @@ impl FileDialog {
         self.path_edit_visible = false;
     }
 
-    /// Loads the next directory in the directory_stack.
-    /// If directory_offset is 0 and there is no other directory to load, Ok() is returned and
+    /// Loads the next directory in the `directory_stack`.
+    /// If `directory_offset` is 0 and there is no other directory to load, `Ok()` is returned and
     /// nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_next_directory(&mut self) -> io::Result<()> {
@@ -2789,7 +2792,7 @@ impl FileDialog {
     }
 
     /// Loads the previous directory the user opened.
-    /// If there is no previous directory left, Ok() is returned and nothing changes.
+    /// If there is no previous directory left, `Ok()` is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_previous_directory(&mut self) -> io::Result<()> {
         if self.directory_offset + 1 >= self.directory_stack.len() {
@@ -2808,7 +2811,7 @@ impl FileDialog {
     }
 
     /// Loads the parent directory of the currently open directory.
-    /// If the directory doesn't have a parent, Ok() is returned and nothing changes.
+    /// If the directory doesn't have a parent, `Ok()` is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
     fn load_parent_directory(&mut self) -> io::Result<()> {
         if let Some(x) = self.current_directory() {
@@ -2821,7 +2824,7 @@ impl FileDialog {
     }
 
     /// Reloads the currently open directory.
-    /// If no directory is currently open, Ok() will be returned.
+    /// If no directory is currently open, `Ok()` will be returned.
     /// Otherwise, the result of the directory loading operation is returned.
     ///
     /// In most cases, this function should not be called directly.

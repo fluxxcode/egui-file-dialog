@@ -46,7 +46,7 @@ impl KeyBinding {
     ///    keybindings, however, it is desired that when they are pressed, the text fields
     ///    lose focus and the keybinding is executed.
     pub fn pressed(&self, ctx: &egui::Context, ignore_if_any_focused: bool) -> bool {
-        let any_focused = ctx.memory(|r| r.focused()).is_some();
+        let any_focused = ctx.memory(egui::Memory::focused).is_some();
 
         // We want to suppress keyboard input when any other widget like
         // text fields have focus.

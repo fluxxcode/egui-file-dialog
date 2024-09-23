@@ -29,7 +29,7 @@ impl OverwriteFileModal {
 impl OverwriteFileModal {
     /// Submits the modal and triggers the action to save the file.
     fn submit(&mut self) {
-        self.state = ModalState::Close(ModalAction::SaveFile(self.path.to_path_buf()));
+        self.state = ModalState::Close(ModalAction::SaveFile(self.path.clone()));
     }
 
     /// Closes the modal without overwriting the file.
@@ -80,7 +80,7 @@ impl FileDialogModal for OverwriteFileModal {
                     .add_sized(BUTTON_SIZE, egui::Button::new(&config.labels.cancel))
                     .clicked()
                 {
-                    self.cancel()
+                    self.cancel();
                 }
 
                 ui.add_space(ui.style().spacing.item_spacing.x);

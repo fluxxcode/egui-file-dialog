@@ -72,18 +72,18 @@
 //!
 //! | Name | Description | Default |
 //! | --- | --- | --- |
-//! | submit | Submit the current action or open the currently selected folder | `Enter` |
-//! | cancel | Cancel the current action | `Escape` |
-//! | parent | Open the parent directory | `ALT` + `↑` |
-//! | back | Go back | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace` |
-//! | forward | Go forward | `Mouse button 2` <br/> `ALT` + `→` |
-//! | reload | Reload the file dialog data and the currently open directory | `F5` |
-//! | new_folder | Open the dialog to create a new folder | `CTRL` + `N` |
-//! | edit_path | Text edit the current path | `/` |
-//! | home_edit_path | Open the home directory and start text editing the path | `~` |
-//! | selection_up | Move the selection one item up | `↑` |
-//! | selection_down | Move the selection one item down | `↓` |
-//! | select_all | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` |
+//! | `submit` | Submit the current action or open the currently selected folder | `Enter` |
+//! | `cancel` | Cancel the current action | `Escape` |
+//! | `parent` | Open the parent directory | `ALT` + `↑` |
+//! | `back` | Go back | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace` |
+//! | `forward` | Go forward | `Mouse button 2` <br/> `ALT` + `→` |
+//! | `reload` | Reload the file dialog data and the currently open directory | `F5` |
+//! | `new_folder` | Open the dialog to create a new folder | `CTRL` + `N` |
+//! | `edit_path` | Text edit the current path | `/` |
+//! | `home_edit_path` | Open the home directory and start text editing the path | `~` |
+//! | `selection_up` | Move the selection one item up | `↑` |
+//! | `selection_down` | Move the selection one item down | `↓` |
+//! | `select_all` | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` |
 //!
 //! ### Customization
 //! Many things can be customized so that the dialog can be used in different situations. \

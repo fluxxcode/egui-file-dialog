@@ -36,14 +36,14 @@ impl DirectoryEntry {
 
     /// Returns true if the item is a directory.
     /// False is returned if the item is a file or the path did not exist when the
-    /// DirectoryEntry object was created.
+    /// `DirectoryEntry` object was created.
     pub fn is_dir(&self) -> bool {
         self.is_directory
     }
 
     /// Returns true if the item is a file.
     /// False is returned if the item is a directory or the path did not exist when the
-    /// DirectoryEntry object was created.
+    /// `DirectoryEntry` object was created.
     pub fn is_file(&self) -> bool {
         !self.is_directory
     }
@@ -103,7 +103,7 @@ impl DirectoryEntry {
             })
     }
 
-    /// Returns whether the path this DirectoryEntry points to is considered hidden.
+    /// Returns whether the path this `DirectoryEntry` points to is considered hidden.
     pub fn is_hidden(&self) -> bool {
         is_path_hidden(self)
     }
@@ -121,8 +121,8 @@ impl DirectoryContent {
         Self { content: vec![] }
     }
 
-    /// Create a new DirectoryContent object and loads the contents of the given path.
-    /// Use include_files to include or exclude files in the content list.
+    /// Create a new `DirectoryContent` object and loads the contents of the given path.
+    /// Use `include_files` to include or exclude files in the content list.
     pub fn from_path(
         config: &FileDialogConfig,
         path: &Path,
@@ -185,7 +185,7 @@ impl DirectoryContent {
     }
 
     pub fn reset_multi_selection(&mut self) {
-        for item in self.content.iter_mut() {
+        for item in &mut self.content {
             item.selected = false;
         }
     }
@@ -234,12 +234,14 @@ fn load_directory(
         };
     }
 
-    result.sort_by(|a, b| match a.is_dir() == b.is_dir() {
-        true => a.file_name().cmp(b.file_name()),
-        false => match a.is_dir() {
-            true => std::cmp::Ordering::Less,
-            false => std::cmp::Ordering::Greater,
-        },
+    result.sort_by(|a, b| {
+        if a.is_dir() == b.is_dir() {
+            a.file_name().cmp(b.file_name())
+        } else if a.is_dir() {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Greater
+        }
     });
 
     Ok(result)
@@ -273,8 +275,9 @@ fn gen_path_icon(config: &FileDialogConfig, path: &Path) -> String {
         }
     }
 
-    match path.is_dir() {
-        true => config.default_folder_icon.clone(),
-        false => config.default_file_icon.clone(),
+    if path.is_dir() {
+        config.default_folder_icon.clone()
+    } else {
+        config.default_file_icon.clone()
     }
 }
