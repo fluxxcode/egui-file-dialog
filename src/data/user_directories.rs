@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 /// Wrapper above directories::UserDirs.
 /// Currently only used to canonicalize the paths.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct UserDirectories {
     home_dir: Option<PathBuf>,
 

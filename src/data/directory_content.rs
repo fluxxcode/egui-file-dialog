@@ -110,7 +110,7 @@ impl DirectoryEntry {
 }
 
 /// Contains the content of a directory.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DirectoryContent {
     content: Vec<DirectoryEntry>,
 }

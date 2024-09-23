@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 /// Wrapper above the sysinfo::Disk struct.
 /// Used for helper functions and so that more flexibility is guaranteed in the future if
 /// the names of the disks are generated dynamically.
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Disk {
     mount_point: PathBuf,
     display_name: String,
@@ -46,7 +46,7 @@ impl Disk {
 }
 
 /// Wrapper above the sysinfo::Disks struct
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Disks {
     disks: Vec<Disk>,
 }
