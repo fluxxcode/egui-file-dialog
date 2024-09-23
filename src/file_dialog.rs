@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
@@ -71,6 +72,7 @@ pub enum DialogState {
 ///     }
 /// }
 /// ```
+#[derive(Debug)]
 pub struct FileDialog {
     /// The configuration of the file dialog
     config: FileDialogConfig,
@@ -169,6 +171,12 @@ impl Default for FileDialog {
     /// Creates a new file dialog instance with default values.
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Debug for dyn FileDialogModal + Send + Sync {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<FileDialogModal>")
     }
 }
 

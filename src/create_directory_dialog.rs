@@ -29,6 +29,7 @@ impl CreateDirectoryResponse {
 }
 
 /// A dialog to create new folder.
+#[derive(Debug)]
 pub struct CreateDirectoryDialog {
     /// If the dialog is currently open
     open: bool,
