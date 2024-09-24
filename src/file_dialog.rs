@@ -12,10 +12,6 @@ use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 
-// Spacing multiplier used between sections in the left sidebar
-const SPACING_MULTIPLIER: f32 = 4.0;
-const BUTTON_HEIGHT: f32 = 20.0;
-
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DialogMode {
@@ -523,8 +519,8 @@ impl FileDialog {
     ///
     /// Since `fs::canonicalize` is used, both absolute paths and relative paths are allowed.
     /// See `FileDialog::canonicalize_paths` for more information.
-    pub fn initial_directory(mut self, directory: &PathBuf) -> Self {
-        self.config.initial_directory.clone_from(directory);
+    pub fn initial_directory(mut self, directory: PathBuf) -> Self {
+        self.config.initial_directory = directory;
         self
     }
 
@@ -1451,6 +1447,8 @@ impl FileDialog {
     /// and system disks (Devices, Removable Devices).
     fn ui_update_left_panel(&mut self, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            // Spacing multiplier used between sections in the left sidebar
+            const SPACING_MULTIPLIER: f32 = 4.0;
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
@@ -1670,6 +1668,7 @@ impl FileDialog {
 
     /// Updates the bottom panel showing the selected item and main action buttons.
     fn ui_update_bottom_panel(&mut self, ui: &mut egui::Ui) {
+        const BUTTON_HEIGHT: f32 = 20.0;
         ui.add_space(5.0);
 
         // Calculate the width of the action buttons
