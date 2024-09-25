@@ -1655,7 +1655,7 @@ impl FileDialog {
     fn ui_update_device_entry(&mut self, ui: &mut egui::Ui, device: &Disk) {
         let label = if device.is_removable() {
             format!(
-                "{} {}",
+                "{}  {}",
                 self.config.removable_device_icon,
                 device.display_name()
             )
