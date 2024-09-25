@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Wrapper above the sysinfo::Disk struct.
+/// Wrapper above the `sysinfo::Disk` struct.
 /// Used for helper functions and so that more flexibility is guaranteed in the future if
 /// the names of the disks are generated dynamically.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -12,7 +12,7 @@ pub struct Disk {
 }
 
 impl Disk {
-    /// Create a new Disk object based on the data of a sysinfo::Disk.
+    /// Create a new Disk object based on the data of a `sysinfo::Disk`.
     pub fn from_sysinfo_disk(disk: &sysinfo::Disk, canonicalize_paths: bool) -> Self {
         Self {
             mount_point: Self::canonicalize(disk.mount_point(), canonicalize_paths),
@@ -31,21 +31,22 @@ impl Disk {
         &self.display_name
     }
 
-    pub fn is_removable(&self) -> bool {
+    pub const fn is_removable(&self) -> bool {
         self.is_removable
     }
 
     /// Canonicalizes the given path.
     /// Returns the input path in case of an error.
     fn canonicalize(path: &Path, canonicalize: bool) -> PathBuf {
-        match canonicalize {
-            true => fs::canonicalize(path).unwrap_or(path.to_path_buf()),
-            false => path.to_path_buf(),
+        if canonicalize {
+            fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+        } else {
+            path.to_path_buf()
         }
     }
 }
 
-/// Wrapper above the sysinfo::Disks struct
+/// Wrapper above the `sysinfo::Disks` struct
 #[derive(Default, Debug)]
 pub struct Disks {
     disks: Vec<Disk>,
@@ -57,14 +58,14 @@ impl Disks {
         let disks = sysinfo::Disks::new_with_refreshed_list();
 
         let mut result: Vec<Disk> = Vec::new();
-        for disk in disks.iter() {
+        for disk in &disks {
             result.push(Disk::from_sysinfo_disk(disk, canonicalize_paths));
         }
 
         Self { disks: result }
     }
 
-    /// Very simple wrapper method of the disks .iter() method.
+    /// Very simple wrapper method of the disks `.iter()` method.
     /// No trait is implemented since this is currently only used internal.
     pub fn iter(&self) -> std::slice::Iter<'_, Disk> {
         self.disks.iter()

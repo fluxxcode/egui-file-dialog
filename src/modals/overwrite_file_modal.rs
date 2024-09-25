@@ -18,7 +18,7 @@ impl OverwriteFileModal {
     /// # Arguments
     ///
     /// * `path` - The path selected for overwriting.
-    pub fn new(path: PathBuf) -> Self {
+    pub const fn new(path: PathBuf) -> Self {
         Self {
             state: ModalState::Pending,
             path,
@@ -29,7 +29,7 @@ impl OverwriteFileModal {
 impl OverwriteFileModal {
     /// Submits the modal and triggers the action to save the file.
     fn submit(&mut self) {
-        self.state = ModalState::Close(ModalAction::SaveFile(self.path.to_path_buf()));
+        self.state = ModalState::Close(ModalAction::SaveFile(self.path.clone()));
     }
 
     /// Closes the modal without overwriting the file.
@@ -71,7 +71,9 @@ impl FileDialogModal for OverwriteFileModal {
             ui.add_space(SECTION_SPACING);
 
             ui.horizontal(|ui| {
-                let required_width = BUTTON_SIZE.x * 2.0 + ui.style().spacing.item_spacing.x;
+                let required_width = BUTTON_SIZE
+                    .x
+                    .mul_add(2.0, ui.style().spacing.item_spacing.x);
                 let padding = (ui.available_width() - required_width) / 2.0;
 
                 ui.add_space(padding);
@@ -80,7 +82,7 @@ impl FileDialogModal for OverwriteFileModal {
                     .add_sized(BUTTON_SIZE, egui::Button::new(&config.labels.cancel))
                     .clicked()
                 {
-                    self.cancel()
+                    self.cancel();
                 }
 
                 ui.add_space(ui.style().spacing.item_spacing.x);
