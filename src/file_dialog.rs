@@ -1660,7 +1660,7 @@ impl FileDialog {
                 device.display_name()
             )
         } else {
-            format!("{} {}", self.config.device_icon, device.display_name())
+            format!("{}  {}", self.config.device_icon, device.display_name())
         };
 
         self.ui_update_left_panel_entry(ui, &label, device.mount_point());
