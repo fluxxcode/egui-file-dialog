@@ -4,6 +4,7 @@
 ### 🔧 Changes
 - Path edit is now selected as the desired file if the path entered is an existing file and the dialog is in `DialogueMode::SelectFile` mode [#151](https://github.com/fluxxcode/egui-file-dialog/pull/151)
 - Implemented `Debug` trait for `FileDialog` [#152](https://github.com/fluxxcode/egui-file-dialog/pull/152)
+- Added several lints and general code cleanup [#153](https://github.com/fluxxcode/egui-file-dialog/pull/153) (thanks [@bircni](https://github.com/bircni)!)
 
 ## 2024-09-10 - v0.6.1 - Bug Fixes
 ### 🐛 Bug Fixes
