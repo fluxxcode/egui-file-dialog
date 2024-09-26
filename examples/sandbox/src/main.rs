@@ -62,7 +62,7 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("My egui application");
-            egui::widgets::global_dark_light_mode_buttons(ui);
+            egui::widgets::global_theme_preference_buttons(ui);
 
             ui.add_space(5.0);
 

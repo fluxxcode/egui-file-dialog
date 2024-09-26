@@ -4,6 +4,7 @@ use std::{fs, io};
 use crate::config::{FileDialogConfig, FileFilter};
 
 /// Contains the metadata of a directory item.
+///
 /// This struct is mainly there so that the metadata can be loaded once and not that
 /// a request has to be sent to the OS every frame using, for example, `path.is_file()`.
 #[derive(Debug, Default, Clone)]
@@ -167,7 +168,7 @@ impl DirectoryContent {
         show_hidden: bool,
         search_value: &'s str,
         file_filter: Option<&'s FileFilter>,
-    ) -> impl Iterator<Item = &DirectoryEntry> + 's {
+    ) -> impl Iterator<Item = &'s DirectoryEntry> + 's {
         self.content
             .iter()
             .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value, file_filter))
@@ -178,7 +179,7 @@ impl DirectoryContent {
         show_hidden: bool,
         search_value: &'s str,
         file_filter: Option<&'s FileFilter>,
-    ) -> impl Iterator<Item = &mut DirectoryEntry> + 's {
+    ) -> impl Iterator<Item = &'s mut DirectoryEntry> + 's {
         self.content
             .iter_mut()
             .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value, file_filter))

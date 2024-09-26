@@ -1821,7 +1821,7 @@ impl FileDialog {
         // If none, no item was selected by the user.
         let mut select_filter: Option<Option<egui::Id>> = None;
 
-        egui::containers::ComboBox::from_id_source(self.window_id.with("file_filter_selection"))
+        egui::containers::ComboBox::from_id_salt(self.window_id.with("file_filter_selection"))
             .width(width)
             .selected_text(selected_text)
             .wrap_mode(egui::TextWrapMode::Truncate)
