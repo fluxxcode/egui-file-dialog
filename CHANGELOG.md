@@ -2,7 +2,7 @@
 
 ## Unreleased
 ### 🚨 Breaking Changes
-- Updated `egui` from version `0.28.0` to version `0.29.0` [#155](https://github.com/fluxxcode/egui-file-dialog/pull/155) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Updated `egui` from version `0.28.0` to version `0.29.1` [#155](https://github.com/fluxxcode/egui-file-dialog/pull/155) and [#157](https://github.com/fluxxcode/egui-file-dialog/pull/157) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 
 ### 🔧 Changes
 - Path edit is now selected as the desired file if the path entered is an existing file and the dialog is in `DialogueMode::SelectFile` mode [#151](https://github.com/fluxxcode/egui-file-dialog/pull/151)
