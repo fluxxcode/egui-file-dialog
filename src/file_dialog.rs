@@ -2764,9 +2764,9 @@ impl FileDialog {
         }
 
         // Assume the user wants to save the given path when
-        //   - An extension to the file name is given
-        //   - The path is not an existing directory
-        //   - The parent directory exists
+        //   - an extension to the file name is given,
+        //   - the path is not an existing directory,
+        //   - and the parent directory exists
         // Otherwise we will assume the user wants to open the path as a directory.
         if self.mode == DialogMode::SaveFile
             && path.extension().is_some()
