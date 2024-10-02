@@ -1,5 +1,9 @@
 # egui-file-dialog changelog
 
+## Unreleased
+### 🔧 Changes
+- Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
+
 ## 2024-10-01 - v0.7.0 - egui update and QoL changes
 ### 🚨 Breaking Changes
 - Updated `egui` from version `0.28.0` to version `0.29.1` [#155](https://github.com/fluxxcode/egui-file-dialog/pull/155) and [#157](https://github.com/fluxxcode/egui-file-dialog/pull/157) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
