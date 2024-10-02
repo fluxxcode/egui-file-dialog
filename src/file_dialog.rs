@@ -540,6 +540,19 @@ impl FileDialog {
         self
     }
 
+    /// Sets if the path edit is allowed to select the path as the file to save
+    /// if it does not have an extension.
+    ///
+    /// This can lead to confusion if the user wants to open a directory with the path edit,
+    /// types it incorrectly and the dialog tries to select the incorrectly typed folder as
+    /// the file to be saved.
+    ///
+    /// This only affects the `DialogMode::SaveFile` mode.
+    pub const fn allow_path_edit_to_save_file_without_extension(mut self, allow: bool) -> Self {
+        self.config.allow_path_edit_to_save_file_without_extension = allow;
+        self
+    }
+
     /// Sets the separator of the directories when displaying a path.
     /// Currently only used when the current path is displayed in the top panel.
     pub fn directory_separator(mut self, separator: &str) -> Self {
@@ -2764,12 +2777,14 @@ impl FileDialog {
         }
 
         // Assume the user wants to save the given path when
-        //   - an extension to the file name is given,
+        //   - an extension to the file name is given or the path
+        //     edit is allowed to save a file without extension,
         //   - the path is not an existing directory,
         //   - and the parent directory exists
         // Otherwise we will assume the user wants to open the path as a directory.
         if self.mode == DialogMode::SaveFile
-            && path.extension().is_some()
+            && (path.extension().is_some()
+                || self.config.allow_path_edit_to_save_file_without_extension)
             && !path.is_dir()
             && path.parent().is_some_and(std::path::Path::exists)
         {

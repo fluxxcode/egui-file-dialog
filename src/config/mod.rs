@@ -84,6 +84,15 @@ pub struct FileDialogConfig {
     /// If the user is allowed to select an already existing file when the dialog is
     /// in `DialogMode::SaveFile` mode.
     pub allow_file_overwrite: bool,
+    /// If the path edit is allowed to select the path as the file to save
+    /// if it does not have an extension.
+    ///
+    /// This can lead to confusion if the user wants to open a directory with the path edit,
+    /// types it incorrectly and the dialog tries to select the incorrectly typed folder as
+    /// the file to be saved.
+    ///
+    /// This only affects the `DialogMode::SaveFile` mode.
+    pub allow_path_edit_to_save_file_without_extension: bool,
     /// Sets the separator of the directories when displaying a path.
     /// Currently only used when the current path is displayed in the top panel.
     pub directory_separator: String,
@@ -196,6 +205,7 @@ impl Default for FileDialogConfig {
             initial_directory: std::env::current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             allow_file_overwrite: true,
+            allow_path_edit_to_save_file_without_extension: false,
             directory_separator: String::from(">"),
             canonicalize_paths: true,
 
