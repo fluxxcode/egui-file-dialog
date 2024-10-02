@@ -2506,19 +2506,23 @@ impl FileDialog {
                 // Should always contain a value since `is_selection_valid` is used to
                 // validate the selection.
                 if let Some(path) = self.current_directory() {
-                    let mut full_path = path.to_path_buf();
-                    full_path.push(&self.file_name_input);
-
-                    if full_path.exists() {
-                        self.open_modal(Box::new(OverwriteFileModal::new(full_path)));
-
-                        return;
-                    }
-
-                    self.state = DialogState::Selected(full_path);
+                    let full_path = path.join(&self.file_name_input);
+                    self.submit_save_file(full_path);
                 }
             }
         }
+    }
+
+    /// Submits the file dialog with the specified path and opens the `OverwriteFileModal`
+    /// if the path already exists.
+    fn submit_save_file(&mut self, path: PathBuf) {
+        if path.exists() {
+            self.open_modal(Box::new(OverwriteFileModal::new(path)));
+
+            return;
+        }
+
+        self.state = DialogState::Selected(path);
     }
 
     /// Cancels the dialog.
@@ -2756,6 +2760,20 @@ impl FileDialog {
 
         if self.mode == DialogMode::SelectFile && path.is_file() {
             self.state = DialogState::Selected(path);
+            return;
+        }
+
+        // Assume the user wants to save the given path when
+        //   - An extension to the file name is given
+        //   - The path is not an existing directory
+        //   - The parent directory exists
+        // Otherwise we will assume the user wants to open the path as a directory.
+        if self.mode == DialogMode::SaveFile
+            && path.extension().is_some()
+            && !path.is_dir()
+            && path.parent().is_some_and(|p| p.exists())
+        {
+            self.submit_save_file(path);
             return;
         }
 
