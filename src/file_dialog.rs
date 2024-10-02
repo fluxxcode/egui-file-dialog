@@ -2771,7 +2771,7 @@ impl FileDialog {
         if self.mode == DialogMode::SaveFile
             && path.extension().is_some()
             && !path.is_dir()
-            && path.parent().is_some_and(|p| p.exists())
+            && path.parent().is_some_and(std::path::Path::exists)
         {
             self.submit_save_file(path);
             return;
