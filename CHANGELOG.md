@@ -3,6 +3,7 @@
 ## Unreleased
 ### 🔧 Changes
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
+- Updated sysinfo to version `0.32` [#161](https://github.com/fluxxcode/egui-file-dialog/pull/161)
 
 ## 2024-10-01 - v0.7.0 - egui update and QoL changes
 ### 🚨 Breaking Changes

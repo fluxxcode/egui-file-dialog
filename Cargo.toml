@@ -27,7 +27,7 @@ egui = "0.29.1"
 directories = "5.0"
 
 # Used to fetch disks
-sysinfo = { version = "0.31", default-features = false, features = ["disk"] }
+sysinfo = { version = "0.32", default-features = false, features = ["disk"] }
 
 # Used for persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
