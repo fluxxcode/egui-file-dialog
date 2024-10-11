@@ -21,7 +21,7 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = "0.29.1"
+egui = { version = "0.29.1", default-features = false }
 
 # Used to fetch user folders
 directories = "5.0"
@@ -33,8 +33,9 @@ sysinfo = { version = "0.32", default-features = false, features = ["disk"] }
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
-default = ["serde"]
+default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
+default_fonts = ["egui/default_fonts"]
 
 [lints.rust]
 unsafe_code = "forbid"
