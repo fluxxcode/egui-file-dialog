@@ -964,6 +964,13 @@ impl FileDialog {
         }
     }
 
+    /// Returns the currently active directory entry.
+    ///
+    /// If no file has been highlighted, it returns the active directory.
+    pub const fn active_entry(&self) -> Option<&DirectoryEntry> {
+        self.selected_item.as_ref()
+    }
+
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
     /// See `FileDialog::open` for more information.
