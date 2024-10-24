@@ -116,8 +116,6 @@ pub struct FileDialog {
     directory_offset: usize,
     /// The content of the currently open directory
     directory_content: DirectoryContent,
-    /// This variable contains the error message if an error occurred while loading the directory.
-    directory_error: Option<String>,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -205,7 +203,6 @@ impl FileDialog {
             directory_stack: Vec::new(),
             directory_offset: 0,
             directory_content: DirectoryContent::new(),
-            directory_error: None,
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -578,6 +575,14 @@ impl FileDialog {
     /// already canonicalized path is then set as the initial directory.
     pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
+        self
+    }
+
+    /// If the directory content should be loaded via a separate thread.
+    /// This prevents the application from blocking when loading large directories
+    /// or from slow hard drives.
+    pub const fn load_via_thread(mut self, load_via_thread: bool) -> Self {
+        self.config.load_via_thread = load_via_thread;
         self
     }
 
@@ -1901,13 +1906,22 @@ impl FileDialog {
     /// Updates the central panel, including the list of items in the currently open directory.
     #[allow(clippy::too_many_lines)] // TODO: Refactor
     fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
-        if let Some(err) = &self.directory_error {
+        if let Some(err) = &self.directory_content.error() {
             ui.centered_and_justified(|ui| {
                 ui.colored_label(
                     ui.style().visuals.error_fg_color,
                     format!("{} {}", self.config.err_icon, err),
                 );
             });
+
+            return;
+        }
+
+        if self.directory_content.is_loading() {
+            ui.centered_and_justified(|ui| {
+                ui.spinner();
+            });
+
             return;
         }
 
@@ -2544,10 +2558,11 @@ impl FileDialog {
     /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
         match &self.mode {
-            DialogMode::SelectDirectory => self
-                .selected_item
-                .as_ref()
-                .map_or(false, crate::DirectoryEntry::is_dir),
+            DialogMode::SelectDirectory => {
+                self.selected_item
+                    .as_ref()
+                    .map_or(false, crate::DirectoryEntry::is_dir)
+            }
             DialogMode::SelectFile => self
                 .selected_item
                 .as_ref()
@@ -2751,39 +2766,35 @@ impl FileDialog {
     /// If `directory_offset` is 0 and there is no other directory to load, `Ok()` is returned and
     /// nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
-    fn load_next_directory(&mut self) -> io::Result<()> {
+    fn load_next_directory(&mut self) {
         if self.directory_offset == 0 {
             // There is no next directory that can be loaded
-            return Ok(());
+            return;
         }
 
         self.directory_offset -= 1;
 
         // Copy path and load directory
         if let Some(path) = self.current_directory() {
-            return self.load_directory_content(path.to_path_buf().as_path());
+            self.load_directory_content(path.to_path_buf().as_path());
         }
-
-        Ok(())
     }
 
     /// Loads the previous directory the user opened.
     /// If there is no previous directory left, `Ok()` is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
-    fn load_previous_directory(&mut self) -> io::Result<()> {
+    fn load_previous_directory(&mut self) {
         if self.directory_offset + 1 >= self.directory_stack.len() {
             // There is no previous directory that can be loaded
-            return Ok(());
+            return;
         }
 
         self.directory_offset += 1;
 
         // Copy path and load directory
         if let Some(path) = self.current_directory() {
-            return self.load_directory_content(path.to_path_buf().as_path());
+            self.load_directory_content(path.to_path_buf().as_path());
         }
-
-        Ok(())
     }
 
     /// Loads the parent directory of the currently open directory.
@@ -2805,12 +2816,10 @@ impl FileDialog {
     ///
     /// In most cases, this function should not be called directly.
     /// Instead, `refresh` should be used to reload all other data like system disks too.
-    fn reload_directory(&mut self) -> io::Result<()> {
+    fn reload_directory(&mut self) {
         if let Some(x) = self.current_directory() {
-            return self.load_directory_content(x.to_path_buf().as_path());
+            self.load_directory_content(x.to_path_buf().as_path());
         }
-
-        Ok(())
     }
 
     /// Loads the given directory and updates the `directory_stack`.
@@ -2835,7 +2844,7 @@ impl FileDialog {
         self.directory_stack.push(path.to_path_buf());
         self.directory_offset = 0;
 
-        self.load_directory_content(path)?;
+        self.load_directory_content(path);
 
         let mut dir_entry = DirectoryEntry::from_path(&self.config, path);
         self.select_item(&mut dir_entry);
@@ -2848,24 +2857,14 @@ impl FileDialog {
     }
 
     /// Loads the directory content of the given path.
-    fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
-        self.directory_error = None;
-
-        self.directory_content = match DirectoryContent::from_path(
+    fn load_directory_content(&mut self, path: &Path) {
+        self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,
             self.show_files,
             self.config.storage.show_hidden,
             self.get_selected_file_filter(),
-        ) {
-            Ok(content) => content,
-            Err(err) => {
-                self.directory_content.clear();
-                self.selected_item = None;
-                self.directory_error = Some(err.to_string());
-                return Err(err);
-            }
-        };
+        );
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;
@@ -2873,7 +2872,5 @@ impl FileDialog {
         if self.mode == DialogMode::SaveFile {
             self.file_name_input_error = self.validate_file_name_input();
         }
-
-        Ok(())
     }
 }

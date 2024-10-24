@@ -98,6 +98,10 @@ pub struct FileDialogConfig {
     pub directory_separator: String,
     /// If the paths in the file dialog should be canonicalized before use.
     pub canonicalize_paths: bool,
+    /// If the directory content should be loaded via a separate thread.
+    /// This prevents the application from blocking when loading large directories
+    /// or from slow hard drives.
+    pub load_via_thread: bool,
 
     /// The icon that is used to display error messages.
     pub err_icon: String,
@@ -208,6 +212,7 @@ impl Default for FileDialogConfig {
             allow_path_edit_to_save_file_without_extension: false,
             directory_separator: String::from(">"),
             canonicalize_paths: true,
+            load_via_thread: true,
 
             err_icon: String::from("⚠"),
             warn_icon: String::from("⚠"),

@@ -1,5 +1,8 @@
 use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::sync::{mpsc, Arc};
+use std::{fs, io, thread};
+
+use egui::mutex::Mutex;
 
 use crate::config::{FileDialogConfig, FileFilter};
 
@@ -111,15 +114,28 @@ impl DirectoryEntry {
 }
 
 /// Contains the content of a directory.
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct DirectoryContent {
     content: Vec<DirectoryEntry>,
+    content_recv: Option<Arc<Mutex<mpsc::Receiver<Result<Vec<DirectoryEntry>, std::io::Error>>>>>,
+    /// Contains the error message if there was an error when loading the directory.
+    error: Option<String>,
+}
+
+impl std::fmt::Debug for DirectoryContent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
 }
 
 impl DirectoryContent {
     /// Create a new object with empty content
     pub const fn new() -> Self {
-        Self { content: vec![] }
+        Self {
+            content: vec![],
+            content_recv: None,
+            error: None,
+        }
     }
 
     /// Create a new `DirectoryContent` object and loads the contents of the given path.
@@ -130,10 +146,42 @@ impl DirectoryContent {
         include_files: bool,
         show_hidden: bool,
         file_filter: Option<&FileFilter>,
-    ) -> io::Result<Self> {
-        Ok(Self {
-            content: load_directory(config, path, include_files, show_hidden, file_filter)?,
-        })
+    ) -> Self {
+        if config.load_via_thread {
+            let (tx, rx) = mpsc::channel();
+
+            let c = config.clone();
+            let p = path.to_path_buf();
+            let f = file_filter.cloned();
+            thread::spawn(move || {
+                let _ = tx.send(load_directory(
+                    &c,
+                    &p,
+                    include_files,
+                    show_hidden,
+                    f.as_ref(),
+                ));
+            });
+
+            Self {
+                content: Vec::new(),
+                content_recv: Some(Arc::new(Mutex::new(rx))),
+                error: None,
+            }
+        } else {
+            match load_directory(config, path, include_files, show_hidden, file_filter) {
+                Ok(c) => Self {
+                    content: c,
+                    content_recv: None,
+                    error: None,
+                },
+                Err(err) => Self {
+                    content: Vec::new(),
+                    content_recv: None,
+                    error: Some(err.to_string()),
+                },
+            }
+        }
     }
 
     pub fn filtered_iter<'s>(
@@ -152,6 +200,39 @@ impl DirectoryContent {
         self.content
             .iter_mut()
             .filter(|p| apply_search_value(p, search_value))
+    }
+
+    pub fn is_loading(&mut self) -> bool {
+        let mut rm_recv = false;
+
+        if let Some(recv) = &self.content_recv {
+            match recv.lock().try_recv() {
+                Ok(t) => {
+                    match t {
+                        Ok(t) => self.content = t,
+                        Err(err) => self.error = Some(err.to_string()),
+                    }
+                    rm_recv = true;
+                }
+                Err(err) => match err {
+                    mpsc::TryRecvError::Empty => return true,
+                    mpsc::TryRecvError::Disconnected => {
+                        self.error = Some("thread ended unexpectedly".to_owned());
+                        rm_recv = true;
+                    }
+                },
+            }
+        }
+
+        if rm_recv {
+            self.content_recv = None;
+        }
+
+        false
+    }
+
+    pub fn error(&self) -> Option<&str> {
+        self.error.as_deref()
     }
 
     pub fn reset_multi_selection(&mut self) {
@@ -257,7 +338,8 @@ fn is_path_hidden(item: &DirectoryEntry) -> bool {
 }
 
 /// Generates the icon for the specific path.
-/// The default icon configuration is taken into account, as well as any configured file icon filters.
+/// The default icon configuration is taken into account, as well as any configured
+/// file icon filters.
 fn gen_path_icon(config: &FileDialogConfig, path: &Path) -> String {
     for def in &config.file_icon_filters {
         if (def.filter)(path) {
