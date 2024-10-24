@@ -5,6 +5,7 @@
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
 - Updated sysinfo to version `0.32` [#161](https://github.com/fluxxcode/egui-file-dialog/pull/161)
 - Made default egui fonts an optional feature `default_fonts` [#163](https://github.com/fluxxcode/egui-file-dialog/pull/163) (thanks [@StarStarJ](https://github.com/StarStarJ)!)
+- Filter directory when loading to improve performance [#169](https://github.com/fluxxcode/egui-file-dialog/pull/169)
 
 ## 2024-10-01 - v0.7.0 - egui update and QoL changes
 ### 🚨 Breaking Changes
