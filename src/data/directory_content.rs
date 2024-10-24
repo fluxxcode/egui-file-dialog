@@ -128,61 +128,36 @@ impl DirectoryContent {
         config: &FileDialogConfig,
         path: &Path,
         include_files: bool,
+        show_hidden: bool,
+        file_filter: Option<&FileFilter>,
     ) -> io::Result<Self> {
         Ok(Self {
-            content: load_directory(config, path, include_files)?,
+            content: load_directory(config, path, include_files, show_hidden, file_filter)?,
         })
-    }
-
-    /// Checks if the given directory entry is visible with the applied filters.
-    fn is_entry_visible(
-        dir_entry: &DirectoryEntry,
-        show_hidden: bool,
-        search_value: &str,
-        file_filter: Option<&FileFilter>,
-    ) -> bool {
-        if !search_value.is_empty()
-            && !dir_entry
-                .file_name()
-                .to_lowercase()
-                .contains(&search_value.to_lowercase())
-        {
-            return false;
-        }
-
-        if !show_hidden && dir_entry.is_hidden() {
-            return false;
-        }
-
-        if let Some(file_filter) = file_filter {
-            if dir_entry.is_file() && !(file_filter.filter)(dir_entry.as_path()) {
-                return false;
-            }
-        }
-
-        true
     }
 
     pub fn filtered_iter<'s>(
         &'s self,
-        show_hidden: bool,
         search_value: &'s str,
-        file_filter: Option<&'s FileFilter>,
     ) -> impl Iterator<Item = &'s DirectoryEntry> + 's {
-        self.content
-            .iter()
-            .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value, file_filter))
+        self.content.iter().filter(|p| {
+            search_value.is_empty()
+                || p.file_name()
+                    .to_lowercase()
+                    .contains(&search_value.to_lowercase())
+        })
     }
 
     pub fn filtered_iter_mut<'s>(
         &'s mut self,
-        show_hidden: bool,
         search_value: &'s str,
-        file_filter: Option<&'s FileFilter>,
     ) -> impl Iterator<Item = &'s mut DirectoryEntry> + 's {
-        self.content
-            .iter_mut()
-            .filter(move |p| Self::is_entry_visible(p, show_hidden, search_value, file_filter))
+        self.content.iter_mut().filter(|p| {
+            search_value.is_empty()
+                || p.file_name()
+                    .to_lowercase()
+                    .contains(&search_value.to_lowercase())
+        })
     }
 
     pub fn reset_multi_selection(&mut self) {
@@ -212,6 +187,8 @@ fn load_directory(
     config: &FileDialogConfig,
     path: &Path,
     include_files: bool,
+    show_hidden: bool,
+    file_filter: Option<&FileFilter>,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let paths = fs::read_dir(path)?;
 
@@ -227,6 +204,16 @@ fn load_directory(
 
                 if !include_files && entry.is_file() {
                     continue;
+                }
+
+                if !show_hidden && entry.is_hidden() {
+                    continue;
+                }
+
+                if let Some(file_filter) = file_filter {
+                    if entry.is_file() && !(file_filter.filter)(entry.as_path()) {
+                        continue;
+                    }
                 }
 
                 result.push(entry);

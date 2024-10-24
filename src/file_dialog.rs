@@ -1183,6 +1183,7 @@ impl FileDialog {
                                     )
                                     .clicked()
                             {
+                                self.refresh();
                                 ui.close_menu();
                             }
                         });
@@ -1861,7 +1862,7 @@ impl FileDialog {
         if let Some(i) = select_filter {
             self.selected_file_filter = i;
             self.selected_item = None;
-            self.directory_content.reset_multi_selection();
+            self.refresh();
         }
     }
 
@@ -1915,7 +1916,6 @@ impl FileDialog {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     let mut data = std::mem::take(&mut self.directory_content);
-                    let file_filter = self.get_selected_file_filter().cloned();
 
                     // If the multi selection should be reset, excluding the currently
                     // selected primary item
@@ -1924,11 +1924,7 @@ impl FileDialog {
                     // The primary selected item is used for item a.
                     let mut batch_select_item_b: Option<DirectoryEntry> = None;
 
-                    for item in data.filtered_iter_mut(
-                        self.config.storage.show_hidden,
-                        &self.search_value.clone(),
-                        file_filter.as_ref(),
-                    ) {
+                    for item in data.filtered_iter_mut(&self.search_value.clone()) {
                         let file_name = item.file_name();
 
                         let mut primary_selected = false;
@@ -2025,11 +2021,7 @@ impl FileDialog {
 
                     // Reset the multi selection except the currently selected primary item
                     if reset_multi_selection {
-                        for item in data.filtered_iter_mut(
-                            self.config.storage.show_hidden,
-                            &self.search_value.clone(),
-                            file_filter.as_ref(),
-                        ) {
+                        for item in data.filtered_iter_mut(&self.search_value) {
                             if let Some(selected_item) = &self.selected_item {
                                 if selected_item.path_eq(item) {
                                     continue;
@@ -2071,18 +2063,10 @@ impl FileDialog {
     ) {
         // Get the position of item a and item b
         let pos_a = directory_content
-            .filtered_iter(
-                self.config.storage.show_hidden,
-                &self.search_value,
-                self.get_selected_file_filter(),
-            )
+            .filtered_iter(&self.search_value)
             .position(|p| p.path_eq(item_a));
         let pos_b = directory_content
-            .filtered_iter(
-                self.config.storage.show_hidden,
-                &self.search_value,
-                self.get_selected_file_filter(),
-            )
+            .filtered_iter(&self.search_value)
             .position(|p| p.path_eq(item_b));
 
         // If both items where found inside the directory entry, mark every item between
@@ -2104,11 +2088,7 @@ impl FileDialog {
                 }
 
                 for item in directory_content
-                    .filtered_iter_mut(
-                        self.config.storage.show_hidden,
-                        &self.search_value,
-                        self.get_selected_file_filter(),
-                    )
+                    .filtered_iter_mut(&self.search_value)
                     .enumerate()
                     .filter(|(i, _)| i > &min && i < &max)
                     .map(|(_, p)| p)
@@ -2287,11 +2267,7 @@ impl FileDialog {
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.select_all, true)
             && self.mode == DialogMode::SelectMultiple
         {
-            for item in self.directory_content.filtered_iter_mut(
-                self.config.storage.show_hidden,
-                &self.search_value,
-                self.get_selected_file_filter().cloned().as_ref(),
-            ) {
+            for item in self.directory_content.filtered_iter_mut(&self.search_value) {
                 item.selected = true;
             }
         }
@@ -2407,11 +2383,7 @@ impl FileDialog {
 
     /// Gets a filtered iterator of the directory content of this object.
     fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item = &DirectoryEntry> {
-        self.directory_content.filtered_iter(
-            self.config.storage.show_hidden,
-            &self.search_value,
-            self.get_selected_file_filter(),
-        )
+        self.directory_content.filtered_iter(&self.search_value)
     }
 
     /// Opens the dialog to create a new folder.
@@ -2637,24 +2609,15 @@ impl FileDialog {
 
         let mut directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
-        let file_filter = self.get_selected_file_filter().cloned();
 
         let index = directory_content
-            .filtered_iter(
-                self.config.storage.show_hidden,
-                &search_value,
-                file_filter.as_ref(),
-            )
+            .filtered_iter(&search_value)
             .position(|p| p.path_eq(item));
 
         if let Some(index) = index {
             if index != 0 {
                 if let Some(item) = directory_content
-                    .filtered_iter_mut(
-                        self.config.storage.show_hidden,
-                        &search_value,
-                        file_filter.as_ref(),
-                    )
+                    .filtered_iter_mut(&search_value)
                     .nth(index.saturating_sub(1))
                 {
                     self.select_item(item);
@@ -2681,23 +2644,14 @@ impl FileDialog {
 
         let mut directory_content = std::mem::take(&mut self.directory_content);
         let search_value = std::mem::take(&mut self.search_value);
-        let file_filter = self.get_selected_file_filter().cloned();
 
         let index = directory_content
-            .filtered_iter(
-                self.config.storage.show_hidden,
-                &search_value,
-                file_filter.as_ref(),
-            )
+            .filtered_iter(&search_value)
             .position(|p| p.path_eq(item));
 
         if let Some(index) = index {
             if let Some(item) = directory_content
-                .filtered_iter_mut(
-                    self.config.storage.show_hidden,
-                    &search_value,
-                    file_filter.as_ref(),
-                )
+                .filtered_iter_mut(&search_value)
                 .nth(index.saturating_add(1))
             {
                 self.select_item(item);
@@ -2719,11 +2673,7 @@ impl FileDialog {
         let mut directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
-            .filtered_iter_mut(
-                self.config.storage.show_hidden,
-                &self.search_value.clone(),
-                self.get_selected_file_filter().cloned().as_ref(),
-            )
+            .filtered_iter_mut(&self.search_value.clone())
             .next()
         {
             self.select_item(item);
@@ -2740,11 +2690,7 @@ impl FileDialog {
         let mut directory_content = std::mem::take(&mut self.directory_content);
 
         if let Some(item) = directory_content
-            .filtered_iter_mut(
-                self.config.storage.show_hidden,
-                &self.search_value.clone(),
-                self.get_selected_file_filter().cloned().as_ref(),
-            )
+            .filtered_iter_mut(&self.search_value.clone())
             .last()
         {
             self.select_item(item);
@@ -2905,16 +2851,21 @@ impl FileDialog {
     fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
         self.directory_error = None;
 
-        self.directory_content =
-            match DirectoryContent::from_path(&self.config, path, self.show_files) {
-                Ok(content) => content,
-                Err(err) => {
-                    self.directory_content.clear();
-                    self.selected_item = None;
-                    self.directory_error = Some(err.to_string());
-                    return Err(err);
-                }
-            };
+        self.directory_content = match DirectoryContent::from_path(
+            &self.config,
+            path,
+            self.show_files,
+            self.config.storage.show_hidden,
+            self.get_selected_file_filter(),
+        ) {
+            Ok(content) => content,
+            Err(err) => {
+                self.directory_content.clear();
+                self.selected_item = None;
+                self.directory_error = Some(err.to_string());
+                return Err(err);
+            }
+        };
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;
