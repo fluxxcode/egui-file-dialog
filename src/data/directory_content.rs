@@ -140,14 +140,18 @@ impl DirectoryContent {
         &'s self,
         search_value: &'s str,
     ) -> impl Iterator<Item = &'s DirectoryEntry> + 's {
-        self.content.iter().filter(|p| apply_search_value(p, search_value))
+        self.content
+            .iter()
+            .filter(|p| apply_search_value(p, search_value))
     }
 
     pub fn filtered_iter_mut<'s>(
         &'s mut self,
         search_value: &'s str,
     ) -> impl Iterator<Item = &'s mut DirectoryEntry> + 's {
-        self.content.iter_mut().filter(|p| apply_search_value(p, search_value))
+        self.content
+            .iter_mut()
+            .filter(|p| apply_search_value(p, search_value))
     }
 
     pub fn reset_multi_selection(&mut self) {
@@ -173,7 +177,11 @@ impl DirectoryContent {
 }
 
 fn apply_search_value(entry: &DirectoryEntry, value: &str) -> bool {
-    value.is_empty() || entry.file_name().to_lowercase().contains(&value.to_lowercase())
+    value.is_empty()
+        || entry
+            .file_name()
+            .to_lowercase()
+            .contains(&value.to_lowercase())
 }
 
 /// Loads the contents of the given directory.
