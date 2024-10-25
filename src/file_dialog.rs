@@ -998,7 +998,8 @@ impl FileDialog {
 
     /// Returns the currently active directory entry.
     ///
-    /// If no file has been highlighted, it returns the active directory.
+    /// This is either the currently highlighted entry, or the currently active directory
+    /// if nothing is being highlighted.
     pub const fn active_entry(&self) -> Option<&DirectoryEntry> {
         self.selected_item.as_ref()
     }
