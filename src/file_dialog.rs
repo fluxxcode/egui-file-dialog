@@ -405,7 +405,7 @@ impl FileDialog {
     /// to show the information for.
     ///
     /// This function has no effect if the dialog state is currently not `DialogState::Open`.
-    pub fn update_with_custom_right_panel(
+    pub fn update_with_right_panel_ui(
         &mut self,
         ctx: &egui::Context,
         f: &mut FileDialogUiCallback,
