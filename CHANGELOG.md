@@ -4,6 +4,7 @@
 ### ✨ Features
 - Added `FileDialog::update_with_right_panel_ui` to add a custom right panel to the file dialog UI and added `FileDialog::active_selected_entries`
   and `FileDialog::active_entry` to get information about the current active item/s [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Add option to show system files in the hamburger menu [#173](https://github.com/fluxxcode/egui-file-dialog/pull/173)
 
 ### 🔧 Changes
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
