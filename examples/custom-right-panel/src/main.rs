@@ -1,7 +1,7 @@
-use {egui_file_dialog::DialogMode, std::path::PathBuf};
+use std::path::PathBuf;
 
 use eframe::egui;
-use egui_file_dialog::FileDialog;
+use egui_file_dialog::{DialogMode, FileDialog};
 
 struct MyApp {
     file_dialog: FileDialog,
