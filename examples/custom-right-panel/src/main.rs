@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use {egui_file_dialog::DialogMode, std::path::PathBuf};
 
 use eframe::egui;
 use egui_file_dialog::FileDialog;
@@ -6,12 +6,6 @@ use egui_file_dialog::FileDialog;
 struct MyApp {
     file_dialog: FileDialog,
     selected_items: Option<Vec<PathBuf>>,
-    mode: SelMode,
-}
-
-enum SelMode {
-    Single,
-    Multiple,
 }
 
 impl MyApp {
@@ -19,7 +13,6 @@ impl MyApp {
         Self {
             file_dialog: FileDialog::new(),
             selected_items: None,
-            mode: SelMode::Single,
         }
     }
 }
@@ -28,11 +21,9 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Select single").clicked() {
-                self.mode = SelMode::Single;
                 self.file_dialog.select_file();
             }
             if ui.button("Select multiple").clicked() {
-                self.mode = SelMode::Multiple;
                 self.file_dialog.select_multiple();
             }
 
@@ -47,12 +38,8 @@ impl eframe::App for MyApp {
             }
 
             self.file_dialog
-                .update_with_right_panel_ui(ctx, &mut |ui, dia| match self.mode {
-                    SelMode::Single => {
-                        ui.heading("Active item");
-                        ui.small(format!("{:#?}", dia.active_entry()));
-                    }
-                    SelMode::Multiple => {
+                .update_with_right_panel_ui(ctx, &mut |ui, dia| match dia.mode() {
+                    DialogMode::SelectMultiple => {
                         ui.heading("Selected items");
                         ui.separator();
                         egui::ScrollArea::vertical()
@@ -64,17 +51,21 @@ impl eframe::App for MyApp {
                                 }
                             });
                     }
+                    _ => {
+                        ui.heading("Active item");
+                        ui.small(format!("{:#?}", dia.active_entry()));
+                    }
                 });
 
-            match self.mode {
-                SelMode::Single => {
-                    if let Some(item) = self.file_dialog.take_selected() {
-                        self.selected_items = Some(vec![item]);
-                    }
-                }
-                SelMode::Multiple => {
+            match self.file_dialog.mode() {
+                DialogMode::SelectMultiple => {
                     if let Some(items) = self.file_dialog.take_selected_multiple() {
                         self.selected_items = Some(items);
+                    }
+                }
+                _ => {
+                    if let Some(item) = self.file_dialog.take_selected() {
+                        self.selected_items = Some(vec![item]);
                     }
                 }
             }
