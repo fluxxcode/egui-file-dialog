@@ -21,6 +21,7 @@ fn get_labels_german() -> FileDialogLabels {
 
         reload: "⟲  Neu laden".to_string(),
         show_hidden: " Versteckte Dateien anzeigen".to_string(),
+        show_system_files: " Systemdateien anzeigen".to_string(),
 
         heading_pinned: "Angeheftet".to_string(),
         heading_places: "Orte".to_string(),

@@ -854,6 +854,16 @@ impl FileDialog {
         self
     }
 
+    /// Sets whether the show system files option inside the top panel
+    /// menu should be visible.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` or
+    /// `FileDialog::show_menu_button` is disabled.
+    pub const fn show_system_files_option(mut self, show_system_files_option: bool) -> Self {
+        self.config.show_system_files_option = show_system_files_option;
+        self
+    }
+
     /// Sets whether the search input should be visible in the top panel.
     ///
     /// Has no effect when `FileDialog::show_top_panel` is disabled.
@@ -1161,7 +1171,9 @@ impl FileDialog {
 
             // Menu button containing reload button and different options
             if self.config.show_menu_button
-                && (self.config.show_reload_button || self.config.show_hidden_option)
+                && (self.config.show_reload_button
+                    || self.config.show_hidden_option
+                    || self.config.show_system_files_option)
             {
                 ui.allocate_ui_with_layout(
                     BUTTON_SIZE,
@@ -1180,6 +1192,18 @@ impl FileDialog {
                                     .checkbox(
                                         &mut self.config.storage.show_hidden,
                                         &self.config.labels.show_hidden,
+                                    )
+                                    .clicked()
+                            {
+                                self.refresh();
+                                ui.close_menu();
+                            }
+
+                            if self.config.show_system_files_option
+                                && ui
+                                    .checkbox(
+                                        &mut self.config.storage.show_system_files,
+                                        &self.config.labels.show_system_files,
                                     )
                                     .clicked()
                             {
@@ -2856,6 +2880,7 @@ impl FileDialog {
             path,
             self.show_files,
             self.config.storage.show_hidden,
+            self.config.storage.show_system_files,
             self.get_selected_file_filter(),
         ) {
             Ok(content) => content,

@@ -18,6 +18,8 @@ pub struct FileDialogStorage {
     pub pinned_folders: Vec<DirectoryEntry>,
     /// If hidden files and folders should be listed inside the directory view.
     pub show_hidden: bool,
+    /// If system files should be listed inside the directory view.
+    pub show_system_files: bool,
 }
 
 impl Default for FileDialogStorage {
@@ -26,6 +28,7 @@ impl Default for FileDialogStorage {
         Self {
             pinned_folders: Vec::new(),
             show_hidden: false,
+            show_system_files: false,
         }
     }
 }
@@ -175,6 +178,8 @@ pub struct FileDialogConfig {
     pub show_reload_button: bool,
     /// If the show hidden files and folders option inside the top panel menu should be visible.
     pub show_hidden_option: bool,
+    /// If the show system files option inside the top panel menu should be visible.
+    pub show_system_files_option: bool,
     /// If the search input in the top panel should be visible.
     pub show_search: bool,
 
@@ -245,6 +250,7 @@ impl Default for FileDialogConfig {
             show_menu_button: true,
             show_reload_button: true,
             show_hidden_option: true,
+            show_system_files_option: true,
             show_search: true,
 
             show_left_panel: true,
