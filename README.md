@@ -37,6 +37,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
 - Create a new folder
 - Keyboard navigation
 - Option to show or hide hidden files and folders
+- Option to show or hide system files
 - Navigation buttons to open the parent or previous directories
 - Search for items in a directory
 - Add file filters the user can select from a dropdown
