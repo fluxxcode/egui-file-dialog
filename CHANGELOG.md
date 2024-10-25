@@ -1,6 +1,10 @@
 # egui-file-dialog changelog
 
 ## Unreleased
+### ✨ Features
+- Added `FileDialog::update_with_right_panel_ui` to add a custom right panel to the file dialog UI and added `FileDialog::active_selected_entries`
+  and `FileDialog::active_entry` to get information about the current active item/s [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+
 ### 🔧 Changes
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
 - Updated sysinfo to version `0.32` [#161](https://github.com/fluxxcode/egui-file-dialog/pull/161)
