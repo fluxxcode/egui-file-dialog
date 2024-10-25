@@ -2565,8 +2565,7 @@ impl FileDialog {
             }
             DialogMode::SelectMultiple => {
                 let result: Vec<PathBuf> = self
-                    .get_dir_content_filtered_iter()
-                    .filter(|p| p.selected)
+                    .active_selected_entries()
                     .map(crate::DirectoryEntry::to_path_buf)
                     .collect();
 
@@ -2581,6 +2580,13 @@ impl FileDialog {
                 }
             }
         }
+    }
+
+    /// Returns an iterator over the currently selected entries in [`SelectMultiple`] mode.
+    ///
+    /// [`SelectMultiple`]: DialogMode::SelectMultiple
+    pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
+        self.get_dir_content_filtered_iter().filter(|p| p.selected)
     }
 
     /// Submits the file dialog with the specified path and opens the `OverwriteFileModal`
