@@ -49,6 +49,7 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
   - Customize file and folder icons
   - Add custom quick access sections to the left sidebar
   - Customize keybindings used by the file dialog
+  - Add a custom UI to the file dialog in the right panel
 
 ## Example
 Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/master/examples) folder.
@@ -140,6 +141,7 @@ A few highlights of the customization are listed below. For all possible customi
 - Update the text labels that the dialog uses. See [Multilingual support](#multilingual-support)
 - Customize file and folder icons using `FileDialog::set_file_icon` (Currently only unicode is supported)
 - Customize keybindings used by the file dialog using `FileDialog::keybindings`. See [Keybindings](#keybindings)
+- Add a right panel with custom UI using `FileDialog::update_with_right_panel_ui`
 
 Since the dialog uses the egui style to look like the rest of the application, the appearance can be customized with `egui::Style` and `egui::Context::set_style`.
 
@@ -188,15 +190,20 @@ FileDialog::new()
 With the options the dialog then looks like this:
 <img src="media/customization_demo.png">
 
-The smallest possible dialog can be generated with the following configuration:
-
+If you want to display your own information in the file dialog, you can update the file dialog with
+`update_with_right_panel_ui` instead of `update`. This allows e.g. to display custom image previews or further
+information about the selected item. See [custom-right-panel](https://github.com/fluxxcode/egui-file-dialog/tree/master/examples/custom-right-panel) for the full example.
 ```rust
-FileDialog::new()
-    .title_bar(false)
-    .show_top_panel(false)
-    .show_left_panel(false)
+fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    // Update the dialog with a custom right panel
+    self.file_dialog.update_with_right_panel_ui(ctx, &mut |ui, dialog| {
+        ui.label("This is a custom label");
+        ui.add_space(5.0);
+        ui.label(format!("Currently selected item:\n{:?}", dialog.active_entry()));
+    });
+}
 ```
-<img src="media/customization_demo_2.png">
+<img src="media/right_panel_demo.png">
 
 ## Multilingual support
 For desktop applications it is often necessary to offer different languages. While the dialog currently only offers English labels by default, the labels are fully customizable. This makes it possible to adapt the labels to different languages.
