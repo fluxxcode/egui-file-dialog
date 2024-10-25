@@ -1000,11 +1000,16 @@ impl FileDialog {
     ///
     /// This is either the currently highlighted entry, or the currently active directory
     /// if nothing is being highlighted.
+    ///
+    /// For the [`DialogMode::SelectMultiple`] counterpart,
+    /// see [`FileDialog::active_selected_entries`].
     pub const fn active_entry(&self) -> Option<&DirectoryEntry> {
         self.selected_item.as_ref()
     }
 
     /// Returns an iterator over the currently selected entries in [`SelectMultiple`] mode.
+    ///
+    /// For the counterpart in single selection modes, see [`FileDialog::active_entry`].
     ///
     /// [`SelectMultiple`]: DialogMode::SelectMultiple
     pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
