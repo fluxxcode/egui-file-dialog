@@ -129,10 +129,18 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         show_hidden: bool,
+        show_system_files: bool,
         file_filter: Option<&FileFilter>,
     ) -> io::Result<Self> {
         Ok(Self {
-            content: load_directory(config, path, include_files, show_hidden, file_filter)?,
+            content: load_directory(
+                config,
+                path,
+                include_files,
+                show_hidden,
+                show_system_files,
+                file_filter,
+            )?,
         })
     }
 
@@ -190,6 +198,7 @@ fn load_directory(
     path: &Path,
     include_files: bool,
     show_hidden: bool,
+    show_system_files: bool,
     file_filter: Option<&FileFilter>,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let paths = fs::read_dir(path)?;
@@ -200,7 +209,7 @@ fn load_directory(
             Ok(entry) => {
                 let entry = DirectoryEntry::from_path(config, entry.path().as_path());
 
-                if entry.is_system_file() {
+                if !show_system_files && entry.is_system_file() {
                     continue;
                 }
 
