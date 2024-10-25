@@ -180,6 +180,12 @@ impl Debug for dyn FileDialogModal + Send + Sync {
     }
 }
 
+/// Callback type to inject a custom egui ui inside the file dialog's ui.
+///
+/// Also gives access to the file dialog, since it would otherwise be inaccessible
+/// inside the closure.
+type FileDialogUiCallback<'a> = dyn FnMut(&mut egui::Ui, &mut FileDialog) + 'a;
+
 impl FileDialog {
     // ------------------------------------------------------------------------
     // Creation:
@@ -383,7 +389,33 @@ impl FileDialog {
         }
 
         self.update_keybindings(ctx);
-        self.update_ui(ctx);
+        self.update_ui(ctx, None);
+
+        self
+    }
+
+    /// Do an [update](`Self::update`) with a custom right panel ui.
+    ///
+    /// Example use cases:
+    /// - Show custom information for a file (size, MIME type, etc.)
+    /// - Embed a preview, like a thumbnail for an image
+    /// - Add controls for custom open options, like open as read-only, etc.
+    ///
+    /// See [`active_entry`](Self::active_entry) to get the active directory entry
+    /// to show the information for.
+    ///
+    /// This function has no effect if the dialog state is currently not `DialogState::Open`.
+    pub fn update_with_right_panel_ui(
+        &mut self,
+        ctx: &egui::Context,
+        f: &mut FileDialogUiCallback,
+    ) -> &Self {
+        if self.state != DialogState::Open {
+            return self;
+        }
+
+        self.update_keybindings(ctx);
+        self.update_ui(ctx, Some(f));
 
         self
     }
@@ -964,6 +996,26 @@ impl FileDialog {
         }
     }
 
+    /// Returns the currently active directory entry.
+    ///
+    /// This is either the currently highlighted entry, or the currently active directory
+    /// if nothing is being highlighted.
+    ///
+    /// For the [`DialogMode::SelectMultiple`] counterpart,
+    /// see [`FileDialog::active_selected_entries`].
+    pub const fn active_entry(&self) -> Option<&DirectoryEntry> {
+        self.selected_item.as_ref()
+    }
+
+    /// Returns an iterator over the currently selected entries in [`SelectMultiple`] mode.
+    ///
+    /// For the counterpart in single selection modes, see [`FileDialog::active_entry`].
+    ///
+    /// [`SelectMultiple`]: DialogMode::SelectMultiple
+    pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
+        self.get_dir_content_filtered_iter().filter(|p| p.selected)
+    }
+
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
     /// See `FileDialog::open` for more information.
@@ -985,7 +1037,13 @@ impl FileDialog {
 /// UI methods
 impl FileDialog {
     /// Main update method of the UI
-    fn update_ui(&mut self, ctx: &egui::Context) {
+    ///
+    /// Takes an optional callback to show a custom right panel.
+    fn update_ui(
+        &mut self,
+        ctx: &egui::Context,
+        right_panel_fn: Option<&mut FileDialogUiCallback>,
+    ) {
         let mut is_open = true;
 
         if self.config.as_modal {
@@ -1014,6 +1072,17 @@ impl FileDialog {
                     .width_range(90.0..=250.0)
                     .show_inside(ui, |ui| {
                         self.ui_update_left_panel(ui);
+                    });
+            }
+
+            // Optionally, show a custom right panel (see `update_with_custom_right_panel`)
+            if let Some(f) = right_panel_fn {
+                egui::SidePanel::right(self.window_id.with("right_panel"))
+                    // Unlike the left panel, we have no control over the contents, so
+                    // we don't restrict the width. It's up to the user to make the UI presentable.
+                    .resizable(true)
+                    .show_inside(ui, |ui| {
+                        f(ui, self);
                     });
             }
 
@@ -2480,8 +2549,7 @@ impl FileDialog {
             }
             DialogMode::SelectMultiple => {
                 let result: Vec<PathBuf> = self
-                    .get_dir_content_filtered_iter()
-                    .filter(|p| p.selected)
+                    .active_selected_entries()
                     .map(crate::DirectoryEntry::to_path_buf)
                     .collect();
 
