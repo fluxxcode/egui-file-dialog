@@ -1004,6 +1004,13 @@ impl FileDialog {
         self.selected_item.as_ref()
     }
 
+    /// Returns an iterator over the currently selected entries in [`SelectMultiple`] mode.
+    ///
+    /// [`SelectMultiple`]: DialogMode::SelectMultiple
+    pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
+        self.get_dir_content_filtered_iter().filter(|p| p.selected)
+    }
+
     /// Returns the ID of the operation for which the dialog is currently being used.
     ///
     /// See `FileDialog::open` for more information.
@@ -2580,13 +2587,6 @@ impl FileDialog {
                 }
             }
         }
-    }
-
-    /// Returns an iterator over the currently selected entries in [`SelectMultiple`] mode.
-    ///
-    /// [`SelectMultiple`]: DialogMode::SelectMultiple
-    pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
-        self.get_dir_content_filtered_iter().filter(|p| p.selected)
     }
 
     /// Submits the file dialog with the specified path and opens the `OverwriteFileModal`
