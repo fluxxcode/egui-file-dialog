@@ -49,10 +49,10 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
   - Customize file and folder icons
   - Add custom quick access sections to the left sidebar
   - Customize keybindings used by the file dialog
-  - Add a custom UI to the file dialog in the right panel
+  - Add a right panel with custom UI using
 
 ## Example
-Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/master/examples) folder.
+Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples) folder.
 
 The following example shows the basic use of the file dialog with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.
 
@@ -192,7 +192,7 @@ With the options the dialog then looks like this:
 
 If you want to display your own information in the file dialog, you can update the file dialog with
 `update_with_right_panel_ui` instead of `update`. This allows e.g. to display custom image previews or further
-information about the selected item. See [custom-right-panel](https://github.com/fluxxcode/egui-file-dialog/tree/master/examples/custom-right-panel) for the full example.
+information about the selected item. See [custom-right-panel](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples/custom-right-panel) for the full example.
 ```rust
 fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
     // Update the dialog with a custom right panel
