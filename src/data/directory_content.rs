@@ -177,28 +177,12 @@ impl DirectoryContent {
         config: &FileDialogConfig,
         path: &Path,
         include_files: bool,
-        show_hidden: bool,
-        show_system_files: bool,
         file_filter: Option<&FileFilter>,
     ) -> Self {
         if config.load_via_thread {
-            Self::with_thread(
-                config,
-                path,
-                include_files,
-                show_hidden,
-                show_system_files,
-                file_filter,
-            )
+            Self::with_thread(config, path, include_files, file_filter)
         } else {
-            Self::without_thread(
-                config,
-                path,
-                include_files,
-                show_hidden,
-                show_system_files,
-                file_filter,
-            )
+            Self::without_thread(config, path, include_files, file_filter)
         }
     }
 
@@ -206,8 +190,6 @@ impl DirectoryContent {
         config: &FileDialogConfig,
         path: &Path,
         include_files: bool,
-        show_hidden: bool,
-        show_system_files: bool,
         file_filter: Option<&FileFilter>,
     ) -> Self {
         let (tx, rx) = mpsc::channel();
@@ -216,14 +198,7 @@ impl DirectoryContent {
         let p = path.to_path_buf();
         let f = file_filter.cloned();
         thread::spawn(move || {
-            let _ = tx.send(load_directory(
-                &c,
-                &p,
-                include_files,
-                show_hidden,
-                show_system_files,
-                f.as_ref(),
-            ));
+            let _ = tx.send(load_directory(&c, &p, include_files, f.as_ref()));
         });
 
         Self {
@@ -237,18 +212,9 @@ impl DirectoryContent {
         config: &FileDialogConfig,
         path: &Path,
         include_files: bool,
-        show_hidden: bool,
-        show_system_files: bool,
         file_filter: Option<&FileFilter>,
     ) -> Self {
-        match load_directory(
-            config,
-            path,
-            include_files,
-            show_hidden,
-            show_system_files,
-            file_filter,
-        ) {
+        match load_directory(config, path, include_files, file_filter) {
             Ok(c) => Self {
                 state: DirectoryContentState::Success,
                 content: c,
@@ -357,8 +323,6 @@ fn load_directory(
     config: &FileDialogConfig,
     path: &Path,
     include_files: bool,
-    show_hidden: bool,
-    show_system_files: bool,
     file_filter: Option<&FileFilter>,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let paths = fs::read_dir(path)?;
@@ -369,7 +333,7 @@ fn load_directory(
             Ok(entry) => {
                 let entry = DirectoryEntry::from_path(config, entry.path().as_path());
 
-                if !show_system_files && entry.is_system_file() {
+                if !config.storage.show_system_files && entry.is_system_file() {
                     continue;
                 }
 
@@ -377,7 +341,7 @@ fn load_directory(
                     continue;
                 }
 
-                if !show_hidden && entry.is_hidden() {
+                if !config.storage.show_hidden && entry.is_hidden() {
                     continue;
                 }
 

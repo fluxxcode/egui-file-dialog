@@ -255,7 +255,7 @@ impl Default for FileDialogConfig {
             show_menu_button: true,
             show_reload_button: true,
             show_hidden_option: true,
-            show_system_files_option: SHOW_SYSTEM_FILES_OPTION_DEFAULT,
+            show_system_files_option: true,
             show_search: true,
 
             show_left_panel: true,
@@ -266,13 +266,6 @@ impl Default for FileDialogConfig {
         }
     }
 }
-
-/// On Windows, displaying system files is troublesome, the option should only
-/// be enabled on explicit request.
-#[cfg(windows)]
-const SHOW_SYSTEM_FILES_OPTION_DEFAULT: bool = false;
-#[cfg(not(windows))]
-const SHOW_SYSTEM_FILES_OPTION_DEFAULT: bool = true;
 
 impl FileDialogConfig {
     /// Sets the storage used by the file dialog.
