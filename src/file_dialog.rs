@@ -1681,7 +1681,7 @@ impl FileDialog {
         // This is done so that we don't have to clone the user directories and
         // configured display names.
         let user_directories = std::mem::take(&mut self.user_directories);
-        let config = std::mem::take(&mut self.config);
+        let labels = std::mem::take(&mut self.config.labels);
 
         let mut visible = false;
 
@@ -1690,33 +1690,33 @@ impl FileDialog {
             ui.label(self.config.labels.heading_places.as_str());
 
             if let Some(path) = dirs.home_dir() {
-                self.ui_update_left_panel_entry(ui, &config.labels.home_dir, path);
+                self.ui_update_left_panel_entry(ui, &labels.home_dir, path);
             }
 
             if let Some(path) = dirs.desktop_dir() {
-                self.ui_update_left_panel_entry(ui, &config.labels.desktop_dir, path);
+                self.ui_update_left_panel_entry(ui, &labels.desktop_dir, path);
             }
             if let Some(path) = dirs.document_dir() {
-                self.ui_update_left_panel_entry(ui, &config.labels.documents_dir, path);
+                self.ui_update_left_panel_entry(ui, &labels.documents_dir, path);
             }
             if let Some(path) = dirs.download_dir() {
-                self.ui_update_left_panel_entry(ui, &config.labels.downloads_dir, path);
+                self.ui_update_left_panel_entry(ui, &labels.downloads_dir, path);
             }
             if let Some(path) = dirs.audio_dir() {
-                self.ui_update_left_panel_entry(ui, &config.labels.audio_dir, path);
+                self.ui_update_left_panel_entry(ui, &labels.audio_dir, path);
             }
             if let Some(path) = dirs.picture_dir() {
-                self.ui_update_left_panel_entry(ui, &config.labels.pictures_dir, path);
+                self.ui_update_left_panel_entry(ui, &labels.pictures_dir, path);
             }
             if let Some(path) = dirs.video_dir() {
-                self.ui_update_left_panel_entry(ui, &config.labels.videos_dir, path);
+                self.ui_update_left_panel_entry(ui, &labels.videos_dir, path);
             }
 
             visible = true;
         }
 
         self.user_directories = user_directories;
-        self.config = config;
+        self.config.labels = labels;
 
         visible
     }
