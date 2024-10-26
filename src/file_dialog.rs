@@ -9,7 +9,9 @@ use crate::config::{
     Filter, QuickAccess,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
-use crate::data::{DirectoryContent, DirectoryEntry, Disk, Disks, UserDirectories};
+use crate::data::{
+    DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
+};
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 
 /// Represents the mode the file dialog is currently in.
@@ -116,8 +118,6 @@ pub struct FileDialog {
     directory_offset: usize,
     /// The content of the currently open directory
     directory_content: DirectoryContent,
-    /// This variable contains the error message if an error occurred while loading the directory.
-    directory_error: Option<String>,
 
     /// The dialog that is shown when the user wants to create a new directory.
     create_directory_dialog: CreateDirectoryDialog,
@@ -210,8 +210,7 @@ impl FileDialog {
 
             directory_stack: Vec::new(),
             directory_offset: 0,
-            directory_content: DirectoryContent::new(),
-            directory_error: None,
+            directory_content: DirectoryContent::default(),
 
             create_directory_dialog: CreateDirectoryDialog::new(),
 
@@ -338,7 +337,10 @@ impl FileDialog {
             .id
             .map_or_else(|| egui::Id::new(self.get_window_title()), |id| id);
 
-        self.load_directory(&self.gen_initial_directory(&self.config.initial_directory))
+        self.load_directory(&self.gen_initial_directory(&self.config.initial_directory));
+
+        // TODO: Dont return a result from this method
+        Ok(())
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
@@ -610,6 +612,14 @@ impl FileDialog {
     /// already canonicalized path is then set as the initial directory.
     pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
+        self
+    }
+
+    /// If the directory content should be loaded via a separate thread.
+    /// This prevents the application from blocking when loading large directories
+    /// or from slow hard drives.
+    pub const fn load_via_thread(mut self, load_via_thread: bool) -> Self {
+        self.config.load_via_thread = load_via_thread;
         self
     }
 
@@ -1297,7 +1307,7 @@ impl FileDialog {
         if self.config.show_parent_button {
             if let Some(x) = self.current_directory() {
                 if self.ui_button_sized(ui, x.parent().is_some(), button_size, "⏶", None) {
-                    let _ = self.load_parent_directory();
+                    self.load_parent_directory();
                 }
             } else {
                 let _ = self.ui_button_sized(ui, false, button_size, "⏶", None);
@@ -1313,13 +1323,13 @@ impl FileDialog {
                 None,
             )
         {
-            let _ = self.load_previous_directory();
+            self.load_previous_directory();
         }
 
         if self.config.show_forward_button
             && self.ui_button_sized(ui, self.directory_offset != 0, button_size, "⏵", None)
         {
-            let _ = self.load_next_directory();
+            self.load_next_directory();
         }
 
         if self.config.show_new_folder_button
@@ -1424,7 +1434,7 @@ impl FileDialog {
                             }
 
                             if ui.button(file_name).clicked() {
-                                let _ = self.load_directory(path.as_path());
+                                self.load_directory(path.as_path());
                                 return;
                             }
                         }
@@ -1613,7 +1623,7 @@ impl FileDialog {
         let response = ui.selectable_label(self.current_directory() == Some(path), display_name);
 
         if response.clicked() {
-            let _ = self.load_directory(path);
+            self.load_directory(path);
         }
 
         response
@@ -1994,13 +2004,7 @@ impl FileDialog {
     /// Updates the central panel, including the list of items in the currently open directory.
     #[allow(clippy::too_many_lines)] // TODO: Refactor
     fn ui_update_central_panel(&mut self, ui: &mut egui::Ui) {
-        if let Some(err) = &self.directory_error {
-            ui.centered_and_justified(|ui| {
-                ui.colored_label(
-                    ui.style().visuals.error_fg_color,
-                    format!("{} {}", self.config.err_icon, err),
-                );
-            });
+        if self.update_directory_content(ui) {
             return;
         }
 
@@ -2099,10 +2103,10 @@ impl FileDialog {
                         }
 
                         // The user double clicked on the directory entry.
-                        // Either open the directory of submit the dialog.
+                        // Either open the directory or submit the dialog.
                         if re.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
                             if item.is_dir() {
-                                let _ = self.load_directory(&item.to_path_buf());
+                                self.load_directory(&item.to_path_buf());
                                 return;
                             }
 
@@ -2144,6 +2148,43 @@ impl FileDialog {
                     }
                 });
         });
+    }
+
+    fn update_directory_content(&mut self, ui: &mut egui::Ui) -> bool {
+        const SHOW_SPINNER_AFTER: f32 = 0.2;
+
+        match self.directory_content.update() {
+            DirectoryContentState::Pending(timestamp) => {
+                let now = std::time::SystemTime::now();
+
+                if now
+                    .duration_since(*timestamp)
+                    .unwrap_or_default()
+                    .as_secs_f32()
+                    > SHOW_SPINNER_AFTER
+                {
+                    ui.centered_and_justified(egui::Ui::spinner);
+                }
+
+                // Prevent egui from not updating the UI when there is no user input
+                ui.ctx().request_repaint();
+
+                true
+            }
+            DirectoryContentState::Errored(err) => {
+                ui.centered_and_justified(|ui| ui.colored_label(ui.visuals().error_fg_color, err));
+                true
+            }
+            DirectoryContentState::Finished => {
+                if let Some(dir) = self.current_directory() {
+                    let mut dir_entry = DirectoryEntry::from_path(&self.config, dir);
+                    self.select_item(&mut dir_entry);
+                }
+
+                false
+            }
+            DirectoryContentState::Success => false,
+        }
     }
 
     /// Selects every item inside the `directory_content` between `item_a` and `item_b`,
@@ -2307,15 +2348,15 @@ impl FileDialog {
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent, true) {
-            let _ = self.load_parent_directory();
+            self.load_parent_directory();
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back, true) {
-            let _ = self.load_previous_directory();
+            self.load_previous_directory();
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward, true) {
-            let _ = self.load_next_directory();
+            self.load_next_directory();
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload, true) {
@@ -2333,7 +2374,7 @@ impl FileDialog {
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.home_edit_path, true) {
             if let Some(dirs) = &self.user_directories {
                 if let Some(home) = dirs.home_dir() {
-                    let _ = self.load_directory(home.to_path_buf().as_path());
+                    self.load_directory(home.to_path_buf().as_path());
                     self.open_path_edit();
                 }
             }
@@ -2390,7 +2431,7 @@ impl FileDialog {
                 .any(|p| p.path_eq(item));
 
             if is_visible && item.is_dir() {
-                let _ = self.load_directory(&item.to_path_buf());
+                self.load_directory(&item.to_path_buf());
                 return;
             }
         }
@@ -2553,7 +2594,7 @@ impl FileDialog {
         self.user_directories = UserDirectories::new(self.config.canonicalize_paths);
         self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
 
-        let _ = self.reload_directory();
+        self.reload_directory();
     }
 
     /// Submits the current selection and tries to finish the dialog, if the selection is valid.
@@ -2830,7 +2871,7 @@ impl FileDialog {
             return;
         }
 
-        let _ = self.load_directory(&path);
+        self.load_directory(&path);
     }
 
     /// Closes the text field at the top to edit the current path without loading
@@ -2843,52 +2884,46 @@ impl FileDialog {
     /// If `directory_offset` is 0 and there is no other directory to load, `Ok()` is returned and
     /// nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
-    fn load_next_directory(&mut self) -> io::Result<()> {
+    fn load_next_directory(&mut self) {
         if self.directory_offset == 0 {
             // There is no next directory that can be loaded
-            return Ok(());
+            return;
         }
 
         self.directory_offset -= 1;
 
         // Copy path and load directory
         if let Some(path) = self.current_directory() {
-            return self.load_directory_content(path.to_path_buf().as_path());
+            self.load_directory_content(path.to_path_buf().as_path());
         }
-
-        Ok(())
     }
 
     /// Loads the previous directory the user opened.
     /// If there is no previous directory left, `Ok()` is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
-    fn load_previous_directory(&mut self) -> io::Result<()> {
+    fn load_previous_directory(&mut self) {
         if self.directory_offset + 1 >= self.directory_stack.len() {
             // There is no previous directory that can be loaded
-            return Ok(());
+            return;
         }
 
         self.directory_offset += 1;
 
         // Copy path and load directory
         if let Some(path) = self.current_directory() {
-            return self.load_directory_content(path.to_path_buf().as_path());
+            self.load_directory_content(path.to_path_buf().as_path());
         }
-
-        Ok(())
     }
 
     /// Loads the parent directory of the currently open directory.
     /// If the directory doesn't have a parent, `Ok()` is returned and nothing changes.
     /// Otherwise, the result of the directory loading operation is returned.
-    fn load_parent_directory(&mut self) -> io::Result<()> {
+    fn load_parent_directory(&mut self) {
         if let Some(x) = self.current_directory() {
             if let Some(x) = x.to_path_buf().parent() {
-                return self.load_directory(x);
+                self.load_directory(x);
             }
         }
-
-        Ok(())
     }
 
     /// Reloads the currently open directory.
@@ -2897,12 +2932,10 @@ impl FileDialog {
     ///
     /// In most cases, this function should not be called directly.
     /// Instead, `refresh` should be used to reload all other data like system disks too.
-    fn reload_directory(&mut self) -> io::Result<()> {
+    fn reload_directory(&mut self) {
         if let Some(x) = self.current_directory() {
-            return self.load_directory_content(x.to_path_buf().as_path());
+            self.load_directory_content(x.to_path_buf().as_path());
         }
-
-        Ok(())
     }
 
     /// Loads the given directory and updates the `directory_stack`.
@@ -2910,12 +2943,12 @@ impl FileDialog {
     /// stored in the vector before the `directory_offset`.
     ///
     /// The function also sets the loaded directory as the selected item.
-    fn load_directory(&mut self, path: &Path) -> io::Result<()> {
+    fn load_directory(&mut self, path: &Path) {
         // Do not load the same directory again.
         // Use reload_directory if the content of the directory should be updated.
         if let Some(x) = self.current_directory() {
             if x == path {
-                return Ok(());
+                return;
             }
         }
 
@@ -2927,38 +2960,23 @@ impl FileDialog {
         self.directory_stack.push(path.to_path_buf());
         self.directory_offset = 0;
 
-        self.load_directory_content(path)?;
-
-        let mut dir_entry = DirectoryEntry::from_path(&self.config, path);
-        self.select_item(&mut dir_entry);
+        self.load_directory_content(path);
 
         // Clear the entry filter buffer.
         // It's unlikely the user wants to keep the current filter when entering a new directory.
         self.search_value.clear();
-
-        Ok(())
     }
 
     /// Loads the directory content of the given path.
-    fn load_directory_content(&mut self, path: &Path) -> io::Result<()> {
-        self.directory_error = None;
-
-        self.directory_content = match DirectoryContent::from_path(
+    fn load_directory_content(&mut self, path: &Path) {
+        self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,
             self.show_files,
             self.config.storage.show_hidden,
             self.config.storage.show_system_files,
             self.get_selected_file_filter(),
-        ) {
-            Ok(content) => content,
-            Err(err) => {
-                self.directory_content.clear();
-                self.selected_item = None;
-                self.directory_error = Some(err.to_string());
-                return Err(err);
-            }
-        };
+        );
 
         self.create_directory_dialog.close();
         self.scroll_to_selection = true;
@@ -2966,7 +2984,5 @@ impl FileDialog {
         if self.mode == DialogMode::SaveFile {
             self.file_name_input_error = self.validate_file_name_input();
         }
-
-        Ok(())
     }
 }
