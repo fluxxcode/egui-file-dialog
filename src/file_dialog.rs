@@ -2149,7 +2149,7 @@ impl FileDialog {
     }
 
     fn update_directory_content(&mut self, ui: &mut egui::Ui) -> bool {
-        const SHOW_SPINNER_AFTER: f32 = 0.1;
+        const SHOW_SPINNER_AFTER: f32 = 0.2;
 
         match self.directory_content.update() {
             DirectoryContentState::Pending(timestamp) => {
@@ -2163,6 +2163,9 @@ impl FileDialog {
                 {
                     ui.centered_and_justified(|ui| ui.spinner());
                 }
+
+                // Prevent egui from not updating the UI when there is no user input
+                ui.ctx().request_repaint();
 
                 true
             }
