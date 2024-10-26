@@ -2973,8 +2973,6 @@ impl FileDialog {
             &self.config,
             path,
             self.show_files,
-            self.config.storage.show_hidden,
-            self.config.storage.show_system_files,
             self.get_selected_file_filter(),
         );
 
