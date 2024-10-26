@@ -115,7 +115,7 @@ impl DirectoryEntry {
 }
 
 /// Contains the state of the directory content.
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DirectoryContentState {
     /// If we are currently waiting for the loading process on another thread.
     /// The value is the timestamp when the loading process started.
@@ -152,7 +152,18 @@ impl Default for DirectoryContent {
 
 impl std::fmt::Debug for DirectoryContent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        f.debug_struct("DirectoryContent")
+            .field("state", &self.state)
+            .field("content", &self.content)
+            .field(
+                "content_recv",
+                if self.content_recv.is_some() {
+                    &"<Receiver>"
+                } else {
+                    &"None"
+                },
+            )
+            .finish()
     }
 }
 

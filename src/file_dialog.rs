@@ -2149,20 +2149,27 @@ impl FileDialog {
     }
 
     fn update_directory_content(&mut self, ui: &mut egui::Ui) -> bool {
+        const SHOW_SPINNER_AFTER: f32 = 0.1;
+
         match self.directory_content.update() {
             DirectoryContentState::Pending(timestamp) => {
                 let now = std::time::SystemTime::now();
 
-                if now.duration_since(*timestamp).unwrap_or_default().as_secs_f32() > 0.3 {
+                if now
+                    .duration_since(*timestamp)
+                    .unwrap_or_default()
+                    .as_secs_f32()
+                    > SHOW_SPINNER_AFTER
+                {
                     ui.centered_and_justified(|ui| ui.spinner());
                 }
 
                 true
-            },
+            }
             DirectoryContentState::Errored(err) => {
                 ui.centered_and_justified(|ui| ui.colored_label(ui.visuals().error_fg_color, err));
                 true
-            },
+            }
             DirectoryContentState::Finished => {
                 if let Some(dir) = self.current_directory() {
                     let mut dir_entry = DirectoryEntry::from_path(&self.config, dir);
