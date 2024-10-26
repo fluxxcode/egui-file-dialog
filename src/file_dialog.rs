@@ -337,8 +337,10 @@ impl FileDialog {
             .id
             .map_or_else(|| egui::Id::new(self.get_window_title()), |id| id);
 
+        self.load_directory(&self.gen_initial_directory(&self.config.initial_directory));
+
         // TODO: Dont return a result from this method
-        Ok(self.load_directory(&self.gen_initial_directory(&self.config.initial_directory)))
+        Ok(())
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
@@ -1305,7 +1307,7 @@ impl FileDialog {
         if self.config.show_parent_button {
             if let Some(x) = self.current_directory() {
                 if self.ui_button_sized(ui, x.parent().is_some(), button_size, "⏶", None) {
-                    let _ = self.load_parent_directory();
+                    self.load_parent_directory();
                 }
             } else {
                 let _ = self.ui_button_sized(ui, false, button_size, "⏶", None);
@@ -1321,13 +1323,13 @@ impl FileDialog {
                 None,
             )
         {
-            let _ = self.load_previous_directory();
+            self.load_previous_directory();
         }
 
         if self.config.show_forward_button
             && self.ui_button_sized(ui, self.directory_offset != 0, button_size, "⏵", None)
         {
-            let _ = self.load_next_directory();
+            self.load_next_directory();
         }
 
         if self.config.show_new_folder_button
@@ -1432,7 +1434,7 @@ impl FileDialog {
                             }
 
                             if ui.button(file_name).clicked() {
-                                let _ = self.load_directory(path.as_path());
+                                self.load_directory(path.as_path());
                                 return;
                             }
                         }
@@ -1621,7 +1623,7 @@ impl FileDialog {
         let response = ui.selectable_label(self.current_directory() == Some(path), display_name);
 
         if response.clicked() {
-            let _ = self.load_directory(path);
+            self.load_directory(path);
         }
 
         response
@@ -2104,7 +2106,7 @@ impl FileDialog {
                         // Either open the directory or submit the dialog.
                         if re.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
                             if item.is_dir() {
-                                let _ = self.load_directory(&item.to_path_buf());
+                                self.load_directory(&item.to_path_buf());
                                 return;
                             }
 
@@ -2161,7 +2163,7 @@ impl FileDialog {
                     .as_secs_f32()
                     > SHOW_SPINNER_AFTER
                 {
-                    ui.centered_and_justified(|ui| ui.spinner());
+                    ui.centered_and_justified(egui::Ui::spinner);
                 }
 
                 // Prevent egui from not updating the UI when there is no user input
@@ -2346,15 +2348,15 @@ impl FileDialog {
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.parent, true) {
-            let _ = self.load_parent_directory();
+            self.load_parent_directory();
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.back, true) {
-            let _ = self.load_previous_directory();
+            self.load_previous_directory();
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.forward, true) {
-            let _ = self.load_next_directory();
+            self.load_next_directory();
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.reload, true) {
@@ -2372,7 +2374,7 @@ impl FileDialog {
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.home_edit_path, true) {
             if let Some(dirs) = &self.user_directories {
                 if let Some(home) = dirs.home_dir() {
-                    let _ = self.load_directory(home.to_path_buf().as_path());
+                    self.load_directory(home.to_path_buf().as_path());
                     self.open_path_edit();
                 }
             }
@@ -2429,7 +2431,7 @@ impl FileDialog {
                 .any(|p| p.path_eq(item));
 
             if is_visible && item.is_dir() {
-                let _ = self.load_directory(&item.to_path_buf());
+                self.load_directory(&item.to_path_buf());
                 return;
             }
         }
@@ -2592,7 +2594,7 @@ impl FileDialog {
         self.user_directories = UserDirectories::new(self.config.canonicalize_paths);
         self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
 
-        let _ = self.reload_directory();
+        self.reload_directory();
     }
 
     /// Submits the current selection and tries to finish the dialog, if the selection is valid.
@@ -2869,7 +2871,7 @@ impl FileDialog {
             return;
         }
 
-        let _ = self.load_directory(&path);
+        self.load_directory(&path);
     }
 
     /// Closes the text field at the top to edit the current path without loading
@@ -2919,7 +2921,7 @@ impl FileDialog {
     fn load_parent_directory(&mut self) {
         if let Some(x) = self.current_directory() {
             if let Some(x) = x.to_path_buf().parent() {
-                return self.load_directory(x);
+                self.load_directory(x);
             }
         }
     }

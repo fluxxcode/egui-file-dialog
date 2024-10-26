@@ -130,6 +130,9 @@ pub enum DirectoryContentState {
     Errored(String),
 }
 
+type DirectoryContentReceiver =
+    Option<Arc<Mutex<mpsc::Receiver<Result<Vec<DirectoryEntry>, std::io::Error>>>>>;
+
 /// Contains the content of a directory.
 pub struct DirectoryContent {
     /// Current state of the directory content.
@@ -137,7 +140,7 @@ pub struct DirectoryContent {
     /// The loaded directory contents.
     content: Vec<DirectoryEntry>,
     /// Receiver when the content is loaded on a different thread.
-    content_recv: Option<Arc<Mutex<mpsc::Receiver<Result<Vec<DirectoryEntry>, std::io::Error>>>>>,
+    content_recv: DirectoryContentReceiver,
 }
 
 impl Default for DirectoryContent {
@@ -276,7 +279,8 @@ impl DirectoryContent {
         let mut update_content_recv = true;
 
         if let Some(recv) = &rx {
-            match recv.lock().try_recv() {
+            let value = recv.lock().try_recv();
+            match value {
                 Ok(result) => match result {
                     Ok(content) => {
                         self.state = DirectoryContentState::Finished;
