@@ -43,6 +43,8 @@ pub struct FileDialogLabels {
     pub reload: String,
     /// Text used for the option to show or hide hidden files and folders.
     pub show_hidden: String,
+    /// Text used for the option to show or hide system files.
+    pub show_system_files: String,
 
     // ------------------------------------------------------------------------
     // Left panel:
@@ -128,6 +130,7 @@ impl Default for FileDialogLabels {
 
             reload: "⟲  Reload".to_string(),
             show_hidden: " Show hidden".to_string(),
+            show_system_files: " Show system files".to_string(),
 
             heading_pinned: "Pinned".to_string(),
             heading_places: "Places".to_string(),

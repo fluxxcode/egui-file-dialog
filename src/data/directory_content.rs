@@ -145,6 +145,7 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         show_hidden: bool,
+        show_system_files: bool,
         file_filter: Option<&FileFilter>,
     ) -> Self {
         if config.load_via_thread {
@@ -159,6 +160,7 @@ impl DirectoryContent {
                     &p,
                     include_files,
                     show_hidden,
+                    show_system_files,
                     f.as_ref(),
                 ));
             });
@@ -169,7 +171,14 @@ impl DirectoryContent {
                 error: None,
             }
         } else {
-            match load_directory(config, path, include_files, show_hidden, file_filter) {
+            match load_directory(
+                config,
+                path,
+                include_files,
+                show_hidden,
+                show_system_files,
+                file_filter,
+            ) {
                 Ok(c) => Self {
                     content: c,
                     content_recv: None,
@@ -271,6 +280,7 @@ fn load_directory(
     path: &Path,
     include_files: bool,
     show_hidden: bool,
+    show_system_files: bool,
     file_filter: Option<&FileFilter>,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let paths = fs::read_dir(path)?;
@@ -281,7 +291,7 @@ fn load_directory(
             Ok(entry) => {
                 let entry = DirectoryEntry::from_path(config, entry.path().as_path());
 
-                if entry.is_system_file() {
+                if !show_system_files && entry.is_system_file() {
                     continue;
                 }
 

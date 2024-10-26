@@ -1,11 +1,19 @@
 # egui-file-dialog changelog
 
 ## Unreleased
+### ✨ Features
+- Added `FileDialog::update_with_right_panel_ui` to add a custom right panel to the file dialog [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Added `FileDialog::active_selected_entries` and `FileDialog::active_entry` to get information about the current active item/s [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Added option to show system files in the hamburger menu [#173](https://github.com/fluxxcode/egui-file-dialog/pull/173) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+
 ### 🔧 Changes
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
 - Updated sysinfo to version `0.32` [#161](https://github.com/fluxxcode/egui-file-dialog/pull/161)
 - Made default egui fonts an optional feature `default_fonts` [#163](https://github.com/fluxxcode/egui-file-dialog/pull/163) (thanks [@StarStarJ](https://github.com/StarStarJ)!)
 - Filter directory when loading to improve performance [#169](https://github.com/fluxxcode/egui-file-dialog/pull/169)
+
+### 📚 Documentation
+- Updated `README.md` to include latest features [#176](https://github.com/fluxxcode/egui-file-dialog/pull/176)
 
 ## 2024-10-01 - v0.7.0 - egui update and QoL changes
 ### 🚨 Breaking Changes
