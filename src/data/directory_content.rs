@@ -149,47 +149,83 @@ impl DirectoryContent {
         file_filter: Option<&FileFilter>,
     ) -> Self {
         if config.load_via_thread {
-            let (tx, rx) = mpsc::channel();
-
-            let c = config.clone();
-            let p = path.to_path_buf();
-            let f = file_filter.cloned();
-            thread::spawn(move || {
-                let _ = tx.send(load_directory(
-                    &c,
-                    &p,
-                    include_files,
-                    show_hidden,
-                    show_system_files,
-                    f.as_ref(),
-                ));
-            });
-
-            Self {
-                content: Vec::new(),
-                content_recv: Some(Arc::new(Mutex::new(rx))),
-                error: None,
-            }
-        } else {
-            match load_directory(
+            Self::with_thread(
                 config,
                 path,
                 include_files,
                 show_hidden,
                 show_system_files,
                 file_filter,
-            ) {
-                Ok(c) => Self {
-                    content: c,
-                    content_recv: None,
-                    error: None,
-                },
-                Err(err) => Self {
-                    content: Vec::new(),
-                    content_recv: None,
-                    error: Some(err.to_string()),
-                },
-            }
+            )
+        } else {
+            Self::without_thread(
+                config,
+                path,
+                include_files,
+                show_hidden,
+                show_system_files,
+                file_filter,
+            )
+        }
+    }
+
+    fn with_thread(
+        config: &FileDialogConfig,
+        path: &Path,
+        include_files: bool,
+        show_hidden: bool,
+        show_system_files: bool,
+        file_filter: Option<&FileFilter>,
+    ) -> Self {
+        let (tx, rx) = mpsc::channel();
+
+        let c = config.clone();
+        let p = path.to_path_buf();
+        let f = file_filter.cloned();
+        thread::spawn(move || {
+            let _ = tx.send(load_directory(
+                &c,
+                &p,
+                include_files,
+                show_hidden,
+                show_system_files,
+                f.as_ref(),
+            ));
+        });
+
+        Self {
+            content: Vec::new(),
+            content_recv: Some(Arc::new(Mutex::new(rx))),
+            error: None,
+        }
+    }
+
+    fn without_thread(
+        config: &FileDialogConfig,
+        path: &Path,
+        include_files: bool,
+        show_hidden: bool,
+        show_system_files: bool,
+        file_filter: Option<&FileFilter>,
+    ) -> Self {
+        match load_directory(
+            config,
+            path,
+            include_files,
+            show_hidden,
+            show_system_files,
+            file_filter,
+        ) {
+            Ok(c) => Self {
+                content: c,
+                content_recv: None,
+                error: None,
+            },
+            Err(err) => Self {
+                content: Vec::new(),
+                content_recv: None,
+                error: Some(err.to_string()),
+            },
         }
     }
 
