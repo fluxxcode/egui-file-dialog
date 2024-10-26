@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
+use std::time::SystemTime;
 use std::{fs, io, thread};
 
 use egui::mutex::Mutex;
@@ -113,13 +114,40 @@ impl DirectoryEntry {
     }
 }
 
+/// Contains the state of the directory content.
+#[derive(PartialEq, Eq)]
+pub enum DirectoryContentState {
+    /// If we are currently waiting for the loading process on another thread.
+    /// The value is the timestamp when the loading process started.
+    Pending(SystemTime),
+    /// If loading the direcotry content finished since the last update call.
+    /// This is only returned once.
+    Finished,
+    /// If loading the directory content was successfull.
+    Success,
+    /// If there was an error loading the directory content.
+    /// The value contains the error message.
+    Errored(String),
+}
+
 /// Contains the content of a directory.
-#[derive(Default)]
 pub struct DirectoryContent {
+    /// Current state of the directory content.
+    state: DirectoryContentState,
+    /// The loaded directory contents.
     content: Vec<DirectoryEntry>,
+    /// Receiver when the content is loaded on a different thread.
     content_recv: Option<Arc<Mutex<mpsc::Receiver<Result<Vec<DirectoryEntry>, std::io::Error>>>>>,
-    /// Contains the error message if there was an error when loading the directory.
-    error: Option<String>,
+}
+
+impl Default for DirectoryContent {
+    fn default() -> Self {
+        Self {
+            state: DirectoryContentState::Success,
+            content: Vec::new(),
+            content_recv: None,
+        }
+    }
 }
 
 impl std::fmt::Debug for DirectoryContent {
@@ -129,15 +157,6 @@ impl std::fmt::Debug for DirectoryContent {
 }
 
 impl DirectoryContent {
-    /// Create a new object with empty content
-    pub const fn new() -> Self {
-        Self {
-            content: vec![],
-            content_recv: None,
-            error: None,
-        }
-    }
-
     /// Create a new `DirectoryContent` object and loads the contents of the given path.
     /// Use `include_files` to include or exclude files in the content list.
     pub fn from_path(
@@ -194,9 +213,9 @@ impl DirectoryContent {
         });
 
         Self {
+            state: DirectoryContentState::Pending(SystemTime::now()),
             content: Vec::new(),
             content_recv: Some(Arc::new(Mutex::new(rx))),
-            error: None,
         }
     }
 
@@ -217,16 +236,62 @@ impl DirectoryContent {
             file_filter,
         ) {
             Ok(c) => Self {
+                state: DirectoryContentState::Success,
                 content: c,
                 content_recv: None,
-                error: None,
             },
             Err(err) => Self {
+                state: DirectoryContentState::Errored(err.to_string()),
                 content: Vec::new(),
                 content_recv: None,
-                error: Some(err.to_string()),
             },
         }
+    }
+
+    pub fn update(&mut self) -> &DirectoryContentState {
+        if self.state == DirectoryContentState::Finished {
+            self.state = DirectoryContentState::Success;
+        }
+
+        if !matches!(self.state, DirectoryContentState::Pending(_)) {
+            return &self.state;
+        }
+
+        self.update_pending_state()
+    }
+
+    fn update_pending_state(&mut self) -> &DirectoryContentState {
+        let rx = std::mem::take(&mut self.content_recv);
+        let mut update_content_recv = true;
+
+        if let Some(recv) = &rx {
+            match recv.lock().try_recv() {
+                Ok(result) => match result {
+                    Ok(content) => {
+                        self.state = DirectoryContentState::Finished;
+                        self.content = content;
+                        update_content_recv = false;
+                    }
+                    Err(err) => {
+                        self.state = DirectoryContentState::Errored(err.to_string());
+                        update_content_recv = false;
+                    }
+                },
+                Err(err) => {
+                    if mpsc::TryRecvError::Disconnected == err {
+                        self.state =
+                            DirectoryContentState::Errored("thread ended unexpectedly".to_owned());
+                        update_content_recv = false;
+                    }
+                }
+            }
+        }
+
+        if update_content_recv {
+            self.content_recv = rx;
+        }
+
+        &self.state
     }
 
     pub fn filtered_iter<'s>(
@@ -247,39 +312,6 @@ impl DirectoryContent {
             .filter(|p| apply_search_value(p, search_value))
     }
 
-    pub fn is_loading(&mut self) -> bool {
-        let mut rm_recv = false;
-
-        if let Some(recv) = &self.content_recv {
-            match recv.lock().try_recv() {
-                Ok(t) => {
-                    match t {
-                        Ok(t) => self.content = t,
-                        Err(err) => self.error = Some(err.to_string()),
-                    }
-                    rm_recv = true;
-                }
-                Err(err) => match err {
-                    mpsc::TryRecvError::Empty => return true,
-                    mpsc::TryRecvError::Disconnected => {
-                        self.error = Some("thread ended unexpectedly".to_owned());
-                        rm_recv = true;
-                    }
-                },
-            }
-        }
-
-        if rm_recv {
-            self.content_recv = None;
-        }
-
-        false
-    }
-
-    pub fn error(&self) -> Option<&str> {
-        self.error.as_deref()
-    }
-
     pub fn reset_multi_selection(&mut self) {
         for item in &mut self.content {
             item.selected = false;
@@ -294,11 +326,6 @@ impl DirectoryContent {
     /// Pushes a new item to the content.
     pub fn push(&mut self, item: DirectoryEntry) {
         self.content.push(item);
-    }
-
-    /// Clears the items inside the directory.
-    pub fn clear(&mut self) {
-        self.content.clear();
     }
 }
 
