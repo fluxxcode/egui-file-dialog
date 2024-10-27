@@ -31,6 +31,7 @@ sysinfo = { version = "0.32", default-features = false, features = ["disk"] }
 
 # Used for persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
+dunce = "1.0.5"
 
 [features]
 default = ["serde", "default_fonts"]

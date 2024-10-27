@@ -4,7 +4,6 @@ pub use labels::FileDialogLabels;
 mod keybindings;
 pub use keybindings::{FileDialogKeyBindings, KeyBinding};
 
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -447,7 +446,7 @@ impl QuickAccess {
         let path = path.into();
 
         let canonicalized_path = if self.canonicalize_paths {
-            fs::canonicalize(&path).unwrap_or(path)
+            dunce::canonicalize(&path).unwrap_or(path)
         } else {
             path
         };
