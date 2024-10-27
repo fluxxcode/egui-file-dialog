@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Wrapper above `directories::UserDirs`.
@@ -70,7 +69,7 @@ impl UserDirectories {
         }
 
         if let Some(path) = path {
-            return fs::canonicalize(path).ok();
+            return dunce::canonicalize(path).ok();
         }
 
         None

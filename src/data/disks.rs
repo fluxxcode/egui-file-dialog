@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Wrapper above the `sysinfo::Disk` struct.
@@ -39,7 +38,7 @@ impl Disk {
     /// Returns the input path in case of an error.
     fn canonicalize(path: &Path, canonicalize: bool) -> PathBuf {
         if canonicalize {
-            fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+            dunce::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
         } else {
             path.to_path_buf()
         }
@@ -91,7 +90,7 @@ fn gen_display_name(disk: &sysinfo::Disk) -> String {
         return mount_point;
     }
 
-    name.push_str(format!(" ({})", mount_point).as_str());
+    name.push_str(format!(" ({mount_point})").as_str());
 
     name
 }

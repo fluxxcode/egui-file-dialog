@@ -384,10 +384,7 @@ fn load_directory(
 fn is_path_hidden(item: &DirectoryEntry) -> bool {
     use std::os::windows::fs::MetadataExt;
 
-    match fs::metadata(item.as_path()) {
-        Ok(metadata) => metadata.file_attributes() & 0x2 > 0,
-        Err(_) => false,
-    }
+    fs::metadata(item.as_path()).map_or(false, |metadata| metadata.file_attributes() & 0x2 > 0)
 }
 
 #[cfg(not(windows))]
