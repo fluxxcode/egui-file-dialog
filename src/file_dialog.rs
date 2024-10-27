@@ -2073,18 +2073,47 @@ impl FileDialog {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             let scroll_area = egui::containers::ScrollArea::vertical().auto_shrink([false, false]);
 
-            scroll_area.show(ui, |ui| {
-                for item in data.filtered_iter_mut(&self.search_value.clone()) {
-                    if self.ui_update_central_panel_entry(
-                        ui,
-                        item,
-                        &mut reset_multi_selection,
-                        &mut batch_select_item_b,
-                    ) {
-                        should_return = true;
+            if self.search_value.is_empty() && !self.create_directory_dialog.is_open() {
+                // Only update visible items when the search value is empty
+                // and the create directory dialog is not open.
+                scroll_area.show_rows(
+                    ui,
+                    ui.text_style_height(&egui::TextStyle::Body),
+                    data.len(), |ui, range| {
+                        for item in data.iter_range_mut(range) {
+                            if self.ui_update_central_panel_entry(
+                                ui,
+                                item,
+                                &mut reset_multi_selection,
+                                &mut batch_select_item_b,
+                            ) {
+                                should_return = true;
+                            }
+                        }
+
+                        self.ui_update_create_directory_dialog(ui);
+                    });
+            } else {
+                // Update each element if the search value is not empty as we apply the
+                // search value in every frame. We can't use `egui::ScrollArea::show_rows`
+                // because we don't know how many files the search value applies to.
+                // We also have to update every item when the create directory dialog is open
+                // it's displayed as the last element.
+                scroll_area.show(ui, |ui| {
+                    for item in data.filtered_iter_mut(&self.search_value.clone()) {
+                        if self.ui_update_central_panel_entry(
+                            ui,
+                            item,
+                            &mut reset_multi_selection,
+                            &mut batch_select_item_b,
+                        ) {
+                            should_return = true;
+                        }
                     }
-                }
-            });
+
+                    self.ui_update_create_directory_dialog(ui);
+                });
+            }
         });
 
         if should_return {
@@ -2113,14 +2142,6 @@ impl FileDialog {
 
         self.directory_content = data;
         self.scroll_to_selection = false;
-
-        if let Some(path) = self
-            .create_directory_dialog
-            .update(ui, &self.config)
-            .directory()
-        {
-            self.process_new_folder(&path);
-        }
     }
 
     /// Updates a single directory content entry.
@@ -2224,6 +2245,16 @@ impl FileDialog {
         }
 
         false
+    }
+
+    fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) {
+        if let Some(path) = self
+            .create_directory_dialog
+            .update(ui, &self.config)
+            .directory()
+        {
+            self.process_new_folder(&path);
+        }
     }
 
     /// Selects every item inside the `directory_content` between `item_a` and `item_b`,

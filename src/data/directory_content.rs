@@ -275,6 +275,15 @@ impl DirectoryContent {
         &self.state
     }
 
+    /// Returns an iterator in the given range of the directory cotnents.
+    /// No filters are applied using this iterator.
+    pub fn iter_range_mut(
+        & mut self,
+        range: std::ops::Range<usize>,
+    ) -> impl Iterator<Item = &mut DirectoryEntry> {
+        self.content[range].iter_mut()
+    }
+
     pub fn filtered_iter<'s>(
         &'s self,
         search_value: &'s str,
@@ -293,6 +302,7 @@ impl DirectoryContent {
             .filter(|p| apply_search_value(p, search_value))
     }
 
+    /// Marks each element in the content as unselected.
     pub fn reset_multi_selection(&mut self) {
         for item in &mut self.content {
             item.selected = false;
