@@ -2099,7 +2099,7 @@ impl FileDialog {
                 // Update each element if the search value is not empty as we apply the
                 // search value in every frame. We can't use `egui::ScrollArea::show_rows`
                 // because we don't know how many files the search value applies to.
-                // We also have to update every item when the create directory dialog is open
+                // We also have to update every item when the create directory dialog is open as
                 // it's displayed as the last element.
                 scroll_area.show(ui, |ui| {
                     for item in data.filtered_iter_mut(&self.search_value.clone()) {
