@@ -1566,6 +1566,7 @@ impl FileDialog {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             // Spacing multiplier used between sections in the left sidebar
             const SPACING_MULTIPLIER: f32 = 4.0;
+
             egui::containers::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
@@ -1687,7 +1688,7 @@ impl FileDialog {
 
         if let Some(dirs) = &user_directories {
             ui.add_space(spacing);
-            ui.label(self.config.labels.heading_places.as_str());
+            ui.label(labels.heading_places.as_str());
 
             if let Some(path) = dirs.home_dir() {
                 self.ui_update_left_panel_entry(ui, &labels.home_dir, path);
