@@ -278,7 +278,7 @@ impl DirectoryContent {
     /// Returns an iterator in the given range of the directory cotnents.
     /// No filters are applied using this iterator.
     pub fn iter_range_mut(
-        & mut self,
+        &mut self,
         range: std::ops::Range<usize>,
     ) -> impl Iterator<Item = &mut DirectoryEntry> {
         self.content[range].iter_mut()
