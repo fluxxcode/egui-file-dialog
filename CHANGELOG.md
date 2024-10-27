@@ -6,6 +6,9 @@
 - Added `FileDialog::active_selected_entries` and `FileDialog::active_entry` to get information about the current active item/s [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Added option to show system files in the hamburger menu [#173](https://github.com/fluxxcode/egui-file-dialog/pull/173) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 
+### 🐛 Bug Fixes
+- Fixed heading `Places` could not be updated using `FileDialogLabels` [#180](https://github.com/fluxxcode/egui-file-dialog/pull/180)
+
 ### 🔧 Changes
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
 - Updated sysinfo to version `0.32` [#161](https://github.com/fluxxcode/egui-file-dialog/pull/161)
