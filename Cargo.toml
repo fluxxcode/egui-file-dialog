@@ -22,7 +22,6 @@ license = "MIT"
 
 [dependencies]
 egui = { version = "0.29.1", default-features = false }
-
 # Used to fetch user folders
 directories = "5.0"
 
@@ -34,6 +33,8 @@ serde = { version = "1", features = ["derive"], optional = true }
 
 # Used to canonicalize paths
 dunce = "1.0.5"
+image = { version = "0.25", default-features = false, features = ["png"] }
+chrono = "0.4.38"
 
 [features]
 default = ["serde", "default_fonts"]
