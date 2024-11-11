@@ -1,9 +1,10 @@
-use crate::{DialogState, FileDialog};
+use crate::{DialogState, DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
 use image::{DynamicImage, GenericImageView, RgbaImage};
 use std::fs;
+use std::path::PathBuf;
 
 pub struct InformationPanel {
     pub meta_data: MetaData,
@@ -82,12 +83,30 @@ impl InformationPanel {
         self
     }
 
+    fn update_metadata(&mut self, entry: &DirectoryEntry) {
+        self.meta_data.file_name = entry.file_name().to_string();
+        // self.meta_data.file_type = entry.file_type().map(|t| t.to_string_lossy().to_string());
+        // self.meta_data.file_size = entry.file_size().map(|s| format_bytes(s));
+        // self.meta_data.file_created = entry
+        //     .metadata()
+        //     .and_then(|m| m.created().ok())
+        //     .map(|c| c.format("%Y-%m-%d %H:%M:%S").to_string());
+        // self.meta_data.file_modified = entry
+        //     .metadata()
+        //     .and_then(|m| m.modified().ok())
+        //     .map(|c| c.format("%Y-%m-%d %H:%M:%S").to_string());
+    }
+
     pub fn ui(&mut self, ui: &mut Ui, file_dialog: &mut FileDialog) {
         const SPACING_MULTIPLIER: f32 = 4.0;
 
         ui.label("Information");
 
         if let Some(item) = &file_dialog.selected_item {
+            // if the selected file has changed, update the meta_data
+            if item.file_name() != &self.meta_data.file_name {
+                self.update_metadata(item);
+            }
             let path = item.as_path();
             if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
                 if let Some(content) = self.supported_files.get_mut(ext) {
@@ -126,8 +145,9 @@ impl InformationPanel {
             egui::Grid::new("meta_data")
                 .num_columns(2)
                 .striped(true)
-                .min_col_width(200.0 / 2.0)
-                .max_col_width(200.0 / 2.0)
+                // not sure if 100.0 as a default value is a good idea
+                .min_col_width(file_dialog.config.right_panel_width.unwrap_or(100.0) / 2.0)
+                .max_col_width(file_dialog.config.right_panel_width.unwrap_or(100.0) / 2.0)
                 .show(ui, |ui| {
                     ui.label("File name: ");
                     ui.label(format!("{}", self.meta_data.file_name));
@@ -135,8 +155,7 @@ impl InformationPanel {
                     ui.label("File type: ");
                     ui.label(format!(
                         "{}",
-                        self
-                            .meta_data
+                        self.meta_data
                             .file_type
                             .clone()
                             .unwrap_or("None".to_string())
@@ -145,8 +164,7 @@ impl InformationPanel {
                     ui.label("File size: ");
                     ui.label(format!(
                         "{}",
-                        self
-                            .meta_data
+                        self.meta_data
                             .file_size
                             .clone()
                             .unwrap_or("NAN".to_string())
