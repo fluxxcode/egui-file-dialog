@@ -77,7 +77,7 @@ pub enum DialogState {
 #[derive(Debug)]
 pub struct FileDialog {
     /// The configuration of the file dialog
-    pub config: FileDialogConfig,
+    config: FileDialogConfig,
 
     /// Stack of modal windows to be displayed.
     /// The top element is what is currently being rendered.
@@ -134,7 +134,7 @@ pub struct FileDialog {
 
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
-    pub selected_item: Option<DirectoryEntry>,
+    selected_item: Option<DirectoryEntry>,
     /// Buffer for the input of the file name when the dialog is in `SaveFile` mode.
     file_name_input: String,
     /// This variables contains the error message if the `file_name_input` is invalid.

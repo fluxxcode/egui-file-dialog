@@ -102,7 +102,7 @@ impl InformationPanel {
 
         ui.label("Information");
 
-        if let Some(item) = &file_dialog.selected_item {
+        if let Some(item) = &file_dialog.active_entry() {
             // if the selected file has changed, update the meta_data
             if item.file_name() != &self.meta_data.file_name {
                 self.update_metadata(item);
@@ -146,8 +146,8 @@ impl InformationPanel {
                 .num_columns(2)
                 .striped(true)
                 // not sure if 100.0 as a default value is a good idea
-                .min_col_width(file_dialog.config.right_panel_width.unwrap_or(100.0) / 2.0)
-                .max_col_width(file_dialog.config.right_panel_width.unwrap_or(100.0) / 2.0)
+                .min_col_width(file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0)
+                .max_col_width(file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0)
                 .show(ui, |ui| {
                     ui.label("File name: ");
                     ui.label(format!("{}", self.meta_data.file_name));
