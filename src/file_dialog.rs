@@ -77,7 +77,7 @@ pub enum DialogState {
 #[derive(Debug)]
 pub struct FileDialog {
     /// The configuration of the file dialog
-    config: FileDialogConfig,
+    pub config: FileDialogConfig,
 
     /// Stack of modal windows to be displayed.
     /// The top element is what is currently being rendered.

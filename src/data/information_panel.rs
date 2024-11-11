@@ -48,14 +48,14 @@ impl InformationPanel {
         //                     [img.width() as usize, img.height() as usize],
         //                     img.as_flat_samples().as_slice(),
         //                 );
-        // 
+        //
         //                 // Load the image as a texture in `egui`
         //                 let texture = ui.ctx().load_texture(
         //                     "loaded_image",
         //                     color_image,
         //                     egui::TextureOptions::default(),
         //                 );
-        // 
+        //
         //                 ui.vertical_centered(|ui| {
         //                     // Display the image
         //                     ui.image(&texture);
@@ -83,6 +83,8 @@ impl InformationPanel {
     }
 
     pub fn ui(&mut self, ui: &mut Ui, file_dialog: &mut FileDialog) {
+        const SPACING_MULTIPLIER: f32 = 4.0;
+
         ui.label("Information");
 
         if let Some(item) = &file_dialog.selected_item {
@@ -118,6 +120,49 @@ impl InformationPanel {
                     content(ui, text, image)
                 }
             }
+            let spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
+
+            ui.add_space(spacing);
+            egui::Grid::new("meta_data")
+                .num_columns(2)
+                .striped(true)
+                .min_col_width(200.0 / 2.0)
+                .max_col_width(200.0 / 2.0)
+                .show(ui, |ui| {
+                    ui.label("File name: ");
+                    ui.label(format!("{}", self.meta_data.file_name));
+                    ui.end_row();
+                    ui.label("File type: ");
+                    ui.label(format!(
+                        "{}",
+                        self
+                            .meta_data
+                            .file_type
+                            .clone()
+                            .unwrap_or("None".to_string())
+                    ));
+                    ui.end_row();
+                    ui.label("File size: ");
+                    ui.label(format!(
+                        "{}",
+                        self
+                            .meta_data
+                            .file_size
+                            .clone()
+                            .unwrap_or("NAN".to_string())
+                    ));
+                    ui.end_row();
+                    if let Some((width, height)) = self.meta_data.dimensions {
+                        ui.label("Dimensions: ");
+
+                        ui.label(format!("{} x {}", width, height));
+                        ui.end_row();
+                        ui.label("Pixel count: ");
+
+                        ui.label(format!("{}", format_pixels(width * height)));
+                        ui.end_row()
+                    }
+                });
         }
 
         // // Spacing multiplier used between sections in the right sidebar
