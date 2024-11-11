@@ -186,6 +186,9 @@ pub struct FileDialogConfig {
     /// If the search input in the top panel should be visible.
     pub show_search: bool,
 
+    /// Set the width of the right panel, if used
+    pub right_panel_width: Option<f32>,
+
     /// If the sidebar with the shortcut directories such as
     /// “Home”, “Documents” etc. should be visible.
     pub show_left_panel: bool,
@@ -257,6 +260,7 @@ impl Default for FileDialogConfig {
             show_system_files_option: true,
             show_search: true,
 
+            right_panel_width: None,
             show_left_panel: true,
             show_pinned_folders: true,
             show_places: true,

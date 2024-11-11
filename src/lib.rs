@@ -204,5 +204,6 @@ pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
     KeyBinding, QuickAccess, QuickAccessPath,
 };
+pub use data::information_panel;
 pub use data::DirectoryEntry;
 pub use file_dialog::{DialogMode, DialogState, FileDialog};

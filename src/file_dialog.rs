@@ -1,19 +1,18 @@
+use std::fmt::Debug;
+use std::io;
+use std::path::{Path, PathBuf};
+
+use egui::text::{CCursor, CCursorRange};
+
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
     Filter, QuickAccess,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
-use crate::data::meta_data::{format_bytes, format_pixels, MetaData};
 use crate::data::{
     DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
-use chrono::{DateTime, Local};
-use egui::text::{CCursor, CCursorRange};
-use image::GenericImageView;
-use std::fmt::Debug;
-use std::path::{Path, PathBuf};
-use std::{fs, io};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -80,9 +79,6 @@ pub struct FileDialog {
     /// The configuration of the file dialog
     config: FileDialogConfig,
 
-    /// Metadata for selected file
-    metadata: MetaData,
-
     /// Stack of modal windows to be displayed.
     /// The top element is what is currently being rendered.
     modals: Vec<Box<dyn FileDialogModal + Send + Sync>>,
@@ -138,7 +134,7 @@ pub struct FileDialog {
 
     /// The item that the user currently selected.
     /// Can be a directory or a folder.
-    selected_item: Option<DirectoryEntry>,
+    pub selected_item: Option<DirectoryEntry>,
     /// Buffer for the input of the file name when the dialog is in `SaveFile` mode.
     file_name_input: String,
     /// This variables contains the error message if the `file_name_input` is invalid.
@@ -200,7 +196,6 @@ impl FileDialog {
         Self {
             config: FileDialogConfig::default(),
 
-            metadata: MetaData::default(),
             modals: Vec::new(),
 
             mode: DialogMode::SelectDirectory,
@@ -399,6 +394,14 @@ impl FileDialog {
         self.update_ui(ctx, None);
 
         self
+    }
+
+    pub fn set_right_panel_width(&mut self, width: f32) {
+        self.config.right_panel_width = Some(width);
+    }
+
+    pub fn clear_right_panel_width(&mut self) {
+        self.config.right_panel_width = None;
     }
 
     /// Do an [update](`Self::update`) with a custom right panel ui.
@@ -1099,25 +1102,19 @@ impl FileDialog {
                         self.ui_update_left_panel(ui);
                     });
             }
-            if self.config.show_left_panel {
-                egui::SidePanel::right(self.window_id.with("right_panel"))
-                    .resizable(true)
-                    .default_width(150.0)
-                    .width_range(90.0..=250.0)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_right_panel(ui);
-                    });
-            }
 
             // Optionally, show a custom right panel (see `update_with_custom_right_panel`)
             if let Some(f) = right_panel_fn {
-                egui::SidePanel::right(self.window_id.with("right_panel"))
+                let mut right_panel = egui::SidePanel::right(self.window_id.with("right_panel"))
                     // Unlike the left panel, we have no control over the contents, so
                     // we don't restrict the width. It's up to the user to make the UI presentable.
-                    .resizable(true)
-                    .show_inside(ui, |ui| {
-                        f(ui, self);
-                    });
+                    .resizable(true);
+                if let Some(width) = self.config.right_panel_width {
+                    right_panel = right_panel.exact_width(width);
+                }
+                right_panel.show_inside(ui, |ui| {
+                    f(ui, self);
+                });
             }
 
             egui::TopBottomPanel::bottom(self.window_id.with("bottom_panel"))
@@ -1546,180 +1543,6 @@ impl FileDialog {
                 self.search_value.push_str(text);
                 self.init_search = true;
             }
-        });
-    }
-
-    /// Updates the right panel of the dialog. This contains the metadata of the selected file.
-    fn ui_update_right_panel(&mut self, ui: &mut egui::Ui) {
-        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            // Spacing multiplier used between sections in the right sidebar
-            const SPACING_MULTIPLIER: f32 = 4.0;
-
-            egui::containers::ScrollArea::vertical()
-                .auto_shrink([false, false])
-                .show(ui, |ui| {
-                    // Spacing for the first section in the right sidebar
-                    let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
-
-                    // Update paths pinned to the left sidebar by the user
-                    if self.config.show_pinned_folders && self.ui_update_pinned_paths(ui, spacing) {
-                        spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
-                    }
-
-                    ui.add_space(spacing);
-                    ui.label(self.config.labels.heading_meta.as_str());
-                    ui.add_space(spacing);
-
-                    if let Some(item) = &self.selected_item {
-                        let file_name = item.file_name();
-                        if self.metadata.file_name != file_name {
-                            // update metadata
-                            let metadata = fs::metadata(item.as_path()).unwrap();
-                            // Display creation and last modified dates
-                            if let Ok(created) = metadata.created() {
-                                let created: DateTime<Local> = created.into();
-                                self.metadata.file_created =
-                                    Some(created.format("%Y-%m-%d %H:%M:%S").to_string());
-                            }
-                            if let Ok(modified) = metadata.modified() {
-                                let modified: DateTime<Local> = modified.into();
-                                self.metadata.file_modified =
-                                    Some(modified.format("%Y-%m-%d %H:%M:%S").to_string());
-                            }
-                            self.metadata.file_size = Some(format_bytes(metadata.len()));
-                            self.metadata.file_name = file_name.to_string();
-                            
-                            // Determine the file type and display relevant metadata
-                            if let Some(ext) = item.as_path().extension().and_then(|e| e.to_str()) {
-                                match ext.to_lowercase().as_str() {
-                                    "png" | "jpg" | "jpeg" | "bmp" | "gif" | "tiff" => {
-                                        self.metadata.file_type = Some("Image".to_string());
-
-                                        // For image files, show dimensions and color space
-                                        if let Ok(img) = image::open(item.as_path()) {
-                                            let (width, height) = img.dimensions();
-                                            self.metadata.dimensions =
-                                                Some((width as usize, height as usize));
-
-                                            let new_width = 100;
-                                            let (original_width, original_height) =
-                                                img.dimensions();
-                                            let new_height = (original_height as f32
-                                                * new_width as f32
-                                                / original_width as f32)
-                                                as u32;
-
-                                            // Resize the image to the new dimensions (100px width)
-                                            let img = img.resize(
-                                                new_width,
-                                                new_height,
-                                                image::imageops::FilterType::Lanczos3,
-                                            );
-                                            self.metadata.scaled_dimensions =
-                                                Some((img.width() as usize, img.height() as usize));
-
-                                            self.metadata.preview_image_bytes =
-                                                Some(img.into_rgba8());
-                                            self.metadata.preview_text = None;
-                                        }
-                                    }
-                                    "txt" | "json" | "md" | "toml" | "csv" | "rtf" | "xml"
-                                    | "rs" | "py" | "c" | "h" | "cpp" | "hpp" => {
-                                        self.metadata.file_type = Some("Textfile".to_string());
-
-                                        // For text files, show content
-                                        if let Ok(content) = fs::read_to_string(item.as_path()) {
-                                            self.metadata.preview_text = Some(content);
-                                        }
-                                        self.metadata.preview_image_bytes = None;
-                                        self.metadata.dimensions = None;
-                                    }
-                                    _ => {
-                                        self.metadata.file_type = Some("Unknown".to_string());
-
-                                        self.metadata.preview_image_bytes = None;
-                                        self.metadata.dimensions = None;
-                                        self.metadata.preview_text = None;
-                                    }
-                                }
-                            } else {
-                                self.metadata.file_type = Some("Unknown".to_string());
-
-                                self.metadata.preview_image_bytes = None;
-                                self.metadata.dimensions = None;
-                                self.metadata.preview_text = None;
-                            }
-                        }
-
-                        self.metadata.file_name = file_name.to_string();
-                        ui.add_space(spacing);
-                        if let Some(content) = &self.metadata.preview_text {
-                            egui::ScrollArea::vertical()
-                                .max_height(100.0)
-                                .show(ui, |ui| {
-                                    ui.add(
-                                        egui::TextEdit::multiline(&mut content.clone())
-                                            .code_editor(),
-                                    );
-                                });
-                        }
-                        else if let Some(img) = &self.metadata.preview_image_bytes {
-                            if let Some((width, height)) = &self.metadata.scaled_dimensions {
-                                // Convert image into `egui::ColorImage`
-                                let color_image = egui::ColorImage::from_rgba_unmultiplied(
-                                    [*width, *height],
-                                    img.as_flat_samples().as_slice(),
-                                );
-
-                                // Load the image as a texture in `egui`
-                                let texture = ui.ctx().load_texture(
-                                    "loaded_image",
-                                    color_image,
-                                    egui::TextureOptions::default(),
-                                );
-
-                                ui.vertical_centered(|ui| {
-                                    // Display the image
-                                    ui.image(&texture);
-                                });
-                            }
-                        } else {
-                            ui.vertical_centered(|ui| {
-                                ui.label(egui::RichText::from("📁").size(120.0));
-                            });
-                        }
-                        ui.add_space(spacing);
-                        egui::Grid::new("meta_data")
-                            .num_columns(2)
-                            .striped(true)
-                            .min_col_width(200.0 / 2.0)
-                            .max_col_width(200.0 / 2.0)
-                            .show(ui, |ui| {
-                                ui.label("File name: ");
-                                ui.label(format!("{}", self.metadata.file_name));
-                                ui.end_row();
-                                ui.label("File type: ");
-                                ui.label(format!("{}", self.metadata.file_type.clone().unwrap_or("None".to_string())));
-                                ui.end_row();
-                                ui.label("File size: ");
-                                ui.label(format!(
-                                    "{}",
-                                    self.metadata.file_size.clone().unwrap_or("NAN".to_string())
-                                ));
-                                ui.end_row();
-                                if let Some((width, height)) = self.metadata.dimensions {
-                                    ui.label("Dimensions: ");
-
-                                    ui.label(format!("{} x {}", width, height));
-                                    ui.end_row();
-                                    ui.label("Pixel count: ");
-
-                                    ui.label(format!("{}", format_pixels(width * height)));
-                                    ui.end_row()
-                                }
-                            });
-                    }
-                });
         });
     }
 

@@ -47,11 +47,6 @@ pub struct FileDialogLabels {
     pub show_system_files: String,
 
     // ------------------------------------------------------------------------
-    // Right panel:
-    /// Heading of the "Pinned" sections in the left panel
-    pub heading_meta: String,
-    
-    // ------------------------------------------------------------------------
     // Left panel:
     /// Heading of the "Pinned" sections in the left panel
     pub heading_pinned: String,
@@ -136,8 +131,6 @@ impl Default for FileDialogLabels {
             reload: "⟲  Reload".to_string(),
             show_hidden: " Show hidden".to_string(),
             show_system_files: " Show system files".to_string(),
-
-            heading_meta: "Information".to_string(),
 
             heading_pinned: "Pinned".to_string(),
             heading_places: "Places".to_string(),
