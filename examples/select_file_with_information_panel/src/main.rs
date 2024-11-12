@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use eframe::egui;
+use egui_commonmark::*;
 use egui_file_dialog::information_panel::InformationPanel;
 use egui_file_dialog::FileDialog;
 
@@ -14,9 +15,8 @@ impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
             file_dialog: FileDialog::new(),
-            information_panel: InformationPanel::new().add_file_preview(
-                "csv",
-                |ui, text, image| {
+            information_panel: InformationPanel::new()
+                .add_file_preview("csv", |ui, text, image| {
                     ui.label("CSV preview:");
                     if let Some(content) = text {
                         egui::ScrollArea::vertical()
@@ -27,8 +27,18 @@ impl MyApp {
                                 );
                             });
                     }
-                },
-            ),
+                })
+                // you can also override existing preview handlers
+                .add_file_preview("md", |ui, text, image| {
+                    let mut cache = CommonMarkCache::default();
+                    if let Some(content) = text {
+                        egui::ScrollArea::vertical()
+                            .max_height(100.0)
+                            .show(ui, |ui| {
+                                CommonMarkViewer::new().show(ui, &mut cache, &content);
+                            });
+                    }
+                }),
             selected_file: None,
         }
     }

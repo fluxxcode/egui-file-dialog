@@ -111,7 +111,8 @@ impl InformationPanel {
             if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
                 if let Some(content) = self.supported_files.get_mut(ext) {
                     let text = if self.load_text_content {
-                        fs::read_to_string(path).ok()
+                        // only show the first 1000 characters of the file
+                        fs::read_to_string(path).ok().map(|s| s[0..1000].to_string())
                     } else {
                         None
                     };
