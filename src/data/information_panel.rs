@@ -101,7 +101,7 @@ impl InformationPanel {
         const SPACING_MULTIPLIER: f32 = 4.0;
 
         ui.label("Information");
-
+        ui.separator();
         if let Some(item) = &file_dialog.active_entry() {
             // if the selected file has changed, update the meta_data
             if item.file_name() != &self.meta_data.file_name {
@@ -141,6 +141,7 @@ impl InformationPanel {
                 }
             }
             let spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
+            ui.separator();
 
             ui.add_space(spacing);
             egui::Grid::new("meta_data")
