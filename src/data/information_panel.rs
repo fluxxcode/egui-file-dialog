@@ -1,3 +1,4 @@
+#![cfg(feature = "info_panel")]
 use crate::{DialogState, DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};

@@ -22,6 +22,7 @@ license = "MIT"
 
 [dependencies]
 egui = { version = "0.29.1", default-features = false }
+
 # Used to fetch user folders
 directories = "5.0"
 
@@ -33,13 +34,16 @@ serde = { version = "1", features = ["derive"], optional = true }
 
 # Used to canonicalize paths
 dunce = "1.0.5"
-image = { version = "0.25", default-features = false, features = ["png"] }
+
+# Used for info panel
+image = { version = "0.25", default-features = false, features = ["png"], optional = true }
 chrono = "0.4.38"
 
 [features]
 default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
+info_panel = ["image"]
 
 [lints.rust]
 unsafe_code = "forbid"
