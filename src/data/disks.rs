@@ -11,16 +11,31 @@ pub struct Disk {
 }
 
 impl Disk {
+    pub fn new(
+        mount_point: &Path,
+        display_name: String,
+        is_removable: bool,
+        canonicalize_paths: bool
+    ) -> Self {
+        Self {
+            mount_point: Self::canonicalize(&mount_point, canonicalize_paths),
+            display_name,
+            is_removable,
+        }
+    }
+
     /// Create a new Disk object based on the data of a `sysinfo::Disk`.
     pub fn from_sysinfo_disk(disk: &sysinfo::Disk, canonicalize_paths: bool) -> Self {
-        Self {
-            mount_point: Self::canonicalize(disk.mount_point(), canonicalize_paths),
-            display_name: gen_display_name(
+        Self::new(
+            disk.mount_point(),
+            gen_display_name(
                 disk.name().to_str().unwrap_or_default(),
                 disk.mount_point().to_str().unwrap_or_default(),
             ),
-            is_removable: disk.is_removable(),
-        }
+            disk.is_removable(),
+            canonicalize_paths,
+        )
+
     }
 
     /// Returns the mount point of the disk
@@ -57,14 +72,9 @@ pub struct Disks {
 impl Disks {
     /// Creates a new Disks object with a refreshed list of the system disks.
     pub fn new_with_refreshed_list(canonicalize_paths: bool) -> Self {
-        let disks = sysinfo::Disks::new_with_refreshed_list();
-
-        let mut result: Vec<Disk> = Vec::new();
-        for disk in &disks {
-            result.push(Disk::from_sysinfo_disk(disk, canonicalize_paths));
+        Self {
+            disks: load_disks(canonicalize_paths),
         }
-
-        Self { disks: result }
     }
 
     /// Very simple wrapper method of the disks `.iter()` method.
@@ -96,4 +106,49 @@ fn gen_display_name(name: &str, mount_point: &str) -> String {
     }
 
     name.to_string()
+}
+
+#[cfg(windows)]
+fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
+    let mut disks: Vec<Disk> = sysinfo::Disks::new_with_refreshed_list()
+        .iter()
+        .map(|d| Disk::from_sysinfo_disk(d, canonicalize_paths))
+        .collect();
+
+    // sysinfo::Disks currently do not include mapped network drives on Windows.
+    // We will load all other available drives using the Windows API.
+    // However, the sysinfo disks have priority, we are just adding to the list.
+    extern "C" {
+        pub fn GetLogicalDrives() -> u32;
+    }
+
+    let mut drives = unsafe { GetLogicalDrives() };
+    let mut letter = b'A';
+
+    while drives > 0 {
+        if drives & 1 != 0 {
+            let mount_point = format!("{}:", letter as char);
+
+            // TODO: Only push when disk does not exist
+            disks.push(Disk::new(
+                PathBuf::from(&mount_point).as_path(),
+                mount_point,
+                false,
+                canonicalize_paths,
+            ))
+        }
+
+        drives >>= 1;
+        letter += 1;
+    }
+
+    disks
+}
+
+#[cfg(not(windows))]
+fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
+    sysinfo::Disks::new_with_refreshed_list()
+        .iter()
+        .map(|d| Disk::from_sysinfo_disk(d, canonicalize_paths))
+        .collect()
 }
