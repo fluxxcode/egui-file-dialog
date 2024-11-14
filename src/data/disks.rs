@@ -15,7 +15,10 @@ impl Disk {
     pub fn from_sysinfo_disk(disk: &sysinfo::Disk, canonicalize_paths: bool) -> Self {
         Self {
             mount_point: Self::canonicalize(disk.mount_point(), canonicalize_paths),
-            display_name: gen_display_name(disk),
+            display_name: gen_display_name(
+                disk.name().to_str().unwrap_or_default(),
+                disk.mount_point().to_str().unwrap_or_default(),
+            ),
             is_removable: disk.is_removable(),
         }
     }
@@ -72,17 +75,8 @@ impl Disks {
 }
 
 #[cfg(windows)]
-fn gen_display_name(disk: &sysinfo::Disk) -> String {
-    // TODO: Get display name of the devices.
-    // Currently on Windows it returns an empty string for the C:\\ drive.
-
-    let mut name = disk.name().to_str().unwrap_or_default().to_string();
-    let mount_point = disk
-        .mount_point()
-        .to_str()
-        .unwrap_or_default()
-        .to_string()
-        .replace('\\', "");
+fn gen_display_name(name: &str, mount_point: &str) -> String {
+    let mount_point = mount_point.replace('\\', "");
 
     // Try using the mount point as the display name if the specified name
     // from sysinfo::Disk is empty or contains invalid characters
@@ -90,20 +84,16 @@ fn gen_display_name(disk: &sysinfo::Disk) -> String {
         return mount_point;
     }
 
-    name.push_str(format!(" ({mount_point})").as_str());
-
-    name
+    format!("{name} ({mount_point})")
 }
 
 #[cfg(not(windows))]
-fn gen_display_name(disk: &sysinfo::Disk) -> String {
-    let name = disk.name().to_str().unwrap_or_default().to_string();
-
+fn gen_display_name(name: &str, mount_point: &str) -> String {
     // Try using the mount point as the display name if the specified name
     // from sysinfo::Disk is empty or contains invalid characters
     if name.is_empty() {
-        return disk.mount_point().to_str().unwrap_or_default().to_string();
+        return mount_point.to_string();
     }
 
-    name
+    name.to_string()
 }
