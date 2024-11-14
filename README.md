@@ -249,6 +249,7 @@ The file dialog currently requires the following persistent data to be stored ac
 
 - Folders the user pinned to the left sidebar (`FileDialog::show_pinned_folders`)
 - If hidden files and folders should be visible (`FileDialog::show_hidden_option`)
+- If system files should be visible (`FileDialog::show_system_files_option`)
 
 If one of the above feature is activated, the data should be saved by the application. Otherwise, frustrating situations could arise for the user and the features would not offer much added value.
 
