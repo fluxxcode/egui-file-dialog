@@ -1,11 +1,11 @@
 #![cfg(feature = "info_panel")]
 use crate::{DirectoryEntry, FileDialog};
+use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
 use image::RgbaImage;
 use std::fs;
 use std::io::Read;
-use chrono::{DateTime, Local};
 
 pub struct InformationPanel {
     pub meta_data: MetaData,
@@ -97,40 +97,48 @@ impl InformationPanel {
 
             if let Some(item) = file_dialog.active_entry() {
                 ui.add_space(spacing);
-                egui::Grid::new("meta_data")
-                    .num_columns(2)
-                    .striped(true)
-                    // not sure if 100.0 as a default value is a good idea
-                    .min_col_width(width)
-                    .max_col_width(width)
+                egui::ScrollArea::vertical()
+                    .id_salt("meta_data_scroll")
                     .show(ui, |ui| {
-                        ui.label("Filename: ");
-                        ui.label(format!("{}", item.file_name()));
-                        ui.end_row();
+                        egui::Grid::new("meta_data")
+                            .num_columns(2)
+                            .striped(true)
+                            // not sure if 100.0 as a default value is a good idea
+                            .min_col_width(width)
+                            .max_col_width(width)
+                            .show(ui, |ui| {
+                                ui.label("Filename: ");
+                                ui.label(format!("{}", item.file_name()));
+                                ui.end_row();
 
-                        if let Some(size) = item.size() {
-                            ui.label("File Size: ");
-                            ui.label(format!("{}", format_bytes(size)));
-                            ui.end_row();
-                        }
-                        if let Some(date) = item.created() {
-                            ui.label("Created: ");
-                            let created: DateTime<Local> = date.into();
-                            ui.label(format!("{}", created.format("%Y-%m-%d %H:%M:%S")));
-                            ui.end_row();
-                        }
-                        if let Some(date) = item.last_modified() {
-                            ui.label("Last Modified: ");
-                            let modified: DateTime<Local> = date.into();
-                            ui.label(format!("{}", modified.format("%Y-%m-%d %H:%M:%S")));
-                            ui.end_row();
-                        }
+                                if let Some(size) = item.size() {
+                                    ui.label("File Size: ");
+                                    if item.is_file() {
+                                        ui.label(format!("{}", format_bytes(size)));
+                                    } else {
+                                        ui.label("NAN");
+                                    }
+                                    ui.end_row();
+                                }
+                                if let Some(date) = item.created() {
+                                    ui.label("Created: ");
+                                    let created: DateTime<Local> = date.into();
+                                    ui.label(format!("{}", created.format("%Y-%m-%d %H:%M:%S")));
+                                    ui.end_row();
+                                }
+                                if let Some(date) = item.last_modified() {
+                                    ui.label("Last Modified: ");
+                                    let modified: DateTime<Local> = date.into();
+                                    ui.label(format!("{}", modified.format("%Y-%m-%d %H:%M:%S")));
+                                    ui.end_row();
+                                }
 
-                        for (key, value) in item.other_metadata() {
-                            ui.label(key);
-                            ui.label(value);
-                            ui.end_row();
-                        }
+                                for (key, value) in item.other_metadata() {
+                                    ui.label(key);
+                                    ui.label(value);
+                                    ui.end_row();
+                                }
+                            });
                     });
             }
         }
