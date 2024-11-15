@@ -9,7 +9,6 @@ use egui::Ui;
 /// It supports text-based file previews, image previews, and displays file metadata.
 ///
 /// # Fields
-/// - `meta_data`: Stores metadata information about the current file.
 /// - `load_text_content`: Flag to control whether text content should be loaded for preview.
 /// - `supported_files`: A hashmap mapping file extensions to their respective preview rendering functions.
 pub struct InformationPanel {
