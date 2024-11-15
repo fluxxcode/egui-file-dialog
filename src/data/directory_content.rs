@@ -120,10 +120,10 @@ pub enum DirectoryContentState {
     /// If we are currently waiting for the loading process on another thread.
     /// The value is the timestamp when the loading process started.
     Pending(SystemTime),
-    /// If loading the direcotry content finished since the last update call.
+    /// If loading the directory content finished since the last update call.
     /// This is only returned once.
     Finished,
-    /// If loading the directory content was successfull.
+    /// If loading the directory content was successful.
     Success,
     /// If there was an error loading the directory content.
     /// The value contains the error message.
