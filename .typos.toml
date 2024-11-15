@@ -1,0 +1,6 @@
+[default.extend-words]
+# Don't correct german words
+Ordner = "Ordner"
+Elemente = "Elemente"
+Alle = "Alle"
+Ein = "Ein"
