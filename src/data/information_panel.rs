@@ -1,17 +1,17 @@
 #![cfg(feature = "info_panel")]
-use crate::{DialogState, DirectoryEntry, FileDialog};
-use chrono::{DateTime, Local};
+use crate::{DirectoryEntry, FileDialog};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
-use image::{DynamicImage, GenericImageView, RgbaImage};
+use image::RgbaImage;
 use std::fs;
-use std::path::PathBuf;
+use std::io::Read;
+use chrono::{DateTime, Local};
 
 pub struct InformationPanel {
     pub meta_data: MetaData,
     pub load_text_content: bool,
     pub load_image_content: bool,
-    supported_files: HashMap<String, Box<dyn FnMut(&mut Ui, Option<String>, Option<RgbaImage>)>>,
+    supported_files: HashMap<String, Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>>,
 }
 
 impl InformationPanel {
@@ -23,7 +23,7 @@ impl InformationPanel {
             supported_files.insert(
                 text_extension.to_string(),
                 Box::new(
-                    |ui: &mut Ui, text: Option<String>, image: Option<RgbaImage>| {
+                    |ui: &mut Ui, text: Option<String>, active_entry: &DirectoryEntry| {
                         if let Some(content) = text {
                             egui::ScrollArea::vertical()
                                 .max_height(100.0)
@@ -35,37 +35,23 @@ impl InformationPanel {
                                 });
                         }
                     },
-                ) as Box<dyn FnMut(&mut Ui, Option<String>, Option<RgbaImage>)>,
+                ) as Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>,
             );
         }
-        // supported_files.insert(
-        //     "png".to_string(),
-        //     Box::new(
-        //         |ui: &mut Ui, text: Option<String>, image: Option<RgbaImage>| {
-        //             ui.label("Image");
-        //             if let Some(img) = image {
-        //                 dbg!(&img.height());
-        //                 dbg!(&img.width());
-        //                 let color_image = egui::ColorImage::from_rgba_unmultiplied(
-        //                     [img.width() as usize, img.height() as usize],
-        //                     img.as_flat_samples().as_slice(),
-        //                 );
-        //
-        //                 // Load the image as a texture in `egui`
-        //                 let texture = ui.ctx().load_texture(
-        //                     "loaded_image",
-        //                     color_image,
-        //                     egui::TextureOptions::default(),
-        //                 );
-        //
-        //                 ui.vertical_centered(|ui| {
-        //                     // Display the image
-        //                     ui.image(&texture);
-        //                 });
-        //             }
-        //         },
-        //     ) as Box<dyn FnMut(&mut Ui, Option<String>, Option<RgbaImage>)>,
-        // );
+        supported_files.insert(
+            "jpg".to_string(),
+            Box::new(|ui: &mut Ui, text: Option<String>, item: &DirectoryEntry| {
+                ui.label("Image");
+                ui.image(format!("file://{}", item.as_path().display()));
+            }) as Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>,
+        );
+        supported_files.insert(
+            "png".to_string(),
+            Box::new(|ui: &mut Ui, text: Option<String>, item: &DirectoryEntry| {
+                ui.label("Image");
+                ui.image(format!("file://{}", item.as_path().display()));
+            }) as Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>,
+        );
         Self {
             meta_data: MetaData::default(),
             load_text_content: true,
@@ -77,25 +63,11 @@ impl InformationPanel {
     pub fn add_file_preview(
         mut self,
         extension: &str,
-        add_contents: impl FnMut(&mut Ui, Option<String>, Option<RgbaImage>) + 'static,
+        add_contents: impl FnMut(&mut Ui, Option<String>, &DirectoryEntry) + 'static,
     ) -> Self {
         self.supported_files
             .insert(extension.to_string(), Box::new(add_contents));
         self
-    }
-
-    fn update_metadata(&mut self, entry: &DirectoryEntry) {
-        self.meta_data.file_name = entry.file_name().to_string();
-        // self.meta_data.file_type = entry.file_type().map(|t| t.to_string_lossy().to_string());
-        // self.meta_data.file_size = entry.file_size().map(|s| format_bytes(s));
-        // self.meta_data.file_created = entry
-        //     .metadata()
-        //     .and_then(|m| m.created().ok())
-        //     .map(|c| c.format("%Y-%m-%d %H:%M:%S").to_string());
-        // self.meta_data.file_modified = entry
-        //     .metadata()
-        //     .and_then(|m| m.modified().ok())
-        //     .map(|c| c.format("%Y-%m-%d %H:%M:%S").to_string());
     }
 
     pub fn ui(&mut self, ui: &mut Ui, file_dialog: &mut FileDialog) {
@@ -103,266 +75,65 @@ impl InformationPanel {
 
         ui.label("Information");
         ui.separator();
-        if let Some(item) = &file_dialog.active_entry() {
-            // if the selected file has changed, update the meta_data
-            if item.file_name() != &self.meta_data.file_name {
-                self.update_metadata(item);
-            }
+        if let Some(item) = file_dialog.active_entry() {
             let path = item.as_path();
             if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
                 if let Some(content) = self.supported_files.get_mut(ext) {
                     let text = if self.load_text_content {
                         // only show the first 1000 characters of the file
-                        fs::read_to_string(path).ok().map(|s| s[0..1000].to_string())
-                    } else {
-                        None
-                    };
-                    let image = if self.load_image_content {
-                        image::open(path)
-                            .map(|img| {
-                                let new_width = 100;
-                                let (original_width, original_height) = img.dimensions();
-                                let new_height = (original_height as f32 * new_width as f32
-                                    / original_width as f32)
-                                    as u32;
-
-                                // Resize the image to the new dimensions (100px width)
-                                let img = img.resize(
-                                    new_width,
-                                    new_height,
-                                    image::imageops::FilterType::Lanczos3,
-                                );
-                                img.into_rgba8()
-                            })
+                        fs::read_to_string(path)
                             .ok()
+                            .map(|s| s[0..1000].to_string())
                     } else {
                         None
                     };
-                    content(ui, text, image)
+                    content(ui, text, item)
                 }
             }
             let spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
             ui.separator();
 
-            ui.add_space(spacing);
-            egui::Grid::new("meta_data")
-                .num_columns(2)
-                .striped(true)
-                // not sure if 100.0 as a default value is a good idea
-                .min_col_width(file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0)
-                .max_col_width(file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0)
-                .show(ui, |ui| {
-                    ui.label("File name: ");
-                    ui.label(format!("{}", self.meta_data.file_name));
-                    ui.end_row();
-                    ui.label("File type: ");
-                    ui.label(format!(
-                        "{}",
-                        self.meta_data
-                            .file_type
-                            .clone()
-                            .unwrap_or("None".to_string())
-                    ));
-                    ui.end_row();
-                    ui.label("File size: ");
-                    ui.label(format!(
-                        "{}",
-                        self.meta_data
-                            .file_size
-                            .clone()
-                            .unwrap_or("NAN".to_string())
-                    ));
-                    ui.end_row();
-                    if let Some((width, height)) = self.meta_data.dimensions {
-                        ui.label("Dimensions: ");
+            let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
 
-                        ui.label(format!("{} x {}", width, height));
+            if let Some(item) = file_dialog.active_entry() {
+                ui.add_space(spacing);
+                egui::Grid::new("meta_data")
+                    .num_columns(2)
+                    .striped(true)
+                    // not sure if 100.0 as a default value is a good idea
+                    .min_col_width(width)
+                    .max_col_width(width)
+                    .show(ui, |ui| {
+                        ui.label("Filename: ");
+                        ui.label(format!("{}", item.file_name()));
                         ui.end_row();
-                        ui.label("Pixel count: ");
 
-                        ui.label(format!("{}", format_pixels(width * height)));
-                        ui.end_row()
-                    }
-                });
+                        if let Some(size) = item.size() {
+                            ui.label("File Size: ");
+                            ui.label(format!("{}", format_bytes(size)));
+                            ui.end_row();
+                        }
+                        if let Some(date) = item.created() {
+                            ui.label("Created: ");
+                            let created: DateTime<Local> = date.into();
+                            ui.label(format!("{}", created.format("%Y-%m-%d %H:%M:%S")));
+                            ui.end_row();
+                        }
+                        if let Some(date) = item.last_modified() {
+                            ui.label("Last Modified: ");
+                            let modified: DateTime<Local> = date.into();
+                            ui.label(format!("{}", modified.format("%Y-%m-%d %H:%M:%S")));
+                            ui.end_row();
+                        }
+
+                        for (key, value) in item.other_metadata() {
+                            ui.label(key);
+                            ui.label(value);
+                            ui.end_row();
+                        }
+                    });
+            }
         }
-
-        // // Spacing multiplier used between sections in the right sidebar
-        // const SPACING_MULTIPLIER: f32 = 4.0;
-        //
-        // egui::containers::ScrollArea::vertical()
-        //     .auto_shrink([false, false])
-        //     .show(ui, |ui| {
-        //         // Spacing for the first section in the right sidebar
-        //         let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
-        //
-        //         // Update paths pinned to the left sidebar by the user
-        //         if file_dialog.config.show_pinned_folders
-        //             && file_dialog.ui_update_pinned_paths(ui, spacing)
-        //         {
-        //             spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
-        //         }
-        //
-        //         ui.add_space(spacing);
-        //         ui.label(file_dialog.config.labels.heading_meta.as_str());
-        //         ui.add_space(spacing);
-        //
-        //         if let Some(item) = &file_dialog.selected_item {
-        //             let file_name = item.file_name();
-        //             if file_dialog.metadata.file_name != file_name {
-        //                 // update metadata
-        //                 let metadata = fs::metadata(item.as_path()).unwrap();
-        //                 // Display creation and last modified dates
-        //                 if let Ok(created) = metadata.created() {
-        //                     let created: DateTime<Local> = created.into();
-        //                     file_dialog.metadata.file_created =
-        //                         Some(created.format("%Y-%m-%d %H:%M:%S").to_string());
-        //                 }
-        //                 if let Ok(modified) = metadata.modified() {
-        //                     let modified: DateTime<Local> = modified.into();
-        //                     file_dialog.metadata.file_modified =
-        //                         Some(modified.format("%Y-%m-%d %H:%M:%S").to_string());
-        //                 }
-        //                 file_dialog.metadata.file_size = Some(format_bytes(metadata.len()));
-        //                 file_dialog.metadata.file_name = file_name.to_string();
-        //
-        //                 // Determine the file type and display relevant metadata
-        //                 if let Some(ext) = item.as_path().extension().and_then(|e| e.to_str()) {
-        //                     match ext.to_lowercase().as_str() {
-        //                         "png" | "jpg" | "jpeg" | "bmp" | "gif" | "tiff" => {
-        //                             file_dialog.metadata.file_type = Some("Image".to_string());
-        //
-        //                             // For image files, show dimensions and color space
-        //                             if let Ok(img) = image::open(item.as_path()) {
-        //                                 let (width, height) = img.dimensions();
-        //                                 file_dialog.metadata.dimensions =
-        //                                     Some((width as usize, height as usize));
-        //
-        //                                 let new_width = 100;
-        //                                 let (original_width, original_height) = img.dimensions();
-        //                                 let new_height = (original_height as f32 * new_width as f32
-        //                                     / original_width as f32)
-        //                                     as u32;
-        //
-        //                                 // Resize the image to the new dimensions (100px width)
-        //                                 let img = img.resize(
-        //                                     new_width,
-        //                                     new_height,
-        //                                     image::imageops::FilterType::Lanczos3,
-        //                                 );
-        //                                 file_dialog.metadata.scaled_dimensions =
-        //                                     Some((img.width() as usize, img.height() as usize));
-        //
-        //                                 file_dialog.metadata.preview_image_bytes =
-        //                                     Some(img.into_rgba8());
-        //                                 file_dialog.metadata.preview_text = None;
-        //                             }
-        //                         }
-        //                         "txt" | "json" | "md" | "toml" | "csv" | "rtf" | "xml" | "rs"
-        //                         | "py" | "c" | "h" | "cpp" | "hpp" => {
-        //                             file_dialog.metadata.file_type = Some("Textfile".to_string());
-        //
-        //                             // For text files, show content
-        //                             if let Ok(content) = fs::read_to_string(item.as_path()) {
-        //                                 file_dialog.metadata.preview_text = Some(content);
-        //                             }
-        //                             file_dialog.metadata.preview_image_bytes = None;
-        //                             file_dialog.metadata.dimensions = None;
-        //                         }
-        //                         _ => {
-        //                             file_dialog.metadata.file_type = Some("Unknown".to_string());
-        //
-        //                             file_dialog.metadata.preview_image_bytes = None;
-        //                             file_dialog.metadata.dimensions = None;
-        //                             file_dialog.metadata.preview_text = None;
-        //                         }
-        //                     }
-        //                 } else {
-        //                     file_dialog.metadata.file_type = Some("Unknown".to_string());
-        //
-        //                     file_dialog.metadata.preview_image_bytes = None;
-        //                     file_dialog.metadata.dimensions = None;
-        //                     file_dialog.metadata.preview_text = None;
-        //                 }
-        //             }
-        //
-        //             file_dialog.metadata.file_name = file_name.to_string();
-        //             ui.add_space(spacing);
-        //             if let Some(content) = &file_dialog.metadata.preview_text {
-        //                 egui::ScrollArea::vertical()
-        //                     .max_height(100.0)
-        //                     .show(ui, |ui| {
-        //                         ui.add(
-        //                             egui::TextEdit::multiline(&mut content.clone()).code_editor(),
-        //                         );
-        //                     });
-        //             } else if let Some(img) = &file_dialog.metadata.preview_image_bytes {
-        //                 if let Some((width, height)) = &file_dialog.metadata.scaled_dimensions {
-        //                     // Convert image into `egui::ColorImage`
-        //                     let color_image = egui::ColorImage::from_rgba_unmultiplied(
-        //                         [*width, *height],
-        //                         img.as_flat_samples().as_slice(),
-        //                     );
-        //
-        //                     // Load the image as a texture in `egui`
-        //                     let texture = ui.ctx().load_texture(
-        //                         "loaded_image",
-        //                         color_image,
-        //                         egui::TextureOptions::default(),
-        //                     );
-        //
-        //                     ui.vertical_centered(|ui| {
-        //                         // Display the image
-        //                         ui.image(&texture);
-        //                     });
-        //                 }
-        //             } else {
-        //                 ui.vertical_centered(|ui| {
-        //                     ui.label(egui::RichText::from("📁").size(120.0));
-        //                 });
-        //             }
-        //             ui.add_space(spacing);
-        //             egui::Grid::new("meta_data")
-        //                 .num_columns(2)
-        //                 .striped(true)
-        //                 .min_col_width(200.0 / 2.0)
-        //                 .max_col_width(200.0 / 2.0)
-        //                 .show(ui, |ui| {
-        //                     ui.label("File name: ");
-        //                     ui.label(format!("{}", file_dialog.metadata.file_name));
-        //                     ui.end_row();
-        //                     ui.label("File type: ");
-        //                     ui.label(format!(
-        //                         "{}",
-        //                         file_dialog
-        //                             .metadata
-        //                             .file_type
-        //                             .clone()
-        //                             .unwrap_or("None".to_string())
-        //                     ));
-        //                     ui.end_row();
-        //                     ui.label("File size: ");
-        //                     ui.label(format!(
-        //                         "{}",
-        //                         file_dialog
-        //                             .metadata
-        //                             .file_size
-        //                             .clone()
-        //                             .unwrap_or("NAN".to_string())
-        //                     ));
-        //                     ui.end_row();
-        //                     if let Some((width, height)) = file_dialog.metadata.dimensions {
-        //                         ui.label("Dimensions: ");
-        //
-        //                         ui.label(format!("{} x {}", width, height));
-        //                         ui.end_row();
-        //                         ui.label("Pixel count: ");
-        //
-        //                         ui.label(format!("{}", format_pixels(width * height)));
-        //                         ui.end_row()
-        //                     }
-        //                 });
-        //         }
-        //     });
     }
 }
 
@@ -379,7 +150,7 @@ pub struct MetaData {
     pub file_created: Option<String>,
 }
 
-pub fn format_bytes(bytes: u64) -> String {
+fn format_bytes(bytes: u64) -> String {
     const KB: u64 = 1024;
     const MB: u64 = KB * 1024;
     const GB: u64 = MB * 1024;
@@ -395,17 +166,5 @@ pub fn format_bytes(bytes: u64) -> String {
         format!("{:.2} KB", bytes as f64 / KB as f64)
     } else {
         format!("{} B", bytes)
-    }
-}
-
-pub fn format_pixels(pixels: usize) -> String {
-    const K: usize = 1_000;
-    const M: usize = K * 1_000;
-    const G: usize = M * 1_000;
-
-    if pixels >= K {
-        format!("{:.2} MPx", pixels as f64 / M as f64)
-    } else {
-        format!("{} Px", pixels)
     }
 }

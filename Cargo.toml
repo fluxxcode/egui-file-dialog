@@ -37,13 +37,14 @@ dunce = "1.0.5"
 
 # Used for info panel
 image = { version = "0.25", default-features = false, features = ["png"], optional = true }
-chrono = "0.4.38"
+chrono = { version = "0.4.38", optional = true }
+kamadak-exif = "0.6.1"
 
 [features]
 default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
-info_panel = ["image"]
+info_panel = ["dep:image", "dep:chrono"]
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -65,3 +66,6 @@ struct_field_names = { level = "allow", priority = 13 }
 missing_fields_in_debug = { level = "allow", priority = 14 }
 missing_errors_doc = { level = "allow", priority = 15 }
 module_name_repetitions = { level = "allow", priority = 16 }
+
+[profile.release]
+debug = true

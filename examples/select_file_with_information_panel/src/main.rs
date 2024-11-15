@@ -16,11 +16,11 @@ impl MyApp {
         Self {
             file_dialog: FileDialog::new(),
             information_panel: InformationPanel::new()
-                .add_file_preview("csv", |ui, text, image| {
+                .add_file_preview("csv", |ui, text, item| {
                     ui.label("CSV preview:");
                     if let Some(content) = text {
                         egui::ScrollArea::vertical()
-                            .max_height(100.0)
+                            .max_height(150.0)
                             .show(ui, |ui| {
                                 ui.add(
                                     egui::TextEdit::multiline(&mut content.clone()).code_editor(),
@@ -29,11 +29,12 @@ impl MyApp {
                     }
                 })
                 // you can also override existing preview handlers
-                .add_file_preview("md", |ui, text, image| {
+                .add_file_preview("md", |ui, text, item| {
                     let mut cache = CommonMarkCache::default();
                     if let Some(content) = text {
                         egui::ScrollArea::vertical()
-                            .max_height(100.0)
+                            .max_height(150.0)
+                            .max_width(300.0)
                             .show(ui, |ui| {
                                 CommonMarkViewer::new().show(ui, &mut cache, &content);
                             });
@@ -51,7 +52,7 @@ impl eframe::App for MyApp {
                 self.file_dialog.select_file();
             }
 
-            self.file_dialog.set_right_panel_width(200.0);
+            self.file_dialog.set_right_panel_width(300.0);
 
             self.file_dialog
                 .update_with_right_panel_ui(ctx, &mut |ui, dia| {

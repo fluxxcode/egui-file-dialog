@@ -1,11 +1,22 @@
+use crate::config::{FileDialogConfig, FileFilter};
+use egui::ahash::HashMap;
+use egui::mutex::Mutex;
+use image::GenericImageView;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
 
-use egui::mutex::Mutex;
+pub fn format_pixels(pixels: u32) -> String {
+    const K: u32 = 1_000;
+    const M: u32 = K * 1_000;
 
-use crate::config::{FileDialogConfig, FileFilter};
+    if pixels >= K {
+        format!("{:.2} MPx", pixels as f64 / M as f64)
+    } else {
+        format!("{} Px", pixels)
+    }
+}
 
 /// Contains the metadata of a directory item.
 ///
@@ -15,6 +26,11 @@ use crate::config::{FileDialogConfig, FileFilter};
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct DirectoryEntry {
     path: PathBuf,
+    size: Option<u64>,
+    last_modified: Option<SystemTime>,
+    created: Option<SystemTime>,
+    file_type: Option<String>,
+    other_meta_data: HashMap<String, String>,
     is_directory: bool,
     is_system_file: bool,
     icon: String,
@@ -25,8 +41,49 @@ pub struct DirectoryEntry {
 impl DirectoryEntry {
     /// Creates a new directory entry from a path
     pub fn from_path(config: &FileDialogConfig, path: &Path) -> Self {
+        let mut size = None;
+        let mut last_modified = None;
+        let mut created = None;
+        let mut file_type = None;
+        let mut other_data = HashMap::default();
+
+        if let Ok(metadata) = fs::metadata(path) {
+            size = Some(metadata.len());
+            last_modified = metadata.modified().ok();
+            created = metadata.created().ok();
+            file_type = Some(format!("{:?}", metadata.file_type()));
+        }
+
+        if let Some(ext) = path.extension() {
+            if let Some(ext_str) = ext.to_str() {
+                match ext_str {
+                    "png" | "jpg" | "jpeg" | "bmp" | "gif" | "tiff" => {
+                        // For image files, show dimensions and color space
+                        if let Ok(img) = image::open(path) {
+                            let (width, height) = img.dimensions();
+                            other_data.insert(
+                                "Dimensions".to_string(),
+                                format!("{} x {}", width, height),
+                            );
+                            other_data.insert(
+                                "Pixel Count".to_string(),
+                                format!("{}", format_pixels(width * height)),
+                            );
+                            // add color space?
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
         Self {
             path: path.to_path_buf(),
+            size,
+            last_modified,
+            created,
+            file_type,
+            other_meta_data: other_data,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
             icon: gen_path_icon(config, path),
@@ -73,6 +130,25 @@ impl DirectoryEntry {
         self.path.clone()
     }
 
+    pub fn size(&self) -> Option<u64> {
+        self.size.clone()
+    }
+
+    pub fn file_type(&self) -> Option<String> {
+        self.file_type.clone()
+    }
+
+    pub fn created(&self) -> Option<SystemTime> {
+        self.created.clone()
+    }
+
+    pub fn last_modified(&self) -> Option<SystemTime> {
+        self.last_modified.clone()
+    }
+
+    pub fn other_metadata(&self) -> HashMap<String, String> {
+        self.other_meta_data.clone()
+    }
     /// Returns the file name of the directory item.
     pub fn file_name(&self) -> &str {
         self.path

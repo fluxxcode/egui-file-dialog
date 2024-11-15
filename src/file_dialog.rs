@@ -396,10 +396,12 @@ impl FileDialog {
         self
     }
 
+    /// Sets the width of the right panel by setting it to None.
     pub fn set_right_panel_width(&mut self, width: f32) {
         self.config.right_panel_width = Some(width);
     }
 
+    /// Clears the width of the right panel by setting it to None.
     pub fn clear_right_panel_width(&mut self) {
         self.config.right_panel_width = None;
     }
