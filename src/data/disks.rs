@@ -15,7 +15,7 @@ impl Disk {
         name: Option<&str>,
         mount_point: &Path,
         is_removable: bool,
-        canonicalize_paths: bool
+        canonicalize_paths: bool,
     ) -> Self {
         Self {
             mount_point: Self::canonicalize(&mount_point, canonicalize_paths),
@@ -35,7 +35,6 @@ impl Disk {
             disk.is_removable(),
             canonicalize_paths,
         )
-
     }
 
     /// Returns the mount point of the disk
@@ -130,7 +129,10 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
         if drives & 1 != 0 {
             let mount_point = format!("{}:\\", letter as char);
 
-            if !disks.iter().any(|d| d.mount_point.to_str().unwrap_or_default() == mount_point) {
+            if !disks
+                .iter()
+                .any(|d| d.mount_point.to_str().unwrap_or_default() == mount_point)
+            {
                 disks.push(Disk::new(
                     None,
                     &PathBuf::from(&mount_point),
