@@ -2028,7 +2028,7 @@ impl FileDialog {
         }
     }
 
-    /// Updates the contents of the currenly open directory.
+    /// Updates the contents of the currently open directory.
     /// TODO: Refactor
     fn ui_update_central_panel_content(&mut self, ui: &mut egui::Ui) {
         // Temporarily take ownership of the directory content.
