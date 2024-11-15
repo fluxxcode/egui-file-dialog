@@ -16,9 +16,9 @@ impl MyApp {
         Self {
             file_dialog: FileDialog::new(),
             information_panel: InformationPanel::new()
-                .add_file_preview("csv", |ui, text, _item| {
+                .add_file_preview("csv", |ui, item| {
                     ui.label("CSV preview:");
-                    if let Some(content) = text {
+                    if let Some(content) = item.content() {
                         egui::ScrollArea::vertical()
                             .max_height(150.0)
                             .show(ui, |ui| {
@@ -29,9 +29,9 @@ impl MyApp {
                     }
                 })
                 // you can also override existing preview handlers
-                .add_file_preview("md", |ui, text, _item| {
+                .add_file_preview("md", |ui, item| {
                     let mut cache = CommonMarkCache::default();
-                    if let Some(content) = text {
+                    if let Some(content) = item.content() {
                         egui::ScrollArea::vertical()
                             .max_height(150.0)
                             .max_width(300.0)

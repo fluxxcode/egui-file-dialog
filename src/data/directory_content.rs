@@ -35,6 +35,7 @@ pub struct DirectoryEntry {
     other_meta_data: HashMap<String, String>,
     is_directory: bool,
     is_system_file: bool,
+    content: Option<String>,
     icon: String,
     /// If the item is marked as selected as part of a multi selection.
     pub selected: bool,
@@ -47,12 +48,11 @@ impl DirectoryEntry {
         let mut last_modified = None;
         let mut created = None;
         let mut file_type = None;
-        
+
         #[cfg(feature = "info_panel")]
         let mut other_data = HashMap::default();
         #[cfg(not(feature = "info_panel"))]
         let other_data = HashMap::default();
-
 
         if let Ok(metadata) = fs::metadata(path) {
             size = Some(metadata.len());
@@ -60,7 +60,7 @@ impl DirectoryEntry {
             created = metadata.created().ok();
             file_type = Some(format!("{:?}", metadata.file_type()));
         }
-        
+
         #[cfg(feature = "info_panel")]
         if let Some(ext) = path.extension() {
             if let Some(ext_str) = ext.to_str() {
@@ -85,6 +85,12 @@ impl DirectoryEntry {
             }
         }
 
+        let content =
+            // Load only the first 1000 characters of the file
+            fs::read_to_string(path)
+                .ok()
+                .map(|s| s.chars().take(1000).collect());
+
         Self {
             path: path.to_path_buf(),
             size,
@@ -94,6 +100,7 @@ impl DirectoryEntry {
             other_meta_data: other_data,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
+            content,
             icon: gen_path_icon(config, path),
             selected: false,
         }
@@ -136,6 +143,11 @@ impl DirectoryEntry {
     /// Clones the path of the directory item.
     pub fn to_path_buf(&self) -> PathBuf {
         self.path.clone()
+    }
+
+    /// Clones the content of the directory item, if available
+    pub fn content(&self) -> Option<String> {
+        self.content.clone()
     }
 
     /// Clones the size of the directory item.

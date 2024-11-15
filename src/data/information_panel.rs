@@ -4,7 +4,6 @@ use crate::{DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
-use std::fs;
 
 /// The `InformationPanel` struct provides a panel to display metadata and previews of files.
 /// It supports text-based file previews, image previews, and displays file metadata.
@@ -16,7 +15,7 @@ use std::fs;
 pub struct InformationPanel {
     /// Flag to control whether text content should be loaded for preview.
     pub load_text_content: bool,
-    supported_files: HashMap<String, Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>>,
+    supported_files: HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>,
 }
 
 impl InformationPanel {
@@ -34,41 +33,34 @@ impl InformationPanel {
         ] {
             supported_files.insert(
                 text_extension.to_string(),
-                Box::new(
-                    |ui: &mut Ui, text: Option<String>, _item: &DirectoryEntry| {
-                        if let Some(content) = text {
-                            egui::ScrollArea::vertical()
-                                .max_height(100.0)
-                                .show(ui, |ui| {
-                                    ui.add(
-                                        egui::TextEdit::multiline(&mut content.clone())
-                                            .code_editor(),
-                                    );
-                                });
-                        }
-                    },
-                ) as Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>,
+                Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+                    if let Some(content) = item.content() {
+                        egui::ScrollArea::vertical()
+                            .max_height(100.0)
+                            .show(ui, |ui| {
+                                ui.add(
+                                    egui::TextEdit::multiline(&mut content.clone()).code_editor(),
+                                );
+                            });
+                    }
+                }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
             );
         }
 
         // Add preview support for JPEG and PNG image files
         supported_files.insert(
             "jpg".to_string(),
-            Box::new(
-                |ui: &mut Ui, _text: Option<String>, item: &DirectoryEntry| {
-                    ui.label("Image");
-                    ui.image(format!("file://{}", item.as_path().display()));
-                },
-            ) as Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>,
+            Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+                ui.label("Image");
+                ui.image(format!("file://{}", item.as_path().display()));
+            }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
         );
         supported_files.insert(
             "png".to_string(),
-            Box::new(
-                |ui: &mut Ui, _text: Option<String>, item: &DirectoryEntry| {
-                    ui.label("Image");
-                    ui.image(format!("file://{}", item.as_path().display()));
-                },
-            ) as Box<dyn FnMut(&mut Ui, Option<String>, &DirectoryEntry)>,
+            Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+                ui.label("Image");
+                ui.image(format!("file://{}", item.as_path().display()));
+            }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
         );
 
         Self {
@@ -88,7 +80,7 @@ impl InformationPanel {
     pub fn add_file_preview(
         mut self,
         extension: &str,
-        add_contents: impl FnMut(&mut Ui, Option<String>, &DirectoryEntry) + 'static,
+        add_contents: impl FnMut(&mut Ui, &DirectoryEntry) + 'static,
     ) -> Self {
         self.supported_files
             .insert(extension.to_string(), Box::new(add_contents));
@@ -113,22 +105,20 @@ impl InformationPanel {
             let path = item.as_path();
 
             if item.is_dir() {
+                // show folder icon
                 ui.vertical_centered(|ui| {
                     ui.label(egui::RichText::from("📁").size(120.0));
                 });
             } else {
                 // Display file content preview based on its extension
                 if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
-                    if let Some(content) = self.supported_files.get_mut(ext) {
-                        let text = if self.load_text_content {
-                            // Load only the first 1000 characters of the file
-                            fs::read_to_string(path)
-                                .ok()
-                                .map(|s| s.chars().take(1000).collect())
-                        } else {
-                            None
-                        };
-                        content(ui, text, item);
+                    if let Some(show_preview) = self.supported_files.get_mut(ext) {
+                        show_preview(ui, item);
+                    } else {
+                        // if now preview is available, show icon
+                        ui.vertical_centered(|ui| {
+                            ui.label(egui::RichText::from(item.icon()).size(120.0));
+                        });
                     }
                 }
             }
