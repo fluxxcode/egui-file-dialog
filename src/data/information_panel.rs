@@ -74,11 +74,11 @@ impl Default for InformationPanel {
         Self {
             load_text_content: true,
             supported_files,
-        }    }
+        }
+    }
 }
 
 impl InformationPanel {
-
     /// Adds support for previewing a custom file type.
     ///
     /// # Arguments
