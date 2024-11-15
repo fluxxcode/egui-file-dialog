@@ -1,11 +1,10 @@
 use crate::config::{FileDialogConfig, FileFilter};
 use egui::mutex::Mutex;
-#[cfg(feature = "info_panel")]
+use indexmap::IndexMap;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
-use indexmap::IndexMap;
 
 #[cfg(feature = "info_panel")]
 pub fn format_pixels(pixels: u32) -> String {
@@ -13,9 +12,9 @@ pub fn format_pixels(pixels: u32) -> String {
     const M: u32 = K * 1_000;
 
     if pixels >= K {
-        format!("{:.2} MPx", pixels as f64 / M as f64)
+        format!("{:.2} MPx", f64::from(pixels) / f64::from(M))
     } else {
-        format!("{} Px", pixels)
+        format!("{pixels} Px")
     }
 }
 
@@ -51,7 +50,7 @@ impl DirectoryEntry {
         #[cfg(feature = "info_panel")]
         let mut other_data = IndexMap::default();
         #[cfg(not(feature = "info_panel"))]
-        let other_data = HashMap::default();
+        let other_data = IndexMap::default();
 
         if let Ok(metadata) = fs::metadata(path) {
             size = Some(metadata.len());
@@ -68,14 +67,10 @@ impl DirectoryEntry {
                         if let Ok(meta) = image_meta::load_from_file(path) {
                             let (width, height) = (meta.dimensions.width, meta.dimensions.height);
                             // For image files, show dimensions and color space
-                            other_data.insert(
-                                "Dimensions".to_string(),
-                                format!("{} x {}", width, height),
-                            );
-                            other_data.insert(
-                                "Pixel Count".to_string(),
-                                format!("{}", format_pixels(width * height)),
-                            );
+                            other_data
+                                .insert("Dimensions".to_string(), format!("{width} x {height}"));
+                            other_data
+                                .insert("Pixel Count".to_string(), format_pixels(width * height));
                             other_data
                                 .insert("Colorspace".to_string(), format!("{:?}", meta.color));
                             other_data.insert("Format".to_string(), format!("{:?}", meta.format));
@@ -151,27 +146,27 @@ impl DirectoryEntry {
         self.content.clone()
     }
 
-    /// Clones the size of the directory item.
-    pub fn size(&self) -> Option<u64> {
-        self.size.clone()
+    /// Returns the size of the directory item.
+    pub const fn size(&self) -> Option<u64> {
+        self.size
     }
 
-    /// Clones the FileType struct of the directory item.
+    /// Clones the `FileType` struct of the directory item.
     pub fn file_type(&self) -> Option<String> {
         self.file_type.clone()
     }
 
-    /// Clones the created date of the directory item.
-    pub fn created(&self) -> Option<SystemTime> {
-        self.created.clone()
+    /// Returns the created date of the directory item.
+    pub const fn created(&self) -> Option<SystemTime> {
+        self.created
     }
 
-    /// Clones the last modified date of the directory item.
-    pub fn last_modified(&self) -> Option<SystemTime> {
-        self.last_modified.clone()
+    /// Returns the last modified date of the directory item.
+    pub const fn last_modified(&self) -> Option<SystemTime> {
+        self.last_modified
     }
 
-    /// Clones the additional metadata HashMap of the directory item.
+    /// Clones the additional metadata `IndexMap` of the directory item.
     pub fn other_metadata(&self) -> IndexMap<String, String> {
         self.other_meta_data.clone()
     }

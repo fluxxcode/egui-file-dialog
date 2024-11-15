@@ -41,7 +41,7 @@ indexmap = { version = "2.6.0", features = ["serde"] }
 # Used for info panel
 image-meta = { version = "0.1.2",  optional = true }
 chrono = { version = "0.4.38", optional = true }
-kamadak-exif = "0.6.1"
+# kamadak-exif = "0.6.1"
 
 [features]
 default = ["serde", "default_fonts"]
@@ -69,3 +69,4 @@ struct_field_names = { level = "allow", priority = 13 }
 missing_fields_in_debug = { level = "allow", priority = 14 }
 missing_errors_doc = { level = "allow", priority = 15 }
 module_name_repetitions = { level = "allow", priority = 16 }
+cast_precision_loss = { level = "allow", priority = 17 }

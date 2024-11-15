@@ -144,13 +144,13 @@ impl InformationPanel {
                         .max_col_width(width)
                         .show(ui, |ui| {
                             ui.label("Filename: ");
-                            ui.label(format!("{}", item.file_name()));
+                            ui.label(item.file_name().to_string());
                             ui.end_row();
 
                             if let Some(size) = item.size() {
                                 ui.label("File Size: ");
                                 if item.is_file() {
-                                    ui.label(format!("{}", format_bytes(size)));
+                                    ui.label(format_bytes(size));
                                 } else {
                                     ui.label("NAN");
                                 }
@@ -205,6 +205,6 @@ fn format_bytes(bytes: u64) -> String {
     } else if bytes >= KB {
         format!("{:.2} KB", bytes as f64 / KB as f64)
     } else {
-        format!("{} B", bytes)
+        format!("{bytes} B")
     }
 }
