@@ -64,7 +64,7 @@ impl DirectoryEntry {
         #[cfg(feature = "info_panel")]
         if let Some(ext) = path.extension() {
             if let Some(ext_str) = ext.to_str() {
-                match ext_str {
+                match ext_str.to_lowercase().as_str() {
                     "png" | "jpg" | "jpeg" | "bmp" | "gif" | "tiff" => {
                         // For image files, show dimensions and color space
                         if let Ok(img) = image::open(path) {
@@ -77,7 +77,10 @@ impl DirectoryEntry {
                                 "Pixel Count".to_string(),
                                 format!("{}", format_pixels(width * height)),
                             );
-                            // add color space?
+                            other_data.insert(
+                                "Colorspace".to_string(),
+                                format!("{:?}", img.color()),
+                            );
                         }
                     }
                     _ => {}

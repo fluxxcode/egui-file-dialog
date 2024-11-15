@@ -117,7 +117,7 @@ impl InformationPanel {
             } else {
                 // Display file content preview based on its extension
                 if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
-                    if let Some(show_preview) = self.supported_files.get_mut(ext) {
+                    if let Some(show_preview) = self.supported_files.get_mut(&ext.to_lowercase()) {
                         show_preview(ui, item);
                     } else {
                         // if now preview is available, show icon
