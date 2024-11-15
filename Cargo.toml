@@ -36,7 +36,7 @@ serde = { version = "1", features = ["derive"], optional = true }
 dunce = "1.0.5"
 
 # Used for info panel
-image = { version = "0.25", default-features = false, features = ["png"], optional = true }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg" , "tiff", "bmp"]}
 chrono = { version = "0.4.38", optional = true }
 kamadak-exif = "0.6.1"
 
@@ -44,7 +44,7 @@ kamadak-exif = "0.6.1"
 default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
-info_panel = ["dep:image", "dep:chrono"]
+info_panel = ["dep:chrono"]
 
 [lints.rust]
 unsafe_code = "forbid"
