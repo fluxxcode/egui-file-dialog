@@ -18,7 +18,7 @@ impl Disk {
         canonicalize_paths: bool,
     ) -> Self {
         Self {
-            mount_point: Self::canonicalize(&mount_point, canonicalize_paths),
+            mount_point: Self::canonicalize(mount_point, canonicalize_paths),
             display_name: gen_display_name(
                 name.unwrap_or_default(),
                 mount_point.to_str().unwrap_or_default(),
