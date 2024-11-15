@@ -5,6 +5,8 @@ use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
 
+type SupportedFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>;
+
 /// The `InformationPanel` struct provides a panel to display metadata and previews of files.
 /// It supports text-based file previews, image previews, and displays file metadata.
 ///
@@ -14,16 +16,16 @@ use egui::Ui;
 pub struct InformationPanel {
     /// Flag to control whether text content should be loaded for preview.
     pub load_text_content: bool,
-    supported_files: HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>,
+    supported_files: SupportedFilesMap,
 }
 
-impl InformationPanel {
+impl Default for InformationPanel {
     /// Creates a new `InformationPanel` instance with default configurations.
     /// Pre-configures support for several text-based and image file extensions.
     ///
     /// # Returns
     /// A new instance of `InformationPanel`.
-    pub fn new() -> Self {
+    fn default() -> Self {
         let mut supported_files = HashMap::new();
 
         // Add preview support for common text file extensions
@@ -72,8 +74,10 @@ impl InformationPanel {
         Self {
             load_text_content: true,
             supported_files,
-        }
-    }
+        }    }
+}
+
+impl InformationPanel {
 
     /// Adds support for previewing a custom file type.
     ///

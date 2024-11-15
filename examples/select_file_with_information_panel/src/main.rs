@@ -15,7 +15,7 @@ impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
             file_dialog: FileDialog::new(),
-            information_panel: InformationPanel::new()
+            information_panel: InformationPanel::default()
                 .add_file_preview("csv", |ui, item| {
                     ui.label("CSV preview:");
                     if let Some(content) = item.content() {
