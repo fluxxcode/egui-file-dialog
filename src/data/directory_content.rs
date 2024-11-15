@@ -1,12 +1,11 @@
 use crate::config::{FileDialogConfig, FileFilter};
-use egui::ahash::HashMap;
 use egui::mutex::Mutex;
 #[cfg(feature = "info_panel")]
-use image::GenericImageView;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
+use indexmap::IndexMap;
 
 #[cfg(feature = "info_panel")]
 pub fn format_pixels(pixels: u32) -> String {
@@ -32,7 +31,7 @@ pub struct DirectoryEntry {
     last_modified: Option<SystemTime>,
     created: Option<SystemTime>,
     file_type: Option<String>,
-    other_meta_data: HashMap<String, String>,
+    other_meta_data: IndexMap<String, String>,
     is_directory: bool,
     is_system_file: bool,
     content: Option<String>,
@@ -50,7 +49,7 @@ impl DirectoryEntry {
         let mut file_type = None;
 
         #[cfg(feature = "info_panel")]
-        let mut other_data = HashMap::default();
+        let mut other_data = IndexMap::default();
         #[cfg(not(feature = "info_panel"))]
         let other_data = HashMap::default();
 
@@ -173,7 +172,7 @@ impl DirectoryEntry {
     }
 
     /// Clones the additional metadata HashMap of the directory item.
-    pub fn other_metadata(&self) -> HashMap<String, String> {
+    pub fn other_metadata(&self) -> IndexMap<String, String> {
         self.other_meta_data.clone()
     }
     /// Returns the file name of the directory item.

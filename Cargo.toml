@@ -35,8 +35,10 @@ serde = { version = "1", features = ["derive"], optional = true }
 # Used to canonicalize paths
 dunce = "1.0.5"
 
+# used for meta-data storage
+indexmap = { version = "2.6.0", features = ["serde"] }
+
 # Used for info panel
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "tiff", "bmp"], optional = true }
 image-meta = { version = "0.1.2",  optional = true }
 chrono = { version = "0.4.38", optional = true }
 kamadak-exif = "0.6.1"
@@ -45,7 +47,7 @@ kamadak-exif = "0.6.1"
 default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
-info_panel = ["dep:chrono", "image", "image-meta"]
+info_panel = ["dep:chrono", "image-meta"]
 
 [lints.rust]
 unsafe_code = "forbid"
