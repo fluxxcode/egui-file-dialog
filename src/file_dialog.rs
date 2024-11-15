@@ -2066,8 +2066,6 @@ impl FileDialog {
                                 should_return = true;
                             }
                         }
-
-                        self.ui_update_create_directory_dialog(ui);
                     },
                 );
             } else {
@@ -2088,7 +2086,9 @@ impl FileDialog {
                         }
                     }
 
-                    self.ui_update_create_directory_dialog(ui);
+                    if let Some(entry) = self.ui_update_create_directory_dialog(ui) {
+                        data.push(entry);
+                    }
                 });
             }
         });
@@ -2224,13 +2224,15 @@ impl FileDialog {
         false
     }
 
-    fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) {
+    fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) -> Option<DirectoryEntry> {
         if let Some(path) = self
             .create_directory_dialog
             .update(ui, &self.config)
             .directory()
         {
-            self.process_new_folder(&path);
+            Some(self.process_new_folder(&path))
+        } else {
+            None
         }
     }
 
@@ -2575,12 +2577,14 @@ impl FileDialog {
     }
 
     /// Function that processes a newly created folder.
-    fn process_new_folder(&mut self, created_dir: &Path) {
+    fn process_new_folder(&mut self, created_dir: &Path) -> DirectoryEntry {
         let mut entry = DirectoryEntry::from_path(&self.config, created_dir);
 
         self.directory_content.push(entry.clone());
 
         self.select_item(&mut entry);
+
+        entry
     }
 
     /// Opens a new modal window.
