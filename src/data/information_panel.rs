@@ -56,6 +56,13 @@ impl InformationPanel {
             }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
         );
         supported_files.insert(
+            "jpeg".to_string(),
+            Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+                ui.label("Image");
+                ui.image(format!("file://{}", item.as_path().display()));
+            }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
+        );
+        supported_files.insert(
             "png".to_string(),
             Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
                 ui.label("Image");
@@ -102,8 +109,6 @@ impl InformationPanel {
         let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
 
         if let Some(item) = file_dialog.active_entry() {
-            let path = item.as_path();
-
             if item.is_dir() {
                 // show folder icon
                 ui.vertical_centered(|ui| {
@@ -111,7 +116,7 @@ impl InformationPanel {
                 });
             } else {
                 // Display file content preview based on its extension
-                if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
+                if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
                     if let Some(show_preview) = self.supported_files.get_mut(ext) {
                         show_preview(ui, item);
                     } else {
@@ -128,6 +133,7 @@ impl InformationPanel {
 
             ui.add_space(spacing);
 
+            // show all metadata
             egui::ScrollArea::vertical()
                 .id_salt("meta_data_scroll")
                 .show(ui, |ui| {
@@ -165,6 +171,7 @@ impl InformationPanel {
                                 ui.end_row();
                             }
 
+                            // show additional metadata, if present
                             for (key, value) in item.other_metadata() {
                                 ui.label(key);
                                 ui.label(value);
