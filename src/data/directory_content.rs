@@ -1,12 +1,14 @@
 use crate::config::{FileDialogConfig, FileFilter};
 use egui::ahash::HashMap;
 use egui::mutex::Mutex;
+#[cfg(feature = "info_panel")]
 use image::GenericImageView;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
 
+#[cfg(feature = "info_panel")]
 pub fn format_pixels(pixels: u32) -> String {
     const K: u32 = 1_000;
     const M: u32 = K * 1_000;
@@ -45,7 +47,12 @@ impl DirectoryEntry {
         let mut last_modified = None;
         let mut created = None;
         let mut file_type = None;
+        
+        #[cfg(feature = "info_panel")]
         let mut other_data = HashMap::default();
+        #[cfg(not(feature = "info_panel"))]
+        let other_data = HashMap::default();
+
 
         if let Ok(metadata) = fs::metadata(path) {
             size = Some(metadata.len());
@@ -53,7 +60,8 @@ impl DirectoryEntry {
             created = metadata.created().ok();
             file_type = Some(format!("{:?}", metadata.file_type()));
         }
-
+        
+        #[cfg(feature = "info_panel")]
         if let Some(ext) = path.extension() {
             if let Some(ext_str) = ext.to_str() {
                 match ext_str {
