@@ -41,7 +41,6 @@ indexmap = { version = "2.6.0", features = ["serde"] }
 # Used for info panel
 image-meta = { version = "0.1.2",  optional = true }
 chrono = { version = "0.4.38", optional = true }
-# kamadak-exif = "0.6.1"
 
 [features]
 default = ["serde", "default_fonts"]
