@@ -65,10 +65,10 @@ impl DirectoryEntry {
         if let Some(ext) = path.extension() {
             if let Some(ext_str) = ext.to_str() {
                 match ext_str.to_lowercase().as_str() {
-                    "png" | "jpg" | "jpeg" | "bmp" | "gif" | "tiff" => {
-                        // For image files, show dimensions and color space
-                        if let Ok(img) = image::open(path) {
-                            let (width, height) = img.dimensions();
+                    "png" | "jpg" | "jpeg" | "bmp" | "gif" => {
+                        if let Ok(meta) = image_meta::load_from_file(path) {
+                            let (width, height) = (meta.dimensions.width, meta.dimensions.height);
+                            // For image files, show dimensions and color space
                             other_data.insert(
                                 "Dimensions".to_string(),
                                 format!("{} x {}", width, height),
@@ -77,10 +77,9 @@ impl DirectoryEntry {
                                 "Pixel Count".to_string(),
                                 format!("{}", format_pixels(width * height)),
                             );
-                            other_data.insert(
-                                "Colorspace".to_string(),
-                                format!("{:?}", img.color()),
-                            );
+                            other_data
+                                .insert("Colorspace".to_string(), format!("{:?}", meta.color));
+                            other_data.insert("Format".to_string(), format!("{:?}", meta.format));
                         }
                     }
                     _ => {}
