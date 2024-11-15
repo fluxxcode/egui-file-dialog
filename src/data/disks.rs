@@ -12,14 +12,17 @@ pub struct Disk {
 
 impl Disk {
     pub fn new(
+        name: Option<&str>,
         mount_point: &Path,
-        display_name: String,
         is_removable: bool,
         canonicalize_paths: bool
     ) -> Self {
         Self {
             mount_point: Self::canonicalize(&mount_point, canonicalize_paths),
-            display_name,
+            display_name: gen_display_name(
+                name.unwrap_or_default(),
+                mount_point.to_str().unwrap_or_default(),
+            ),
             is_removable,
         }
     }
@@ -27,11 +30,8 @@ impl Disk {
     /// Create a new Disk object based on the data of a `sysinfo::Disk`.
     pub fn from_sysinfo_disk(disk: &sysinfo::Disk, canonicalize_paths: bool) -> Self {
         Self::new(
+            disk.name().to_str(),
             disk.mount_point(),
-            gen_display_name(
-                disk.name().to_str().unwrap_or_default(),
-                disk.mount_point().to_str().unwrap_or_default(),
-            ),
             disk.is_removable(),
             canonicalize_paths,
         )
@@ -122,20 +122,22 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
         pub fn GetLogicalDrives() -> u32;
     }
 
+    #[allow(unsafe_code)]
     let mut drives = unsafe { GetLogicalDrives() };
     let mut letter = b'A';
 
     while drives > 0 {
         if drives & 1 != 0 {
-            let mount_point = format!("{}:", letter as char);
+            let mount_point = format!("{}:\\", letter as char);
 
-            // TODO: Only push when disk does not exist
-            disks.push(Disk::new(
-                PathBuf::from(&mount_point).as_path(),
-                mount_point,
-                false,
-                canonicalize_paths,
-            ))
+            if !disks.iter().any(|d| d.mount_point.to_str().unwrap_or_default() == mount_point) {
+                disks.push(Disk::new(
+                    None,
+                    &PathBuf::from(&mount_point),
+                    false,
+                    canonicalize_paths,
+                ))
+            }
         }
 
         drives >>= 1;
