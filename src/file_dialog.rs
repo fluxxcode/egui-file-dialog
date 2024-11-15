@@ -2225,15 +2225,10 @@ impl FileDialog {
     }
 
     fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) -> Option<DirectoryEntry> {
-        if let Some(path) = self
+        self
             .create_directory_dialog
             .update(ui, &self.config)
-            .directory()
-        {
-            Some(self.process_new_folder(&path))
-        } else {
-            None
-        }
+            .directory().map(|path| self.process_new_folder(&path))
     }
 
     /// Selects every item inside the `directory_content` between `item_a` and `item_b`,
