@@ -130,22 +130,27 @@ impl DirectoryEntry {
         self.path.clone()
     }
 
+    /// Clones the size of the directory item.
     pub fn size(&self) -> Option<u64> {
         self.size.clone()
     }
 
+    /// Clones the FileType struct of the directory item.
     pub fn file_type(&self) -> Option<String> {
         self.file_type.clone()
     }
 
+    /// Clones the created date of the directory item.
     pub fn created(&self) -> Option<SystemTime> {
         self.created.clone()
     }
 
+    /// Clones the last modified date of the directory item.
     pub fn last_modified(&self) -> Option<SystemTime> {
         self.last_modified.clone()
     }
 
+    /// Clones the additional metadata HashMap of the directory item.
     pub fn other_metadata(&self) -> HashMap<String, String> {
         self.other_meta_data.clone()
     }
