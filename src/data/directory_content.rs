@@ -33,6 +33,7 @@ pub struct DirectoryEntry {
     other_meta_data: IndexMap<String, String>,
     is_directory: bool,
     is_system_file: bool,
+    #[cfg(feature = "info_panel")]
     content: Option<String>,
     icon: String,
     /// If the item is marked as selected as part of a multi selection.
@@ -81,12 +82,6 @@ impl DirectoryEntry {
             }
         }
 
-        let content =
-            // Load only the first 1000 characters of the file
-            fs::read_to_string(path)
-                .ok()
-                .map(|s| s.chars().take(1000).collect());
-
         Self {
             path: path.to_path_buf(),
             size,
@@ -96,7 +91,8 @@ impl DirectoryEntry {
             other_meta_data: other_data,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
-            content,
+            #[cfg(feature = "info_panel")]
+            content: None,
             icon: gen_path_icon(config, path),
             selected: false,
         }
@@ -141,9 +137,16 @@ impl DirectoryEntry {
         self.path.clone()
     }
 
+    #[cfg(feature = "info_panel")]
     /// Clones the content of the directory item, if available
     pub fn content(&self) -> Option<String> {
         self.content.clone()
+    }
+
+    #[cfg(feature = "info_panel")]
+    /// Sets the content of the directory item
+    pub fn set_content(&mut self, content: Option<String>) {
+        self.content = content;
     }
 
     /// Returns the size of the directory item.

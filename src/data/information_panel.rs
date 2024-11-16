@@ -4,6 +4,10 @@ use crate::{DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
+use std::fs::File;
+use std::io;
+use std::io::Read;
+use std::path::PathBuf;
 
 type SupportedFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>;
 
@@ -16,6 +20,7 @@ type SupportedFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)
 pub struct InformationPanel {
     /// Flag to control whether text content should be loaded for preview.
     pub load_text_content: bool,
+    loaded_file_name: PathBuf,
     supported_files: SupportedFilesMap,
 }
 
@@ -73,6 +78,7 @@ impl Default for InformationPanel {
 
         Self {
             load_text_content: true,
+            loaded_file_name: PathBuf::new(),
             supported_files,
         }
     }
@@ -97,6 +103,37 @@ impl InformationPanel {
         self
     }
 
+    /// Reads a preview of the file if it is detected as a text file.
+    fn load_text_file_preview(path: PathBuf, max_chars: usize) -> io::Result<String> {
+        let mut file = File::open(path)?;
+        let mut chunk = [0; 96]; // Temporary buffer
+        let mut buffer = String::new();
+
+        // Add the first chunk to the buffer as text
+        let mut total_read = 0;
+
+        // Continue reading if needed
+        while total_read < max_chars {
+            let bytes_read = file.read(&mut chunk)?;
+            if bytes_read == 0 {
+                break; // End of file
+            }
+            let chars_read: String = String::from_utf8(chunk[..bytes_read].to_vec())
+                .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
+            total_read += chars_read.len();
+            buffer.push_str(&chars_read);
+        }
+
+        Ok(buffer.to_string())
+    }
+    fn load_content(&self, path: PathBuf) -> Option<String> {
+        if self.load_text_content {
+            Self::load_text_file_preview(path, 1000).ok()
+        } else {
+            None
+        }
+    }
+
     /// Renders the Information Panel in the provided UI context.
     ///
     /// # Arguments
@@ -111,6 +148,15 @@ impl InformationPanel {
         // Display metadata in a grid format
         let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
 
+        // load file size if it's a new file
+        let path_option = file_dialog.active_entry();
+        if let Some(path) = path_option {
+            if self.loaded_file_name != path.to_path_buf() {
+                self.loaded_file_name = path.to_path_buf();
+                file_dialog.set_selected_content(self.load_content(path.to_path_buf()));
+            }
+        }
+
         if let Some(item) = file_dialog.active_entry() {
             if item.is_dir() {
                 // show folder icon
@@ -122,6 +168,14 @@ impl InformationPanel {
                 if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
                     if let Some(show_preview) = self.supported_files.get_mut(&ext.to_lowercase()) {
                         show_preview(ui, item);
+                    } else if let Some(content) = item.content() {
+                        egui::ScrollArea::vertical()
+                            .max_height(100.0)
+                            .show(ui, |ui| {
+                                ui.add(
+                                    egui::TextEdit::multiline(&mut content.clone()).code_editor(),
+                                );
+                            });
                     } else {
                         // if now preview is available, show icon
                         ui.vertical_centered(|ui| {

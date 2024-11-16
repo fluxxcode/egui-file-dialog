@@ -69,3 +69,6 @@ missing_fields_in_debug = { level = "allow", priority = 14 }
 missing_errors_doc = { level = "allow", priority = 15 }
 module_name_repetitions = { level = "allow", priority = 16 }
 cast_precision_loss = { level = "allow", priority = 17 }
+
+[profile.release]
+debug = true
