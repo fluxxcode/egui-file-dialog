@@ -20,6 +20,8 @@ type SupportedFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)
 pub struct InformationPanel {
     /// Flag to control whether text content should be loaded for preview.
     pub load_text_content: bool,
+    /// Max chars that should be loaded for preview of text files.
+    pub text_content_max_chars: usize,
     loaded_file_name: PathBuf,
     supported_files: SupportedFilesMap,
 }
@@ -78,6 +80,7 @@ impl Default for InformationPanel {
 
         Self {
             load_text_content: true,
+            text_content_max_chars: 1000,
             loaded_file_name: PathBuf::new(),
             supported_files,
         }
@@ -128,7 +131,7 @@ impl InformationPanel {
     }
     fn load_content(&self, path: PathBuf) -> Option<String> {
         if self.load_text_content {
-            Self::load_text_file_preview(path, 1000).ok()
+            Self::load_text_file_preview(path, self.text_content_max_chars).ok()
         } else {
             None
         }
