@@ -39,6 +39,11 @@ impl MyApp {
                                 CommonMarkViewer::new().show(ui, &mut cache, &content);
                             });
                     }
+                })
+                // add additional metadata loader
+                .add_metadata_loader("pdf", |other_meta_data, path| {
+                    // as a simple example, just show the Filename of the PDF
+                    other_meta_data.insert("PDF Filename".to_string(), format!("{:?}", path));
                 }),
             selected_file: None,
         }

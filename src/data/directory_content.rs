@@ -1,6 +1,5 @@
 use crate::config::{FileDialogConfig, FileFilter};
 use egui::mutex::Mutex;
-use indexmap::IndexMap;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
@@ -30,7 +29,6 @@ pub struct DirectoryEntry {
     last_modified: Option<SystemTime>,
     created: Option<SystemTime>,
     file_type: Option<String>,
-    other_meta_data: IndexMap<String, String>,
     is_directory: bool,
     is_system_file: bool,
     #[cfg(feature = "info_panel")]
@@ -48,38 +46,11 @@ impl DirectoryEntry {
         let mut created = None;
         let mut file_type = None;
 
-        #[cfg(feature = "info_panel")]
-        let mut other_data = IndexMap::default();
-        #[cfg(not(feature = "info_panel"))]
-        let other_data = IndexMap::default();
-
         if let Ok(metadata) = fs::metadata(path) {
             size = Some(metadata.len());
             last_modified = metadata.modified().ok();
             created = metadata.created().ok();
             file_type = Some(format!("{:?}", metadata.file_type()));
-        }
-
-        #[cfg(feature = "info_panel")]
-        if let Some(ext) = path.extension() {
-            if let Some(ext_str) = ext.to_str() {
-                match ext_str.to_lowercase().as_str() {
-                    "png" | "jpg" | "jpeg" | "bmp" | "gif" => {
-                        if let Ok(meta) = image_meta::load_from_file(path) {
-                            let (width, height) = (meta.dimensions.width, meta.dimensions.height);
-                            // For image files, show dimensions and color space
-                            other_data
-                                .insert("Dimensions".to_string(), format!("{width} x {height}"));
-                            other_data
-                                .insert("Pixel Count".to_string(), format_pixels(width * height));
-                            other_data
-                                .insert("Colorspace".to_string(), format!("{:?}", meta.color));
-                            other_data.insert("Format".to_string(), format!("{:?}", meta.format));
-                        }
-                    }
-                    _ => {}
-                }
-            }
         }
 
         Self {
@@ -88,7 +59,6 @@ impl DirectoryEntry {
             last_modified,
             created,
             file_type,
-            other_meta_data: other_data,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
             #[cfg(feature = "info_panel")]
@@ -168,11 +138,7 @@ impl DirectoryEntry {
     pub const fn last_modified(&self) -> Option<SystemTime> {
         self.last_modified
     }
-
-    /// Clones the additional metadata `IndexMap` of the directory item.
-    pub fn other_metadata(&self) -> IndexMap<String, String> {
-        self.other_meta_data.clone()
-    }
+    
     /// Returns the file name of the directory item.
     pub fn file_name(&self) -> &str {
         self.path

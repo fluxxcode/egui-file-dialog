@@ -1,15 +1,19 @@
 #![cfg(feature = "info_panel")]
 
+use crate::data::directory_content::format_pixels;
 use crate::{DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
+use indexmap::IndexMap;
 use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 
-type SupportedFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>;
+type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>;
+type SupportedAdditionalMetaFilesMap =
+    HashMap<String, Box<dyn FnMut(&mut IndexMap<String, String>, &PathBuf)>>;
 
 /// The `InformationPanel` struct provides a panel to display metadata and previews of files.
 /// It supports text-based file previews, image previews, and displays file metadata.
@@ -23,7 +27,9 @@ pub struct InformationPanel {
     /// Max chars that should be loaded for preview of text files.
     pub text_content_max_chars: usize,
     loaded_file_name: PathBuf,
-    supported_files: SupportedFilesMap,
+    supported_preview_files: SupportedPreviewFilesMap,
+    additional_meta_files: SupportedAdditionalMetaFilesMap,
+    other_meta_data: IndexMap<String, String>,
 }
 
 impl Default for InformationPanel {
@@ -34,6 +40,29 @@ impl Default for InformationPanel {
     /// A new instance of `InformationPanel`.
     fn default() -> Self {
         let mut supported_files = HashMap::new();
+        let mut additional_meta_files = HashMap::new();
+
+        for ext in ["png", "jpg", "jpeg", "bmp", "gif"] {
+            additional_meta_files.insert(
+                ext.to_string(),
+                Box::new(
+                    |other_meta_data: &mut IndexMap<String, String>, path: &PathBuf| {
+                        if let Ok(meta) = image_meta::load_from_file(&path) {
+                            let (width, height) = (meta.dimensions.width, meta.dimensions.height);
+                            // For image files, show dimensions and color space
+                            other_meta_data
+                                .insert("Dimensions".to_string(), format!("{width} x {height}"));
+                            other_meta_data
+                                .insert("Pixel Count".to_string(), format_pixels(width * height));
+                            other_meta_data
+                                .insert("Colorspace".to_string(), format!("{:?}", meta.color));
+                            other_meta_data
+                                .insert("Format".to_string(), format!("{:?}", meta.format));
+                        }
+                    },
+                ) as Box<dyn FnMut(&mut IndexMap<String, String>, &PathBuf)>,
+            );
+        }
 
         // Add preview support for common text file extensions
         for text_extension in [
@@ -82,7 +111,9 @@ impl Default for InformationPanel {
             load_text_content: true,
             text_content_max_chars: 1000,
             loaded_file_name: PathBuf::new(),
-            supported_files,
+            supported_preview_files: supported_files,
+            additional_meta_files,
+            other_meta_data: IndexMap::default(),
         }
     }
 }
@@ -101,8 +132,26 @@ impl InformationPanel {
         extension: &str,
         add_contents: impl FnMut(&mut Ui, &DirectoryEntry) + 'static,
     ) -> Self {
-        self.supported_files
+        self.supported_preview_files
             .insert(extension.to_string(), Box::new(add_contents));
+        self
+    }
+
+    /// Adds support for an additional metadata loader.
+    ///
+    /// # Arguments
+    /// - `extension`: The file extension to support (e.g., "png", "pdf").
+    /// - `load_metadata`: A closure defining how the metadata should be loaded when the file is selected.
+    ///
+    /// # Returns
+    /// The modified `InformationPanel` instance.
+    pub fn add_metadata_loader(
+        mut self,
+        extension: &str,
+        load_metadata: impl FnMut(&mut IndexMap<String, String>, &PathBuf) + 'static,
+    ) -> Self {
+        self.additional_meta_files
+            .insert(extension.to_string(), Box::new(load_metadata));
         self
     }
 
@@ -151,11 +200,22 @@ impl InformationPanel {
         // Display metadata in a grid format
         let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
 
-        // load file size if it's a new file
+        // load file content and additional metadata if it's a new file
         let path_option = file_dialog.active_entry();
         if let Some(path) = path_option {
             if self.loaded_file_name != path.to_path_buf() {
                 self.loaded_file_name = path.to_path_buf();
+                // clear previous meta data
+                self.other_meta_data = IndexMap::default();
+                if let Some(ext) = path.to_path_buf().extension() {
+                    if let Some(ext_str) = ext.to_str() {
+                        if let Some(load_meta_data) = self.additional_meta_files.get_mut(ext_str) {
+                            // load metadata
+                            load_meta_data(&mut self.other_meta_data, &path.to_path_buf());
+                        }
+                    }
+                }
+                // load content
                 file_dialog.set_selected_content(self.load_content(path.to_path_buf()));
             }
         }
@@ -169,7 +229,9 @@ impl InformationPanel {
             } else {
                 // Display file content preview based on its extension
                 if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
-                    if let Some(show_preview) = self.supported_files.get_mut(&ext.to_lowercase()) {
+                    if let Some(show_preview) =
+                        self.supported_preview_files.get_mut(&ext.to_lowercase())
+                    {
                         show_preview(ui, item);
                     } else if let Some(content) = item.content() {
                         egui::ScrollArea::vertical()
@@ -232,7 +294,7 @@ impl InformationPanel {
                             }
 
                             // show additional metadata, if present
-                            for (key, value) in item.other_metadata() {
+                            for (key, value) in self.other_meta_data.clone() {
                                 ui.label(key);
                                 ui.label(value);
                                 ui.end_row();
