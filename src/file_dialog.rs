@@ -237,6 +237,9 @@ impl FileDialog {
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
+
+        obj.refresh();
+
         obj
     }
 
@@ -610,8 +613,12 @@ impl FileDialog {
     /// you know what you are doing and have a reason for it.
     /// Disabling canonicalization can lead to unexpected behavior, for example if an
     /// already canonicalized path is then set as the initial directory.
-    pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
+    pub fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
+
+        // Reload data like system disks and user directories with the updated canonicalization.
+        self.refresh();
+
         self
     }
 
