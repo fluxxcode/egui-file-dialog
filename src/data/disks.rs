@@ -126,16 +126,8 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
             let path = PathBuf::from(format!("{}:\\", letter as char));
             let mount_point = canonicalize(&path, canonicalize_paths);
 
-            if !disks
-                .iter()
-                .any(|d| d.mount_point == mount_point)
-            {
-                disks.push(Disk::new(
-                    None,
-                    &path,
-                    false,
-                    canonicalize_paths,
-                ));
+            if !disks.iter().any(|d| d.mount_point == mount_point) {
+                disks.push(Disk::new(None, &path, false, canonicalize_paths));
             }
         }
 
