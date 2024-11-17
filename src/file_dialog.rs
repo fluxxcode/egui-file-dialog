@@ -998,7 +998,7 @@ impl FileDialog {
 
     /// Sets the content (text) of the active Directory item
     ///
-
+    #[cfg(feature = "info_panel")]
     pub fn set_selected_content(&mut self, content: Option<String>) {
         if let Some(item) = &mut self.selected_item {
             item.set_content(content);
@@ -1121,7 +1121,7 @@ impl FileDialog {
                     // we don't restrict the width. It's up to the user to make the UI presentable.
                     .resizable(true);
                 if let Some(width) = self.config.right_panel_width {
-                    right_panel = right_panel.exact_width(width);
+                    right_panel = right_panel.min_width(width);
                 }
                 right_panel.show_inside(ui, |ui| {
                     f(ui, self);

@@ -54,10 +54,15 @@ impl eframe::App for MyApp {
 
             self.file_dialog.set_right_panel_width(300.0);
 
-            self.file_dialog
+            if let Some(path) = self
+                .file_dialog
                 .update_with_right_panel_ui(ctx, &mut |ui, dia| {
                     self.information_panel.ui(ui, dia);
-                });
+                })
+                .selected()
+            {
+                self.selected_file = Some(path.to_path_buf());
+            }
 
             ui.label(format!("Selected file: {:?}", self.selected_file));
         });
