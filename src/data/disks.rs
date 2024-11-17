@@ -18,7 +18,7 @@ impl Disk {
         canonicalize_paths: bool,
     ) -> Self {
         Self {
-            mount_point: Self::canonicalize(mount_point, canonicalize_paths),
+            mount_point: canonicalize(mount_point, canonicalize_paths),
             display_name: gen_display_name(
                 name.unwrap_or_default(),
                 mount_point.to_str().unwrap_or_default(),
@@ -50,16 +50,6 @@ impl Disk {
     pub const fn is_removable(&self) -> bool {
         self.is_removable
     }
-
-    /// Canonicalizes the given path.
-    /// Returns the input path in case of an error.
-    fn canonicalize(path: &Path, canonicalize: bool) -> PathBuf {
-        if canonicalize {
-            dunce::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
-        } else {
-            path.to_path_buf()
-        }
-    }
 }
 
 /// Wrapper above the `sysinfo::Disks` struct
@@ -80,6 +70,16 @@ impl Disks {
     /// No trait is implemented since this is currently only used internal.
     pub fn iter(&self) -> std::slice::Iter<'_, Disk> {
         self.disks.iter()
+    }
+}
+
+/// Canonicalizes the given path.
+/// Returns the input path in case of an error.
+fn canonicalize(path: &Path, canonicalize: bool) -> PathBuf {
+    if canonicalize {
+        dunce::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+    } else {
+        path.to_path_buf()
     }
 }
 
@@ -114,31 +114,28 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
         .map(|d| Disk::from_sysinfo_disk(d, canonicalize_paths))
         .collect();
 
-    // sysinfo::Disks currently do not include mapped network drives on Windows.
+    // `sysinfo::Disks` currently do not include mapped network drives on Windows.
     // We will load all other available drives using the Windows API.
     // However, the sysinfo disks have priority, we are just adding to the list.
-    extern "C" {
-        pub fn GetLogicalDrives() -> u32;
-    }
-
     #[allow(unsafe_code)]
     let mut drives = unsafe { GetLogicalDrives() };
     let mut letter = b'A';
 
     while drives > 0 {
         if drives & 1 != 0 {
-            let mount_point = format!("{}:\\", letter as char);
+            let path = PathBuf::from(format!("{}:\\", letter as char));
+            let mount_point = canonicalize(&path, canonicalize_paths);
 
             if !disks
                 .iter()
-                .any(|d| d.mount_point.to_str().unwrap_or_default() == mount_point)
+                .any(|d| d.mount_point == mount_point)
             {
                 disks.push(Disk::new(
                     None,
-                    &PathBuf::from(&mount_point),
+                    &path,
                     false,
                     canonicalize_paths,
-                ))
+                ));
             }
         }
 
@@ -147,6 +144,11 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
     }
 
     disks
+}
+
+#[cfg(windows)]
+extern "C" {
+    pub fn GetLogicalDrives() -> u32;
 }
 
 #[cfg(not(windows))]
