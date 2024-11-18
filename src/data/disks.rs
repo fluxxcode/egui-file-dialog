@@ -1,3 +1,4 @@
+#[cfg(target_os = "macos")]
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -38,6 +39,7 @@ impl Disk {
         )
     }
 
+    #[cfg(target_os = "macos")]
     pub fn from_path(path: &Path, canonicalize_paths: bool) -> Self {
         let mount_point = canonicalize(path, canonicalize_paths);
 
