@@ -192,9 +192,11 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
         for entry in entries.filter_map(Result::ok) {
             let path = entry.path();
             if seen_mount_points.insert(path.clone()) {
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.is_dir() {
-                        result.push(Disk::from_path(&path, canonicalize_paths));
+                if let Some(name_osstr) = path.file_name() {
+                    if let Some(name) = name_osstr.to_str() {
+                        if path.is_dir() && !name.starts_with('.') {
+                            result.push(Disk::from_path(&path, canonicalize_paths));
+                        }
                     }
                 }
             }
