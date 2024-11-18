@@ -1,8 +1,7 @@
+use egui::text::{CCursor, CCursorRange};
 use std::fmt::Debug;
 use std::io;
 use std::path::{Path, PathBuf};
-
-use egui::text::{CCursor, CCursorRange};
 
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
@@ -1128,6 +1127,33 @@ impl FileDialog {
         // User closed the window without finishing the dialog
         if !is_open {
             self.cancel();
+        }
+
+        let mut new_file_dropped = false;
+
+        // Collect dropped files:
+        ctx.input(|i| {
+            if !i.raw.dropped_files.is_empty() {
+                // check if files were dropped
+                let dropped_files = &i.raw.dropped_files.clone();
+                if let Some(dropped_file) = dropped_files.last() {
+                    if let Some(path) = &dropped_file.path {
+                        if path.is_dir() {
+                            // if we dropped a directory, go there
+                            self.load_directory(path.as_path());
+                        } else if let Some(parent) = path.parent() {
+                            // else, go to the parent directory
+                            self.load_directory(parent);
+                        }
+                        new_file_dropped = true;
+                    }
+                }
+            }
+        });
+
+        // update GUI if we dropped a file
+        if new_file_dropped {
+            ctx.request_repaint();
         }
     }
 
