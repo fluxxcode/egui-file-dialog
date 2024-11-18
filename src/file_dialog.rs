@@ -1,8 +1,7 @@
+use egui::text::{CCursor, CCursorRange};
 use std::fmt::Debug;
 use std::io;
 use std::path::{Path, PathBuf};
-
-use egui::text::{CCursor, CCursorRange};
 
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
@@ -237,6 +236,9 @@ impl FileDialog {
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
+
+        obj.refresh();
+
         obj
     }
 
@@ -610,8 +612,12 @@ impl FileDialog {
     /// you know what you are doing and have a reason for it.
     /// Disabling canonicalization can lead to unexpected behavior, for example if an
     /// already canonicalized path is then set as the initial directory.
-    pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
+    pub fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
+
+        // Reload data like system disks and user directories with the updated canonicalization.
+        self.refresh();
+
         self
     }
 
@@ -1128,6 +1134,31 @@ impl FileDialog {
         // User closed the window without finishing the dialog
         if !is_open {
             self.cancel();
+        }
+
+        let mut new_file_dropped = false;
+
+        // Collect dropped files:
+        ctx.input(|i| {
+            // check if files were dropped
+            if let Some(dropped_file) = i.raw.dropped_files.last() {
+                if let Some(path) = &dropped_file.path {
+                    if path.is_dir() {
+                        // if we dropped a directory, go there
+                        self.load_directory(path.as_path());
+                        new_file_dropped = true;
+                    } else if let Some(parent) = path.parent() {
+                        // else, go to the parent directory
+                        self.load_directory(parent);
+                        new_file_dropped = true;
+                    }
+                }
+            }
+        });
+
+        // update GUI if we dropped a file
+        if new_file_dropped {
+            ctx.request_repaint();
         }
     }
 
@@ -2028,7 +2059,7 @@ impl FileDialog {
         }
     }
 
-    /// Updates the contents of the currenly open directory.
+    /// Updates the contents of the currently open directory.
     /// TODO: Refactor
     fn ui_update_central_panel_content(&mut self, ui: &mut egui::Ui) {
         // Temporarily take ownership of the directory content.
@@ -2066,8 +2097,6 @@ impl FileDialog {
                                 should_return = true;
                             }
                         }
-
-                        self.ui_update_create_directory_dialog(ui);
                     },
                 );
             } else {
@@ -2088,7 +2117,9 @@ impl FileDialog {
                         }
                     }
 
-                    self.ui_update_create_directory_dialog(ui);
+                    if let Some(entry) = self.ui_update_create_directory_dialog(ui) {
+                        data.push(entry);
+                    }
                 });
             }
         });
@@ -2224,14 +2255,11 @@ impl FileDialog {
         false
     }
 
-    fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) {
-        if let Some(path) = self
-            .create_directory_dialog
+    fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) -> Option<DirectoryEntry> {
+        self.create_directory_dialog
             .update(ui, &self.config)
             .directory()
-        {
-            self.process_new_folder(&path);
-        }
+            .map(|path| self.process_new_folder(&path))
     }
 
     /// Selects every item inside the `directory_content` between `item_a` and `item_b`,
@@ -2575,12 +2603,14 @@ impl FileDialog {
     }
 
     /// Function that processes a newly created folder.
-    fn process_new_folder(&mut self, created_dir: &Path) {
+    fn process_new_folder(&mut self, created_dir: &Path) -> DirectoryEntry {
         let mut entry = DirectoryEntry::from_path(&self.config, created_dir);
 
         self.directory_content.push(entry.clone());
 
         self.select_item(&mut entry);
+
+        entry
     }
 
     /// Opens a new modal window.

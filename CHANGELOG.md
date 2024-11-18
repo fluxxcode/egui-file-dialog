@@ -5,6 +5,7 @@
 - Added `FileDialog::update_with_right_panel_ui` to add a custom right panel to the file dialog [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Added `FileDialog::active_selected_entries` and `FileDialog::active_entry` to get information about the current active item/s [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Added option to show system files in the hamburger menu [#173](https://github.com/fluxxcode/egui-file-dialog/pull/173) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Support mapped network devices on Windows [#189](https://github.com/fluxxcode/egui-file-dialog/pull/189)
 - Added the ability to drag and drop files and folders to open their respective path [#192](https://github.com/fluxxcode/egui-file-dialog/pull/192) (thanks [@hacknus](https://github.com/hacknus)!)
 
 ### 🐛 Bug Fixes
@@ -18,6 +19,7 @@
 - Filter directory when loading to improve performance [#169](https://github.com/fluxxcode/egui-file-dialog/pull/169)
 - Implement non blocking directory loading [#177](https://github.com/fluxxcode/egui-file-dialog/pull/177)
 - Only update visible items in the central panel if the search value is empty and the create directory dialog is currently closed [#181](https://github.com/fluxxcode/egui-file-dialog/pull/181)
+- Improve CI [#186](https://github.com/fluxxcode/egui-file-dialog/pull/186) (thanks [@bircni](https://github.com/bircni)!)
 
 ### 📚 Documentation
 - Updated `README.md` to include latest features [#176](https://github.com/fluxxcode/egui-file-dialog/pull/176)

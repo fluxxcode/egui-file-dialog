@@ -122,7 +122,7 @@ pub struct FileDialogKeyBindings {
 }
 
 impl FileDialogKeyBindings {
-    /// Checks wether any of the given keybindings is pressed.
+    /// Checks whether any of the given keybindings is pressed.
     pub fn any_pressed(
         ctx: &egui::Context,
         keybindings: &Vec<KeyBinding>,
