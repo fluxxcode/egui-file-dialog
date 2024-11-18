@@ -42,8 +42,10 @@ impl Disk {
         let mount_point = canonicalize(path, canonicalize_paths);
 
         // Use the directory name as the display name.
-        let display_name = path
-            .file_name().map_or_else(|| "Unknown".to_string(), |name| name.to_string_lossy().to_string());
+        let display_name = path.file_name().map_or_else(
+            || "Unknown".to_string(),
+            |name| name.to_string_lossy().to_string(),
+        );
 
         // Check if the path corresponds to a removable disk.
         // This is a best guess as this information might not be available.
@@ -161,42 +163,33 @@ extern "C" {
     pub fn GetLogicalDrives() -> u32;
 }
 
-#[cfg(not(windows))]
+#[cfg(all(not(windows), not(target_os = "macos")))]
 fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
+    sysinfo::Disks::new_with_refreshed_list()
+        .iter()
+        .map(|d| Disk::from_sysinfo_disk(d, canonicalize_paths))
+        .collect()
+}
 
-    let mut result: Vec<Disk> = Vec::new();
+// On macOS, add volumes from `/Volumes`
+#[cfg(target_os = "macos")]
+fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
+    let mut result = Vec::new();
     let mut seen_mount_points = std::collections::HashSet::new();
 
-    // Use sysinfo to get system disks
-    let disks = sysinfo::Disks::new_with_refreshed_list();
-    for disk in &disks {
+    // Collect disks from sysinfo
+    for disk in &sysinfo::Disks::new_with_refreshed_list() {
         let mount_point = disk.mount_point();
-        if mount_point == Path::new("/") {
-            // Skip the root system drive
-            continue;
+        if mount_point != Path::new("/") && seen_mount_points.insert(mount_point.to_path_buf()) {
+            result.push(Disk::from_sysinfo_disk(disk, canonicalize_paths));
         }
-
-        // Ensure no duplicates by checking the mount point
-        if !seen_mount_points.insert(mount_point.to_path_buf()) {
-            continue;
-        }
-
-        result.push(Disk::from_sysinfo_disk(disk, canonicalize_paths));
     }
 
-    // On macOS, add volumes from `/Volumes`
-    #[cfg(target_os = "macos")]
-    {
-        if let Ok(entries) = fs::read_dir("/Volumes") {
-            for entry in entries.filter_map(std::result::Result::ok) {
-                let path = entry.path();
-
-                // Skip already seen mount points
-                if !seen_mount_points.insert(path.clone()) {
-                    continue;
-                }
-
-                // Include only directories and ensure they are valid volumes
+    // Collect volumes from /Volumes
+    if let Ok(entries) = fs::read_dir("/Volumes") {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if seen_mount_points.insert(path.clone()) {
                 if let Ok(metadata) = entry.metadata() {
                     if metadata.is_dir() {
                         result.push(Disk::from_path(&path, canonicalize_paths));
@@ -205,5 +198,6 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
             }
         }
     }
+
     result
 }
