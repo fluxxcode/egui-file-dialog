@@ -1135,17 +1135,17 @@ impl FileDialog {
         ctx.input(|i| {
             if !i.raw.dropped_files.is_empty() {
                 // check if files were dropped
-                let dropped_files = &i.raw.dropped_files.clone();
-                if let Some(dropped_file) = dropped_files.last() {
+                if let Some(dropped_file) = i.raw.dropped_files.last() {
                     if let Some(path) = &dropped_file.path {
                         if path.is_dir() {
                             // if we dropped a directory, go there
                             self.load_directory(path.as_path());
+                            new_file_dropped = true;
                         } else if let Some(parent) = path.parent() {
                             // else, go to the parent directory
                             self.load_directory(parent);
+                            new_file_dropped = true;
                         }
-                        new_file_dropped = true;
                     }
                 }
             }
