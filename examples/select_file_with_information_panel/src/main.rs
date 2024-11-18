@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use eframe::egui;
-use egui_commonmark::*;
+use egui_commonmark::{CommonMarkCache, CommonMarkViewer};
 use egui_file_dialog::information_panel::InformationPanel;
 use egui_file_dialog::FileDialog;
 

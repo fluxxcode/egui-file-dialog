@@ -998,7 +998,7 @@ impl FileDialog {
 
     /// Sets the content (text) of the active Directory item
     ///
-    #[cfg(feature = "info_panel")]
+    #[cfg(feature = "metadata_view")]
     pub fn set_selected_content(&mut self, content: Option<String>) {
         if let Some(item) = &mut self.selected_item {
             item.set_content(content);

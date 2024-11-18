@@ -1,4 +1,4 @@
-#![cfg(feature = "info_panel")]
+#![cfg(feature = "metadata_view")]
 
 use crate::data::directory_content::format_pixels;
 use crate::{DirectoryEntry, FileDialog};
@@ -7,8 +7,7 @@ use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
 use indexmap::IndexMap;
 use std::fs::File;
-use std::io;
-use std::io::Read;
+use std::io::{self, Read};
 use std::path::PathBuf;
 
 type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>;

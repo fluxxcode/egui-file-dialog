@@ -9,4 +9,4 @@ edition = "2021"
 eframe = { workspace = true }
 egui_extras = { version = "0.29", features = ["all_loaders"] }
 egui_commonmark = "0.18"
-egui-file-dialog = { path = "../../", features = ["info_panel"] }
+egui-file-dialog = { path = "../../", features = ["metadata_view"] }

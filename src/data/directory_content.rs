@@ -5,7 +5,7 @@ use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
 
-#[cfg(feature = "info_panel")]
+#[cfg(feature = "metadata_view")]
 pub fn format_pixels(pixels: u32) -> String {
     const K: u32 = 1_000;
     const M: u32 = K * 1_000;
@@ -31,7 +31,7 @@ pub struct DirectoryEntry {
     file_type: Option<String>,
     is_directory: bool,
     is_system_file: bool,
-    #[cfg(feature = "info_panel")]
+    #[cfg(feature = "metadata_view")]
     content: Option<String>,
     icon: String,
     /// If the item is marked as selected as part of a multi selection.
@@ -61,7 +61,7 @@ impl DirectoryEntry {
             file_type,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
-            #[cfg(feature = "info_panel")]
+            #[cfg(feature = "metadata_view")]
             content: None,
             icon: gen_path_icon(config, path),
             selected: false,
@@ -107,18 +107,6 @@ impl DirectoryEntry {
         self.path.clone()
     }
 
-    #[cfg(feature = "info_panel")]
-    /// Clones the content of the directory item, if available
-    pub fn content(&self) -> Option<String> {
-        self.content.clone()
-    }
-
-    #[cfg(feature = "info_panel")]
-    /// Sets the content of the directory item
-    pub fn set_content(&mut self, content: Option<String>) {
-        self.content = content;
-    }
-
     /// Returns the size of the directory item.
     pub const fn size(&self) -> Option<u64> {
         self.size
@@ -138,7 +126,7 @@ impl DirectoryEntry {
     pub const fn last_modified(&self) -> Option<SystemTime> {
         self.last_modified
     }
-    
+
     /// Returns the file name of the directory item.
     pub fn file_name(&self) -> &str {
         self.path
@@ -177,6 +165,19 @@ impl DirectoryEntry {
     /// Returns whether the path this `DirectoryEntry` points to is considered hidden.
     pub fn is_hidden(&self) -> bool {
         is_path_hidden(self)
+    }
+}
+
+#[cfg(feature = "metadata_view")]
+impl DirectoryEntry {
+    /// Clones the content of the directory item, if available
+    pub fn content(&self) -> Option<String> {
+        self.content.clone()
+    }
+
+    /// Sets the content of the directory item
+    pub fn set_content(&mut self, content: Option<String>) {
+        self.content = content;
     }
 }
 

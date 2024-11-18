@@ -36,17 +36,17 @@ serde = { version = "1", features = ["derive"], optional = true }
 dunce = "1.0.5"
 
 # used for meta-data storage
-indexmap = { version = "2.6.0", features = ["serde"] }
+indexmap = { version = "2.6.0", features = ["serde"], optional = true }
 
 # Used for info panel
-image-meta = { version = "0.1.2",  optional = true }
+image-meta = { version = "0.1.2", optional = true }
 chrono = { version = "0.4.38", optional = true }
 
 [features]
 default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
-info_panel = ["dep:chrono", "image-meta"]
+metadata_view = ["dep:chrono", "image-meta", "indexmap"]
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -69,6 +69,3 @@ missing_fields_in_debug = { level = "allow", priority = 14 }
 missing_errors_doc = { level = "allow", priority = 15 }
 module_name_repetitions = { level = "allow", priority = 16 }
 cast_precision_loss = { level = "allow", priority = 17 }
-
-[profile.release]
-debug = true
