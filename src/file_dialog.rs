@@ -2083,9 +2083,13 @@ impl FileDialog {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             let scroll_area = egui::containers::ScrollArea::vertical().auto_shrink([false, false]);
 
-            if self.search_value.is_empty() && !self.create_directory_dialog.is_open() {
-                // Only update visible items when the search value is empty
-                // and the create directory dialog is not open.
+            if self.search_value.is_empty()
+                && !self.create_directory_dialog.is_open()
+                && !self.scroll_to_selection
+            {
+                // Only update visible items when the search value is empty,
+                // the create directory dialog is closed and we are currently not scrolling
+                // to the current item.
                 scroll_area.show_rows(
                     ui,
                     ui.text_style_height(&egui::TextStyle::Body),
