@@ -155,9 +155,6 @@ pub struct FileDialog {
     /// This is used to prevent the dialog from closing when pressing the escape key
     /// inside a text input.
     any_focused_last_frame: bool,
-
-    /// flag to set if files have been dropped
-    new_file_dropped: bool,
 }
 
 /// This tests if file dialog is send and sync.
@@ -232,7 +229,6 @@ impl FileDialog {
             init_search: false,
 
             any_focused_last_frame: false,
-            new_file_dropped: false,
         }
     }
 
@@ -1140,28 +1136,30 @@ impl FileDialog {
             self.cancel();
         }
 
+        let mut repaint = false;
+
         // Collect dropped files:
         ctx.input(|i| {
-            // check if files were dropped
+            // Check if files were dropped
             if let Some(dropped_file) = i.raw.dropped_files.last() {
                 if let Some(path) = &dropped_file.path {
                     if path.is_dir() {
-                        // if we dropped a directory, go there
+                        // If we dropped a directory, go there
                         self.load_directory(path.as_path());
-                        self.new_file_dropped = true;
+                        repaint = true;
                     } else if let Some(parent) = path.parent() {
-                        // else, go to the parent directory
+                        // Else, go to the parent directory
                         self.load_directory(parent);
                         self.select_item(&mut DirectoryEntry::from_path(&self.config, path));
                         self.scroll_to_selection = true;
-                        self.new_file_dropped = true;
+                        repaint = true;
                     }
                 }
             }
         });
 
-        // update GUI if we dropped a file
-        if self.new_file_dropped {
+        // Update GUI if we dropped a file
+        if repaint {
             ctx.request_repaint();
         }
     }
@@ -2052,15 +2050,11 @@ impl FileDialog {
                 true
             }
             DirectoryContentState::Finished => {
-                // don't override the selected dropped item with the active directory
-                if self.new_file_dropped {
-                    // clear the flag and return
-                    self.new_file_dropped = false;
-                    return true;
-                }
-                if let Some(dir) = self.current_directory() {
-                    let mut dir_entry = DirectoryEntry::from_path(&self.config, dir);
-                    self.select_item(&mut dir_entry);
+                if self.mode == DialogMode::SelectDirectory {
+                    if let Some(dir) = self.current_directory() {
+                        let mut dir_entry = DirectoryEntry::from_path(&self.config, dir);
+                        self.select_item(&mut dir_entry);
+                    }
                 }
 
                 false
