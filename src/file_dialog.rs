@@ -157,7 +157,7 @@ pub struct FileDialog {
     any_focused_last_frame: bool,
 
     /// flag to set if files have been dropped
-    new_file_dropped : bool,
+    new_file_dropped: bool,
 }
 
 /// This tests if file dialog is send and sync.
