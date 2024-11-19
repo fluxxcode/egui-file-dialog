@@ -1,3 +1,5 @@
+#[cfg(target_os = "macos")]
+use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Wrapper above the `sysinfo::Disk` struct.
@@ -37,6 +39,27 @@ impl Disk {
         )
     }
 
+    #[cfg(target_os = "macos")]
+    pub fn from_path(path: &Path, canonicalize_paths: bool) -> Self {
+        let mount_point = canonicalize(path, canonicalize_paths);
+
+        // Use the directory name as the display name.
+        let display_name = path.file_name().map_or_else(
+            || "Unknown".to_string(),
+            |name| name.to_string_lossy().to_string(),
+        );
+
+        // Check if the path corresponds to a removable disk.
+        // This is a best guess as this information might not be available.
+        let is_removable = false; // Network drives or `/Volumes` entries don't have a clear removable flag.
+
+        Self {
+            mount_point,
+            display_name,
+            is_removable,
+        }
+    }
+
     /// Returns the mount point of the disk
     pub fn mount_point(&self) -> &Path {
         &self.mount_point
@@ -65,7 +88,6 @@ impl Disks {
             disks: load_disks(canonicalize_paths),
         }
     }
-
     /// Very simple wrapper method of the disks `.iter()` method.
     /// No trait is implemented since this is currently only used internal.
     pub fn iter(&self) -> std::slice::Iter<'_, Disk> {
@@ -143,10 +165,43 @@ extern "C" {
     pub fn GetLogicalDrives() -> u32;
 }
 
-#[cfg(not(windows))]
+#[cfg(all(not(windows), not(target_os = "macos")))]
 fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
     sysinfo::Disks::new_with_refreshed_list()
         .iter()
         .map(|d| Disk::from_sysinfo_disk(d, canonicalize_paths))
         .collect()
+}
+
+// On macOS, add volumes from `/Volumes`
+#[cfg(target_os = "macos")]
+fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
+    let mut result = Vec::new();
+    let mut seen_mount_points = std::collections::HashSet::new();
+
+    // Collect disks from sysinfo
+    for disk in &sysinfo::Disks::new_with_refreshed_list() {
+        let mount_point = disk.mount_point();
+        if mount_point != Path::new("/") && seen_mount_points.insert(mount_point.to_path_buf()) {
+            result.push(Disk::from_sysinfo_disk(disk, canonicalize_paths));
+        }
+    }
+
+    // Collect volumes from /Volumes
+    if let Ok(entries) = fs::read_dir("/Volumes") {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if seen_mount_points.insert(path.clone()) {
+                if let Some(name_osstr) = path.file_name() {
+                    if let Some(name) = name_osstr.to_str() {
+                        if path.is_dir() && !name.starts_with('.') {
+                            result.push(Disk::from_path(&path, canonicalize_paths));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    result
 }
