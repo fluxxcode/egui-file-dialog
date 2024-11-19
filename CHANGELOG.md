@@ -7,6 +7,7 @@
 - Added option to show system files in the hamburger menu [#173](https://github.com/fluxxcode/egui-file-dialog/pull/173) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Support mapped network devices on Windows [#189](https://github.com/fluxxcode/egui-file-dialog/pull/189)
 - Added the ability to drag and drop files and folders to open their respective path [#192](https://github.com/fluxxcode/egui-file-dialog/pull/192) (thanks [@hacknus](https://github.com/hacknus)!)
+- Support network drives on MacOS [#194](https://github.com/fluxxcode/egui-file-dialog/pull/194) (thanks [@hacknus](https://github.com/hacknus)!)
 
 ### 🐛 Bug Fixes
 - Fixed heading `Places` not being able to be updated with `FileDialogLabels` [#180](https://github.com/fluxxcode/egui-file-dialog/pull/180)
