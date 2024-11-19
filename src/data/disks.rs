@@ -182,7 +182,10 @@ fn load_disks(canonicalize_paths: bool) -> Vec<Disk> {
     // Collect disks from sysinfo
     for disk in &sysinfo::Disks::new_with_refreshed_list() {
         let mount_point = disk.mount_point();
-        if mount_point != Path::new("/") && seen_mount_points.insert(mount_point.to_path_buf()) {
+        if mount_point != Path::new("/")
+            && seen_mount_points.insert(mount_point.to_path_buf())
+            && disk.mount_point() != Path::new("/System/Volumes/Data")
+        {
             result.push(Disk::from_sysinfo_disk(disk, canonicalize_paths));
         }
     }
