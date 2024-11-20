@@ -2092,7 +2092,7 @@ impl FileDialog {
                 // to the current item.
                 scroll_area.show_rows(
                     ui,
-                    ui.text_style_height(&egui::TextStyle::Body),
+                    ui.spacing().interact_size.y,
                     data.len(),
                     |ui, range| {
                         for item in data.iter_range_mut(range) {
