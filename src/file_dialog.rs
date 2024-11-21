@@ -1,8 +1,3 @@
-use egui::text::{CCursor, CCursorRange};
-use std::fmt::Debug;
-use std::io;
-use std::path::{Path, PathBuf};
-
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
     Filter, QuickAccess,
@@ -12,6 +7,11 @@ use crate::data::{
     DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
+use egui::text::{CCursor, CCursorRange};
+use egui::TextStyle;
+use std::fmt::Debug;
+use std::io;
+use std::path::{Path, PathBuf};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -1038,7 +1038,7 @@ impl FileDialog {
     /// For the counterpart in single selection modes, see [`FileDialog::active_entry`].
     ///
     /// [`SelectMultiple`]: DialogMode::SelectMultiple
-    pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
+    pub fn active_selected_entries(&self) -> impl Iterator<Item=&DirectoryEntry> {
         self.get_dir_content_filtered_iter().filter(|p| p.selected)
     }
 
@@ -1284,8 +1284,8 @@ impl FileDialog {
             // Menu button containing reload button and different options
             if self.config.show_menu_button
                 && (self.config.show_reload_button
-                    || self.config.show_hidden_option
-                    || self.config.show_system_files_option)
+                || self.config.show_hidden_option
+                || self.config.show_system_files_option)
             {
                 ui.allocate_ui_with_layout(
                     BUTTON_SIZE,
@@ -1301,11 +1301,11 @@ impl FileDialog {
 
                             if self.config.show_hidden_option
                                 && ui
-                                    .checkbox(
-                                        &mut self.config.storage.show_hidden,
-                                        &self.config.labels.show_hidden,
-                                    )
-                                    .clicked()
+                                .checkbox(
+                                    &mut self.config.storage.show_hidden,
+                                    &self.config.labels.show_hidden,
+                                )
+                                .clicked()
                             {
                                 self.refresh();
                                 ui.close_menu();
@@ -1313,11 +1313,11 @@ impl FileDialog {
 
                             if self.config.show_system_files_option
                                 && ui
-                                    .checkbox(
-                                        &mut self.config.storage.show_system_files,
-                                        &self.config.labels.show_system_files,
-                                    )
-                                    .clicked()
+                                .checkbox(
+                                    &mut self.config.storage.show_system_files,
+                                    &self.config.labels.show_system_files,
+                                )
+                                .clicked()
                             {
                                 self.refresh();
                                 ui.close_menu();
@@ -1349,12 +1349,12 @@ impl FileDialog {
 
         if self.config.show_back_button
             && self.ui_button_sized(
-                ui,
-                self.directory_offset + 1 < self.directory_stack.len(),
-                button_size,
-                "⏴",
-                None,
-            )
+            ui,
+            self.directory_offset + 1 < self.directory_stack.len(),
+            button_size,
+            "⏴",
+            None,
+        )
         {
             self.load_previous_directory();
         }
@@ -1367,12 +1367,12 @@ impl FileDialog {
 
         if self.config.show_new_folder_button
             && self.ui_button_sized(
-                ui,
-                !self.create_directory_dialog.is_open(),
-                button_size,
-                "+",
-                None,
-            )
+            ui,
+            !self.create_directory_dialog.is_open(),
+            button_size,
+            "+",
+            None,
+        )
         {
             self.open_new_folder_dialog();
         }
@@ -2177,11 +2177,40 @@ impl FileDialog {
         }
 
         let pinned = self.is_pinned(item);
-        let label = if pinned {
+        let mut label = if pinned {
             format!("{} {} {}", item.icon(), self.config.pinned_icon, file_name)
         } else {
             format!("{} {}", item.icon(), file_name)
         };
+
+        let length = label.chars().count();
+
+        let font_id = TextStyle::Body.resolve(&ui.ctx().style());
+
+        // Use the `fonts` method with a closure to access the Fonts object
+        let width = ui.ctx().fonts(|fonts| {
+            // Measure the text
+            let galley = fonts.layout_no_wrap(label.to_string(), font_id, egui::Color32::RED);
+            galley.size().x // The width of the text
+        });
+
+        // to be a bit conservative, we subtract 20.0
+        let available_width = ui.available_width() - 20.0;
+
+        #[allow(
+            clippy::cast_sign_loss,
+            clippy::cast_precision_loss,
+            clippy::cast_possible_truncation
+        )]
+        {
+            if width > available_width {
+                label = truncate_path(
+                    &label,
+                    (available_width / width * length as f32) as usize,
+                    item.is_dir(),
+                );
+            }
+        }
 
         let re = ui.selectable_label(primary_selected || item.selected, label);
 
@@ -2599,7 +2628,7 @@ impl FileDialog {
     }
 
     /// Gets a filtered iterator of the directory content of this object.
-    fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item = &DirectoryEntry> {
+    fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item=&DirectoryEntry> {
         self.directory_content.filtered_iter(&self.search_value)
     }
 
@@ -2948,7 +2977,7 @@ impl FileDialog {
         // Otherwise we will assume the user wants to open the path as a directory.
         if self.mode == DialogMode::SaveFile
             && (path.extension().is_some()
-                || self.config.allow_path_edit_to_save_file_without_extension)
+            || self.config.allow_path_edit_to_save_file_without_extension)
             && !path.is_dir()
             && path.parent().is_some_and(std::path::Path::exists)
         {
@@ -3067,5 +3096,48 @@ impl FileDialog {
         if self.mode == DialogMode::SaveFile {
             self.file_name_input_error = self.validate_file_name_input();
         }
+    }
+}
+
+fn truncate_path(path: &str, max_length: usize, is_dir: bool) -> String {
+    if path.len() <= max_length {
+        return path.to_string();
+    }
+
+    let path = Path::new(path);
+    let file_name = path.file_name().and_then(|f| f.to_str()).unwrap_or("");
+    let extension = if is_dir {
+        ""
+    } else {
+        path.extension().and_then(|ext| ext.to_str()).unwrap_or("")
+    };
+    let file_stem = file_name
+        .strip_suffix(&format!(".{extension}"))
+        .unwrap_or(file_name);
+
+    // Calculate space for truncation
+    let ext_length = extension.len() + 1; // Include the dot
+    let reserved_length = ext_length + 3; // For "..." and the extension
+    if max_length <= reserved_length {
+        return format!("...{extension}");
+    }
+
+    let available_length = max_length - reserved_length;
+    let half = available_length / 2;
+
+    // Safely truncate using chars
+    let start: String = file_stem.chars().take(half).collect();
+    let end: String = file_stem
+        .chars()
+        .rev()
+        .take(half)
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect();
+    if extension.is_empty() {
+        format!("{start}...{end}")
+    } else {
+        format!("{start}...{end}.{extension}")
     }
 }
