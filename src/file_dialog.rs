@@ -2216,11 +2216,8 @@ impl FileDialog {
             )]
             {
                 if width > available_width {
-                    label = truncate_filenames(
-                        &label,
-                        (available_width / width * length as f32) as usize,
-                        item.is_dir(),
-                    );
+                    label =
+                        truncate_filename(item, (available_width / width * length as f32) as usize);
                     ui.selectable_label(primary_selected || item.selected, label)
                         .on_hover_text(full_label)
                 } else {
@@ -3116,21 +3113,14 @@ impl FileDialog {
     }
 }
 
-fn truncate_filenames(path: &str, max_length: usize, is_dir: bool) -> String {
-    if path.len() <= max_length {
-        return path.to_string();
-    }
-
-    let path = Path::new(path);
-    let file_name = path.file_name().and_then(|f| f.to_str()).unwrap_or("");
-    let extension = if is_dir {
+fn truncate_filename(item: &DirectoryEntry, max_length: usize) -> String {
+    let path = item.as_path();
+    let extension = if item.is_dir() {
         ""
     } else {
         path.extension().and_then(|ext| ext.to_str()).unwrap_or("")
     };
-    let file_stem = file_name
-        .strip_suffix(&format!(".{extension}"))
-        .unwrap_or(file_name);
+    let file_stem = path.file_stem().map_or("", |s| s.to_str().unwrap_or(""));
 
     // Calculate space for truncation
     let ext_length = extension.len() + 1; // Include the dot
