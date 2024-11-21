@@ -961,6 +961,16 @@ impl FileDialog {
         self
     }
 
+    /// Sets if long filenames should be truncated in the middle.
+    /// The extension, if available, will be preserved.
+    ///
+    /// Warning! If this is disabled, the scroll-to-selection might not work correctly and have
+    /// an offset for large directories.
+    pub const fn truncate_filenames(mut self, truncate_filenames: bool) -> Self {
+        self.config.truncate_filenames = truncate_filenames;
+        self
+    }
+
     // -------------------------------------------------
     // Getter:
 
@@ -2182,33 +2192,35 @@ impl FileDialog {
         } else {
             format!("{} {}", item.icon(), file_name)
         };
+        
+        if self.config.truncate_filenames {
+            let length = label.chars().count();
 
-        let length = label.chars().count();
+            let font_id = TextStyle::Body.resolve(&ui.ctx().style());
 
-        let font_id = TextStyle::Body.resolve(&ui.ctx().style());
+            // Use the `fonts` method with a closure to access the Fonts object
+            let width = ui.ctx().fonts(|fonts| {
+                // Measure the text
+                let galley = fonts.layout_no_wrap(label.to_string(), font_id, egui::Color32::RED);
+                galley.size().x // The width of the text
+            });
 
-        // Use the `fonts` method with a closure to access the Fonts object
-        let width = ui.ctx().fonts(|fonts| {
-            // Measure the text
-            let galley = fonts.layout_no_wrap(label.to_string(), font_id, egui::Color32::RED);
-            galley.size().x // The width of the text
-        });
+            // to be a bit conservative, we subtract 20.0
+            let available_width = ui.available_width() - 20.0;
 
-        // to be a bit conservative, we subtract 20.0
-        let available_width = ui.available_width() - 20.0;
-
-        #[allow(
-            clippy::cast_sign_loss,
-            clippy::cast_precision_loss,
-            clippy::cast_possible_truncation
-        )]
-        {
-            if width > available_width {
-                label = truncate_path(
-                    &label,
-                    (available_width / width * length as f32) as usize,
-                    item.is_dir(),
-                );
+            #[allow(
+                clippy::cast_sign_loss,
+                clippy::cast_precision_loss,
+                clippy::cast_possible_truncation
+            )]
+            {
+                if width > available_width {
+                    label = truncate_filenames(
+                        &label,
+                        (available_width / width * length as f32) as usize,
+                        item.is_dir(),
+                    );
+                }
             }
         }
 
@@ -3099,7 +3111,7 @@ impl FileDialog {
     }
 }
 
-fn truncate_path(path: &str, max_length: usize, is_dir: bool) -> String {
+fn truncate_filenames(path: &str, max_length: usize, is_dir: bool) -> String {
     if path.len() <= max_length {
         return path.to_string();
     }

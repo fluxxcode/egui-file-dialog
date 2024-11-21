@@ -198,6 +198,9 @@ pub struct FileDialogConfig {
     pub show_devices: bool,
     /// If the Removable Devices section in the left sidebar should be visible.
     pub show_removable_devices: bool,
+
+    /// If we should truncate the filenames in the middle
+    pub truncate_filenames: bool,
 }
 
 impl Default for FileDialogConfig {
@@ -262,6 +265,7 @@ impl Default for FileDialogConfig {
             show_places: true,
             show_devices: true,
             show_removable_devices: true,
+            truncate_filenames: true,
         }
     }
 }
