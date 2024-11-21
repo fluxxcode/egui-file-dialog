@@ -2192,8 +2192,9 @@ impl FileDialog {
         } else {
             format!("{} {}", item.icon(), file_name)
         };
-        
-        if self.config.truncate_filenames {
+
+        let re = if self.config.truncate_filenames {
+            let full_label = label.clone();
             let length = label.chars().count();
 
             let font_id = TextStyle::Body.resolve(&ui.ctx().style());
@@ -2220,11 +2221,15 @@ impl FileDialog {
                         (available_width / width * length as f32) as usize,
                         item.is_dir(),
                     );
+                    ui.selectable_label(primary_selected || item.selected, label)
+                        .on_hover_text(full_label)
+                } else {
+                    ui.selectable_label(primary_selected || item.selected, label)
                 }
             }
-        }
-
-        let re = ui.selectable_label(primary_selected || item.selected, label);
+        } else {
+            ui.selectable_label(primary_selected || item.selected, label)
+        };
 
         if item.is_dir() {
             self.ui_update_path_context_menu(&re, item);
