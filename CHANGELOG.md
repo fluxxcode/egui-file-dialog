@@ -12,6 +12,7 @@
 ### 🐛 Bug Fixes
 - Fixed heading `Places` not being able to be updated with `FileDialogLabels` [#180](https://github.com/fluxxcode/egui-file-dialog/pull/180)
 - Fix display errors with path prefix on Windows [#182](https://github.com/fluxxcode/egui-file-dialog/pull/182)
+- Fix Macintosh HD drive appearing twice on MacOS [#204](https://github.com/fluxxcode/egui-file-dialog/pull/204)
 
 ### 🔧 Changes
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
