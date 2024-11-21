@@ -1038,7 +1038,7 @@ impl FileDialog {
     /// For the counterpart in single selection modes, see [`FileDialog::active_entry`].
     ///
     /// [`SelectMultiple`]: DialogMode::SelectMultiple
-    pub fn active_selected_entries(&self) -> impl Iterator<Item=&DirectoryEntry> {
+    pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
         self.get_dir_content_filtered_iter().filter(|p| p.selected)
     }
 
@@ -1284,8 +1284,8 @@ impl FileDialog {
             // Menu button containing reload button and different options
             if self.config.show_menu_button
                 && (self.config.show_reload_button
-                || self.config.show_hidden_option
-                || self.config.show_system_files_option)
+                    || self.config.show_hidden_option
+                    || self.config.show_system_files_option)
             {
                 ui.allocate_ui_with_layout(
                     BUTTON_SIZE,
@@ -1301,11 +1301,11 @@ impl FileDialog {
 
                             if self.config.show_hidden_option
                                 && ui
-                                .checkbox(
-                                    &mut self.config.storage.show_hidden,
-                                    &self.config.labels.show_hidden,
-                                )
-                                .clicked()
+                                    .checkbox(
+                                        &mut self.config.storage.show_hidden,
+                                        &self.config.labels.show_hidden,
+                                    )
+                                    .clicked()
                             {
                                 self.refresh();
                                 ui.close_menu();
@@ -1313,11 +1313,11 @@ impl FileDialog {
 
                             if self.config.show_system_files_option
                                 && ui
-                                .checkbox(
-                                    &mut self.config.storage.show_system_files,
-                                    &self.config.labels.show_system_files,
-                                )
-                                .clicked()
+                                    .checkbox(
+                                        &mut self.config.storage.show_system_files,
+                                        &self.config.labels.show_system_files,
+                                    )
+                                    .clicked()
                             {
                                 self.refresh();
                                 ui.close_menu();
@@ -1349,12 +1349,12 @@ impl FileDialog {
 
         if self.config.show_back_button
             && self.ui_button_sized(
-            ui,
-            self.directory_offset + 1 < self.directory_stack.len(),
-            button_size,
-            "⏴",
-            None,
-        )
+                ui,
+                self.directory_offset + 1 < self.directory_stack.len(),
+                button_size,
+                "⏴",
+                None,
+            )
         {
             self.load_previous_directory();
         }
@@ -1367,12 +1367,12 @@ impl FileDialog {
 
         if self.config.show_new_folder_button
             && self.ui_button_sized(
-            ui,
-            !self.create_directory_dialog.is_open(),
-            button_size,
-            "+",
-            None,
-        )
+                ui,
+                !self.create_directory_dialog.is_open(),
+                button_size,
+                "+",
+                None,
+            )
         {
             self.open_new_folder_dialog();
         }
@@ -2628,7 +2628,7 @@ impl FileDialog {
     }
 
     /// Gets a filtered iterator of the directory content of this object.
-    fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item=&DirectoryEntry> {
+    fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item = &DirectoryEntry> {
         self.directory_content.filtered_iter(&self.search_value)
     }
 
@@ -2977,7 +2977,7 @@ impl FileDialog {
         // Otherwise we will assume the user wants to open the path as a directory.
         if self.mode == DialogMode::SaveFile
             && (path.extension().is_some()
-            || self.config.allow_path_edit_to_save_file_without_extension)
+                || self.config.allow_path_edit_to_save_file_without_extension)
             && !path.is_dir()
             && path.parent().is_some_and(std::path::Path::exists)
         {
