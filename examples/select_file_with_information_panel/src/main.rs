@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use eframe::egui;
-use egui_commonmark::{CommonMarkCache, CommonMarkViewer};
 use egui_file_dialog::information_panel::InformationPanel;
 use egui_file_dialog::FileDialog;
 
@@ -25,18 +24,6 @@ impl MyApp {
                                 ui.add(
                                     egui::TextEdit::multiline(&mut content.clone()).code_editor(),
                                 );
-                            });
-                    }
-                })
-                // you can also override existing preview handlers
-                .add_file_preview("md", |ui, item| {
-                    let mut cache = CommonMarkCache::default();
-                    if let Some(content) = item.content() {
-                        egui::ScrollArea::vertical()
-                            .max_height(150.0)
-                            .max_width(300.0)
-                            .show(ui, |ui| {
-                                CommonMarkViewer::new().show(ui, &mut cache, &content);
                             });
                     }
                 })

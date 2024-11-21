@@ -8,8 +8,7 @@ edition = "2021"
 [dependencies]
 eframe = { workspace = true }
 egui_extras = { version = "0.29", features = ["all_loaders"] }
-image = {version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "rayon"]}
-egui_commonmark = "0.18"
+image = { version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "rayon"] }
 egui-file-dialog = { path = "../../", features = ["metadata_view"] }
 
 [package.metadata.cargo-machete]
