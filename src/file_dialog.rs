@@ -2213,7 +2213,9 @@ impl FileDialog {
 
         // The user wants to select or unselect the item as part of a
         // multi selection
-        if self.mode == DialogMode::SelectMultiple && re.clicked() && ui.input(|i| i.modifiers.command)
+        if self.mode == DialogMode::SelectMultiple
+            && re.clicked()
+            && ui.input(|i| i.modifiers.command)
         {
             if primary_selected {
                 // If the clicked item is the primary selected item,
