@@ -2090,23 +2090,18 @@ impl FileDialog {
                 // Only update visible items when the search value is empty,
                 // the create directory dialog is closed and we are currently not scrolling
                 // to the current item.
-                scroll_area.show_rows(
-                    ui,
-                    ui.text_style_height(&egui::TextStyle::Body),
-                    data.len(),
-                    |ui, range| {
-                        for item in data.iter_range_mut(range) {
-                            if self.ui_update_central_panel_entry(
-                                ui,
-                                item,
-                                &mut reset_multi_selection,
-                                &mut batch_select_item_b,
-                            ) {
-                                should_return = true;
-                            }
+                scroll_area.show_rows(ui, ui.spacing().interact_size.y, data.len(), |ui, range| {
+                    for item in data.iter_range_mut(range) {
+                        if self.ui_update_central_panel_entry(
+                            ui,
+                            item,
+                            &mut reset_multi_selection,
+                            &mut batch_select_item_b,
+                        ) {
+                            should_return = true;
                         }
-                    },
-                );
+                    }
+                });
             } else {
                 // Update each element if the search value is not empty as we apply the
                 // search value in every frame. We can't use `egui::ScrollArea::show_rows`
