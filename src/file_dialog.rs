@@ -2206,8 +2206,8 @@ impl FileDialog {
                 galley.size().x // The width of the text
             });
 
-            // to be a bit conservative, we subtract 20.0
-            let available_width = ui.available_width() - 20.0;
+            // to be a bit conservative, we subtract 15.0
+            let available_width = ui.available_width() - 15.0;
 
             #[allow(
                 clippy::cast_sign_loss,
