@@ -2194,7 +2194,7 @@ impl FileDialog {
         let available_width = ui.available_width() - icons_width - 15.0;
 
         let truncate = self.config.truncate_filenames
-            && available_width < Self::calc_text_width(ui, &file_name);
+            && available_width < Self::calc_text_width(ui, file_name);
 
         let text = if truncate {
             Self::truncate_filename(ui, item, available_width)
@@ -2202,10 +2202,8 @@ impl FileDialog {
             file_name.to_owned()
         };
 
-        let mut re = ui.selectable_label(
-            primary_selected || item.selected,
-            format!("{}{}", icons, text),
-        );
+        let mut re =
+            ui.selectable_label(primary_selected || item.selected, format!("{icons}{text}"));
 
         if truncate {
             re = re.on_hover_text(file_name);
@@ -2455,7 +2453,7 @@ impl FileDialog {
         }
 
         let mut width = reserved;
-        let mut stem = String::new();
+        let mut shortened_stem = String::new();
 
         for char in file_stem.chars() {
             let w = Self::calc_char_width(ui, char);
@@ -2464,11 +2462,11 @@ impl FileDialog {
                 break;
             }
 
-            stem.push(char);
+            shortened_stem.push(char);
             width += w;
         }
 
-        format!("{stem}{extension}")
+        format!("{shortened_stem}{extension}")
     }
 }
 
@@ -2730,11 +2728,9 @@ impl FileDialog {
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
-        if let Some(x) = &self.selected_item {
-            x.path_eq(item)
-        } else {
-            false
-        }
+        self.selected_item
+            .as_ref()
+            .map_or(false, |x| x.path_eq(item))
     }
 
     /// Resets the dialog to use default values.
