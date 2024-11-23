@@ -39,9 +39,9 @@ fn get_labels_german() -> FileDialogLabels {
         pin_folder: "📌 Ordner anheften".to_string(),
         unpin_folder: "✖ Ordner loslösen".to_string(),
 
-        selected_directory: "Ausgewählter Ordner:".to_string(),
-        selected_file: "Ausgewählte Datei:".to_string(),
-        selected_items: "Ausgewählte Elemente:".to_string(),
+        picked_directory: "Ausgewählter Ordner:".to_string(),
+        picked_file: "Ausgewählte Datei:".to_string(),
+        picked_items: "Ausgewählte Elemente:".to_string(),
         file_name: "Dateiname:".to_string(),
         file_filter_all_files: "Alle Dateien".to_string(),
 
