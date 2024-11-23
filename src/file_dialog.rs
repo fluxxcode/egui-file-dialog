@@ -2443,10 +2443,20 @@ impl FileDialog {
         const TRUNCATE_STR: &str = "...";
 
         let path = item.as_path();
-        let file_stem = path.file_stem().and_then(|f| f.to_str()).unwrap_or("");
-        let extension = path
-            .extension()
-            .map_or("".to_owned(), |ext| format!(".{}", ext.to_str().unwrap_or("")));
+
+        let file_stem = if path.is_file() {
+            path.file_stem().and_then(|f| f.to_str()).unwrap_or("")
+        } else {
+            item.file_name()
+        };
+
+        let extension = if path.is_file() {
+            path.extension().map_or(String::new(), |ext| {
+                format!(".{}", ext.to_str().unwrap_or(""))
+            })
+        } else {
+            String::new()
+        };
 
         let extension_width = Self::calc_text_width(ui, &extension);
         let reserved = extension_width + Self::calc_text_width(ui, TRUNCATE_STR);
@@ -2487,7 +2497,10 @@ impl FileDialog {
             }
         }
 
-        format!("{front}{TRUNCATE_STR}{}{extension}", back.chars().rev().collect::<String>())
+        format!(
+            "{front}{TRUNCATE_STR}{}{extension}",
+            back.chars().rev().collect::<String>()
+        )
     }
 }
 
