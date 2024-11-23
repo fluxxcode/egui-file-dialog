@@ -1938,9 +1938,9 @@ impl FileDialog {
 
         ui.horizontal(|ui| {
             match &self.mode {
-                DialogMode::SelectDirectory => ui.label(&self.config.labels.picked_directory),
-                DialogMode::SelectFile => ui.label(&self.config.labels.picked_file),
-                DialogMode::SelectMultiple => ui.label(&self.config.labels.picked_items),
+                DialogMode::SelectDirectory => ui.label(&self.config.labels.selected_directory),
+                DialogMode::SelectFile => ui.label(&self.config.labels.selected_file),
+                DialogMode::SelectMultiple => ui.label(&self.config.labels.selected_items),
                 DialogMode::SaveFile => ui.label(&self.config.labels.file_name),
             };
 
