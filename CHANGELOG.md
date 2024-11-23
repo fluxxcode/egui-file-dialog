@@ -21,7 +21,7 @@
 - Implement non blocking directory loading [#177](https://github.com/fluxxcode/egui-file-dialog/pull/177)
 - Only update visible items in the central panel if the search value is empty and the create directory dialog is currently closed [#181](https://github.com/fluxxcode/egui-file-dialog/pull/181)
 - Improve CI [#186](https://github.com/fluxxcode/egui-file-dialog/pull/186) (thanks [@bircni](https://github.com/bircni)!)
-- Files and folders are now truncated in the middle and no longer divided onto separate lines. This can be disabled using `FileDialog::truncate_filenames` [#203](https://github.com/fluxxcode/egui-file-dialog/pull/203)
+- Files and folders are now truncated in the middle and no longer divided onto separate lines. This can be disabled using `FileDialog::truncate_filenames` [#203](https://github.com/fluxxcode/egui-file-dialog/pull/203) (thanks [@hacknus](https://github.com/hacknus)!)
 
 ### 📚 Documentation
 - Updated `README.md` to include latest features [#176](https://github.com/fluxxcode/egui-file-dialog/pull/176)
