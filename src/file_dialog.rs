@@ -2444,13 +2444,12 @@ impl FileDialog {
     fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
         let path = item.as_path();
         let file_stem = path.file_stem().and_then(|f| f.to_str()).unwrap_or("");
-        let extension = path.extension().map_or(
-            "...".to_owned(),
-            |ext| format!("...{}", ext.to_str().unwrap_or("")),
-        );
-    
+        let extension = path.extension().map_or("...".to_owned(), |ext| {
+            format!("...{}", ext.to_str().unwrap_or(""))
+        });
+
         let reserved = Self::calc_text_width(ui, &extension);
-    
+
         if max_length <= reserved {
             return extension;
         }
