@@ -2195,7 +2195,7 @@ impl FileDialog {
 
         // The user wants to select the item as the primary selected item
         if re.clicked()
-            && !ui.input(|i| i.modifiers.ctrl)
+            && !ui.input(|i| i.modifiers.command)
             && !ui.input(|i| i.modifiers.shift_only())
         {
             self.select_item(item);
@@ -2208,7 +2208,9 @@ impl FileDialog {
 
         // The user wants to select or unselect the item as part of a
         // multi selection
-        if self.mode == DialogMode::SelectMultiple && re.clicked() && ui.input(|i| i.modifiers.ctrl)
+        if self.mode == DialogMode::SelectMultiple
+            && re.clicked()
+            && ui.input(|i| i.modifiers.command)
         {
             if primary_selected {
                 // If the clicked item is the primary selected item,
@@ -2244,7 +2246,7 @@ impl FileDialog {
 
         // The user double clicked on the directory entry.
         // Either open the directory or submit the dialog.
-        if re.double_clicked() && !ui.input(|i| i.modifiers.ctrl) {
+        if re.double_clicked() && !ui.input(|i| i.modifiers.command) {
             if item.is_dir() {
                 self.load_directory(&item.to_path_buf());
                 return true;
