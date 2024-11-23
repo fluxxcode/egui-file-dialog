@@ -104,6 +104,8 @@ pub struct FileDialogConfig {
     /// This prevents the application from blocking when loading large directories
     /// or from slow hard drives.
     pub load_via_thread: bool,
+    /// If we should truncate the filenames in the middle
+    pub truncate_filenames: bool,
 
     /// The icon that is used to display error messages.
     pub err_icon: String,
@@ -198,9 +200,6 @@ pub struct FileDialogConfig {
     pub show_devices: bool,
     /// If the Removable Devices section in the left sidebar should be visible.
     pub show_removable_devices: bool,
-
-    /// If we should truncate the filenames in the middle
-    pub truncate_filenames: bool,
 }
 
 impl Default for FileDialogConfig {
@@ -220,6 +219,7 @@ impl Default for FileDialogConfig {
             directory_separator: String::from(">"),
             canonicalize_paths: true,
             load_via_thread: true,
+            truncate_filenames: true,
 
             err_icon: String::from("⚠"),
             warn_icon: String::from("⚠"),
@@ -265,7 +265,6 @@ impl Default for FileDialogConfig {
             show_places: true,
             show_devices: true,
             show_removable_devices: true,
-            truncate_filenames: true,
         }
     }
 }
