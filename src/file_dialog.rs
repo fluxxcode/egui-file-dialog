@@ -2440,33 +2440,54 @@ impl FileDialog {
     }
 
     fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
+        const TRUNCATE_STR: &str = "...";
+
         let path = item.as_path();
         let file_stem = path.file_stem().and_then(|f| f.to_str()).unwrap_or("");
-        let extension = path.extension().map_or("...".to_owned(), |ext| {
-            format!("...{}", ext.to_str().unwrap_or(""))
-        });
+        let extension = path
+            .extension()
+            .map_or("".to_owned(), |ext| format!(".{}", ext.to_str().unwrap_or("")));
 
-        let reserved = Self::calc_text_width(ui, &extension);
+        let extension_width = Self::calc_text_width(ui, &extension);
+        let reserved = extension_width + Self::calc_text_width(ui, TRUNCATE_STR);
 
         if max_length <= reserved {
-            return extension;
+            return format!("{TRUNCATE_STR}{extension}");
         }
 
         let mut width = reserved;
-        let mut shortened_stem = String::new();
+        let mut front = String::new();
+        let mut back = String::new();
 
-        for char in file_stem.chars() {
+        for (i, char) in file_stem.chars().enumerate() {
             let w = Self::calc_char_width(ui, char);
 
             if width + w > max_length {
                 break;
             }
 
-            shortened_stem.push(char);
+            front.push(char);
             width += w;
+
+            let back_index = file_stem.len() - i - 1;
+
+            if back_index <= i {
+                break;
+            }
+
+            if let Some(char) = file_stem.chars().nth(back_index) {
+                let w = Self::calc_char_width(ui, char);
+
+                if width + w > max_length {
+                    break;
+                }
+
+                back.push(char);
+                width += w;
+            }
         }
 
-        format!("{shortened_stem}{extension}")
+        format!("{front}{TRUNCATE_STR}{}{extension}", back.chars().rev().collect::<String>())
     }
 }
 
