@@ -132,8 +132,7 @@ The following table lists all available keybindings and their default values.
 | home_edit_path | Open the home directory and start text editing the path | `~` |
 | selection_up | Move the selection one item up | `↑` |
 | selection_down | Move the selection one item down | `↓` |
-| select_all | Select every item in the directory when using the file dialog to select multiple files and folders |
-`CTRL` + `A` on linux/windows or `CMD` + `A` on macOS |
+| select_all | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` on linux/windows or `CMD` + `A` on macOS |
 
 ## Customization
 Many things can be customized so that the dialog can be used in different situations. \
