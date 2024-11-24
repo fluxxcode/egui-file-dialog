@@ -26,8 +26,6 @@ The file dialog is intended for use by desktop applications, allowing the use of
 
 The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
-**Currently only tested on Linux and Windows!**
-
 ## Features
 - Select a file or a directory
 - Save a file (Prompt user for a destination path)

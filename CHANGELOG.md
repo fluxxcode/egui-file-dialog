@@ -8,6 +8,7 @@
 - Support mapped network devices on Windows [#189](https://github.com/fluxxcode/egui-file-dialog/pull/189)
 - Added the ability to drag and drop files and folders to open their respective path [#192](https://github.com/fluxxcode/egui-file-dialog/pull/192) (thanks [@hacknus](https://github.com/hacknus)!)
 - Support network drives on MacOS [#194](https://github.com/fluxxcode/egui-file-dialog/pull/194) (thanks [@hacknus](https://github.com/hacknus)!)
+- Files and folders are now truncated in the middle and no longer divided onto separate lines. This can be disabled using `FileDialog::truncate_filenames` [#203](https://github.com/fluxxcode/egui-file-dialog/pull/203) (thanks [@hacknus](https://github.com/hacknus)!)
 
 ### ☢️ Deprecated
 - Deprecated all `select_*` methods and added new equivalent `pick_*` methods [207](https://github.com/fluxxcode/egui-file-dialog/pull/207)
@@ -15,6 +16,7 @@
 ### 🐛 Bug Fixes
 - Fixed heading `Places` not being able to be updated with `FileDialogLabels` [#180](https://github.com/fluxxcode/egui-file-dialog/pull/180)
 - Fix display errors with path prefix on Windows [#182](https://github.com/fluxxcode/egui-file-dialog/pull/182)
+- Fix Macintosh HD drive appearing twice on MacOS [#204](https://github.com/fluxxcode/egui-file-dialog/pull/204) (thanks [@hacknus](https://github.com/hacknus)!)
 
 ### 🔧 Changes
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
@@ -24,7 +26,7 @@
 - Implement non blocking directory loading [#177](https://github.com/fluxxcode/egui-file-dialog/pull/177)
 - Only update visible items in the central panel if the search value is empty and the create directory dialog is currently closed [#181](https://github.com/fluxxcode/egui-file-dialog/pull/181)
 - Improve CI [#186](https://github.com/fluxxcode/egui-file-dialog/pull/186) (thanks [@bircni](https://github.com/bircni)!)
-- Files and folders are now truncated in the middle and no longer divided onto separate lines. This can be disabled using `FileDialog::truncate_filenames` [#203](https://github.com/fluxxcode/egui-file-dialog/pull/203) (thanks [@hacknus](https://github.com/hacknus)!)
+- Use `cmd` for keybindings on MacOS [#205](https://github.com/fluxxcode/egui-file-dialog/pull/205) (thanks [@hacknus](https://github.com/hacknus)!)
 
 ### 📚 Documentation
 - Updated `README.md` to include latest features [#176](https://github.com/fluxxcode/egui-file-dialog/pull/176)
