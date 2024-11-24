@@ -26,7 +26,7 @@ impl eframe::App for MyApp {
 
             ui.label(format!("File to save: {:?}", self.file_path));
 
-            if let Some(path) = self.file_dialog.update(ctx).selected() {
+            if let Some(path) = self.file_dialog.update(ctx).picked() {
                 self.file_path = Some(path.to_path_buf());
             }
         });

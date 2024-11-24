@@ -344,6 +344,17 @@ impl FileDialog {
         Ok(())
     }
 
+    /// Shortcut function to open the file dialog to prompt the user to pick a directory.
+    /// If used, no files in the directories will be shown to the user.
+    /// Use the `open()` method instead, if you still want to display files to the user.
+    /// This function resets the file dialog. Configuration variables such as
+    /// `initial_directory` are retained.
+    ///
+    /// The function ignores the result of the initial directory loading operation.
+    pub fn pick_directory(&mut self) {
+        let _ = self.open(DialogMode::SelectDirectory, false, None);
+    }
+
     /// Shortcut function to open the file dialog to prompt the user to select a directory.
     /// If used, no files in the directories will be shown to the user.
     /// Use the `open()` method instead, if you still want to display files to the user.
@@ -351,8 +362,22 @@ impl FileDialog {
     /// `initial_directory` are retained.
     ///
     /// The function ignores the result of the initial directory loading operation.
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `FileDialog::pick_directory` for more consistent naming. \
+                Will be removed in a future release, most likely 0.9.0."
+    )]
     pub fn select_directory(&mut self) {
-        let _ = self.open(DialogMode::SelectDirectory, false, None);
+        self.pick_directory();
+    }
+
+    /// Shortcut function to open the file dialog to prompt the user to pick a file.
+    /// This function resets the file dialog. Configuration variables such as
+    /// `initial_directory` are retained.
+    ///
+    /// The function ignores the result of the initial directory loading operation.
+    pub fn pick_file(&mut self) {
+        let _ = self.open(DialogMode::SelectFile, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select a file.
@@ -360,8 +385,23 @@ impl FileDialog {
     /// `initial_directory` are retained.
     ///
     /// The function ignores the result of the initial directory loading operation.
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `FileDialog::pick_file` for more consistent naming. \
+                Will be removed in a future release, most likely 0.9.0."
+    )]
     pub fn select_file(&mut self) {
-        let _ = self.open(DialogMode::SelectFile, true, None);
+        self.pick_file();
+    }
+
+    /// Shortcut function to open the file dialog to prompt the user to pick multiple
+    /// files and folders.
+    /// This function resets the file dialog. Configuration variables such as `initial_directory`
+    /// are retained.
+    ///
+    /// The function ignores the result of the initial directory loading operation.
+    pub fn pick_multiple(&mut self) {
+        let _ = self.open(DialogMode::SelectMultiple, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to select multiple
@@ -370,8 +410,13 @@ impl FileDialog {
     /// are retained.
     ///
     /// The function ignores the result of the initial directory loading operation.
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `FileDialog::pick_multiple` for more consistent naming. \
+                Will be removed in a future release, most likely 0.9.0."
+    )]
     pub fn select_multiple(&mut self) {
-        let _ = self.open(DialogMode::SelectMultiple, true, None);
+        self.pick_multiple();
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -973,11 +1018,11 @@ impl FileDialog {
     // -------------------------------------------------
     // Getter:
 
-    /// Returns the directory or file that the user selected, or the target file
+    /// Returns the directory or file that the user picked, or the target file
     /// if the dialog is in `DialogMode::SaveFile` mode.
     ///
     /// None is returned when the user has not yet selected an item.
-    pub fn selected(&self) -> Option<&Path> {
+    pub fn picked(&self) -> Option<&Path> {
         match &self.state {
             DialogState::Selected(path) => Some(path),
             _ => None,
@@ -986,11 +1031,24 @@ impl FileDialog {
 
     /// Returns the directory or file that the user selected, or the target file
     /// if the dialog is in `DialogMode::SaveFile` mode.
-    /// Unlike `FileDialog::selected`, this method returns the selected path only once and
-    /// sets the dialog's state to `DialogState::Closed`.
     ///
     /// None is returned when the user has not yet selected an item.
-    pub fn take_selected(&mut self) -> Option<PathBuf> {
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `FileDialog::picked` for more consistent naming. \
+                Will be removed in a future release, most likely 0.9.0."
+    )]
+    pub fn selected(&self) -> Option<&Path> {
+        self.picked()
+    }
+
+    /// Returns the directory or file that the user picked, or the target file
+    /// if the dialog is in `DialogMode::SaveFile` mode.
+    /// Unlike `FileDialog::picked`, this method returns the picked path only once and
+    /// sets the dialog's state to `DialogState::Closed`.
+    ///
+    /// None is returned when the user has not yet picked an item.
+    pub fn take_picked(&mut self) -> Option<PathBuf> {
         match &mut self.state {
             DialogState::Selected(path) => {
                 let path = std::mem::take(path);
@@ -1001,14 +1059,59 @@ impl FileDialog {
         }
     }
 
+    /// Returns the directory or file that the user selected, or the target file
+    /// if the dialog is in `DialogMode::SaveFile` mode.
+    /// Unlike `FileDialog::selected`, this method returns the selected path only once and
+    /// sets the dialog's state to `DialogState::Closed`.
+    ///
+    /// None is returned when the user has not yet selected an item.
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `FileDialog::take_picked` for more consistent naming. \
+                Will be removed in a future release, most likely 0.9.0."
+    )]
+    pub fn take_selected(&mut self) -> Option<PathBuf> {
+        self.take_picked()
+    }
+
+    /// Returns a list of the files and folders the user picked, when the dialog is in
+    /// `DialogMode::PickMultiple` mode.
+    ///
+    /// None is returned when the user has not yet picked an item.
+    pub fn picked_multiple(&self) -> Option<Vec<&Path>> {
+        match &self.state {
+            DialogState::SelectedMultiple(items) => {
+                Some(items.iter().map(std::path::PathBuf::as_path).collect())
+            }
+            _ => None,
+        }
+    }
+
     /// Returns a list of the files and folders the user selected, when the dialog is in
     /// `DialogMode::SelectMultiple` mode.
     ///
     /// None is returned when the user has not yet selected an item.
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `FileDialog::picked_multiple` for more consistent naming. \
+                Will be removed in a future release, most likely 0.9.0."
+    )]
     pub fn selected_multiple(&self) -> Option<Vec<&Path>> {
-        match &self.state {
+        self.picked_multiple()
+    }
+
+    /// Returns a list of the files and folders the user picked, when the dialog is in
+    /// `DialogMode::PickMultiple` mode.
+    /// Unlike `FileDialog::picked_multiple`, this method returns the picked paths only once
+    /// and sets the dialog's state to `DialogState::Closed`.
+    ///
+    /// None is returned when the user has not yet picked an item.
+    pub fn take_picked_multiple(&mut self) -> Option<Vec<PathBuf>> {
+        match &mut self.state {
             DialogState::SelectedMultiple(items) => {
-                Some(items.iter().map(std::path::PathBuf::as_path).collect())
+                let items = std::mem::take(items);
+                self.state = DialogState::Closed;
+                Some(items)
             }
             _ => None,
         }
@@ -1020,15 +1123,13 @@ impl FileDialog {
     /// and sets the dialog's state to `DialogState::Closed`.
     ///
     /// None is returned when the user has not yet selected an item.
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `FileDialog::take_picked_multiple` for more consistent naming. \
+                Will be removed in a future release, most likely 0.9.0."
+    )]
     pub fn take_selected_multiple(&mut self) -> Option<Vec<PathBuf>> {
-        match &mut self.state {
-            DialogState::SelectedMultiple(items) => {
-                let items = std::mem::take(items);
-                self.state = DialogState::Closed;
-                Some(items)
-            }
-            _ => None,
-        }
+        self.take_picked_multiple()
     }
 
     /// Returns the currently active directory entry.

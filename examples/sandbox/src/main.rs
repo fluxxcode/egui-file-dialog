@@ -6,9 +6,9 @@ use egui_file_dialog::{DialogMode, FileDialog};
 struct MyApp {
     file_dialog: FileDialog,
 
-    selected_directory: Option<PathBuf>,
-    selected_file: Option<PathBuf>,
-    selected_multiple: Option<Vec<PathBuf>>,
+    picked_directory: Option<PathBuf>,
+    picked_file: Option<PathBuf>,
+    picked_multiple: Option<Vec<PathBuf>>,
     saved_file: Option<PathBuf>,
 }
 
@@ -42,9 +42,9 @@ impl MyApp {
         Self {
             file_dialog,
 
-            selected_directory: None,
-            selected_file: None,
-            selected_multiple: None,
+            picked_directory: None,
+            picked_file: None,
+            picked_multiple: None,
             saved_file: None,
         }
     }
@@ -66,24 +66,24 @@ impl eframe::App for MyApp {
 
             ui.add_space(5.0);
 
-            if ui.button("Select directory").clicked() {
-                self.file_dialog.select_directory();
+            if ui.button("Pick directory").clicked() {
+                self.file_dialog.pick_directory();
             }
-            ui.label(format!("Selected directory: {:?}", self.selected_directory));
+            ui.label(format!("Picked directory: {:?}", self.picked_directory));
 
             ui.add_space(5.0);
 
-            if ui.button("Select file").clicked() {
-                self.file_dialog.select_file();
+            if ui.button("Pick file").clicked() {
+                self.file_dialog.pick_file();
             }
-            ui.label(format!("Selected file: {:?}", self.selected_file));
+            ui.label(format!("Selected file: {:?}", self.picked_file));
 
-            if ui.button("Select multiple").clicked() {
-                self.file_dialog.select_multiple();
+            if ui.button("Pick multiple").clicked() {
+                self.file_dialog.pick_multiple();
             }
-            ui.label("Selected multiple:");
+            ui.label("Picked multiple:");
 
-            if let Some(items) = &self.selected_multiple {
+            if let Some(items) = &self.picked_multiple {
                 for item in items {
                     ui.label(format!("{:?}", item));
                 }
@@ -100,17 +100,17 @@ impl eframe::App for MyApp {
 
             self.file_dialog.update(ctx);
 
-            if let Some(path) = self.file_dialog.take_selected() {
+            if let Some(path) = self.file_dialog.take_picked() {
                 match self.file_dialog.mode() {
-                    DialogMode::SelectDirectory => self.selected_directory = Some(path),
-                    DialogMode::SelectFile => self.selected_file = Some(path),
+                    DialogMode::SelectDirectory => self.picked_directory = Some(path),
+                    DialogMode::SelectFile => self.picked_file = Some(path),
                     DialogMode::SaveFile => self.saved_file = Some(path),
                     _ => {}
                 }
             }
 
-            if let Some(items) = self.file_dialog.take_selected_multiple() {
-                self.selected_multiple = Some(items);
+            if let Some(items) = self.file_dialog.take_picked_multiple() {
+                self.picked_multiple = Some(items);
             }
         });
     }

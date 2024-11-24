@@ -9,6 +9,9 @@
 - Added the ability to drag and drop files and folders to open their respective path [#192](https://github.com/fluxxcode/egui-file-dialog/pull/192) (thanks [@hacknus](https://github.com/hacknus)!)
 - Support network drives on MacOS [#194](https://github.com/fluxxcode/egui-file-dialog/pull/194) (thanks [@hacknus](https://github.com/hacknus)!)
 
+### ☢️ Deprecated
+- Deprecated all `select_*` methods and added new equivalent `pick_*` methods [207](https://github.com/fluxxcode/egui-file-dialog/pull/207)
+
 ### 🐛 Bug Fixes
 - Fixed heading `Places` not being able to be updated with `FileDialogLabels` [#180](https://github.com/fluxxcode/egui-file-dialog/pull/180)
 - Fix display errors with path prefix on Windows [#182](https://github.com/fluxxcode/egui-file-dialog/pull/182)
