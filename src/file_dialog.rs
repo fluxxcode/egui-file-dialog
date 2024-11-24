@@ -1,8 +1,3 @@
-use egui::text::{CCursor, CCursorRange};
-use std::fmt::Debug;
-use std::io;
-use std::path::{Path, PathBuf};
-
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
     Filter, QuickAccess,
@@ -12,6 +7,10 @@ use crate::data::{
     DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
+use egui::text::{CCursor, CCursorRange};
+use std::fmt::Debug;
+use std::io;
+use std::path::{Path, PathBuf};
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -626,6 +625,16 @@ impl FileDialog {
     /// or from slow hard drives.
     pub const fn load_via_thread(mut self, load_via_thread: bool) -> Self {
         self.config.load_via_thread = load_via_thread;
+        self
+    }
+
+    /// Sets if long filenames should be truncated in the middle.
+    /// The extension, if available, will be preserved.
+    ///
+    /// Warning! If this is disabled, the scroll-to-selection might not work correctly and have
+    /// an offset for large directories.
+    pub const fn truncate_filenames(mut self, truncate_filenames: bool) -> Self {
+        self.config.truncate_filenames = truncate_filenames;
         self
     }
 
@@ -2165,20 +2174,35 @@ impl FileDialog {
         batch_select_item_b: &mut Option<DirectoryEntry>,
     ) -> bool {
         let file_name = item.file_name();
-
-        let mut primary_selected = false;
-        if let Some(x) = &self.selected_item {
-            primary_selected = x.path_eq(item);
-        }
-
+        let primary_selected = self.is_primary_selected(item);
         let pinned = self.is_pinned(item);
-        let label = if pinned {
-            format!("{} {} {}", item.icon(), self.config.pinned_icon, file_name)
+
+        let icons = if pinned {
+            format!("{} {} ", item.icon(), self.config.pinned_icon)
         } else {
-            format!("{} {}", item.icon(), file_name)
+            format!("{} ", item.icon())
         };
 
-        let re = ui.selectable_label(primary_selected || item.selected, label);
+        let icons_width = Self::calc_text_width(ui, &icons);
+
+        // Calc available width for the file name and include a small margin
+        let available_width = ui.available_width() - icons_width - 15.0;
+
+        let truncate = self.config.truncate_filenames
+            && available_width < Self::calc_text_width(ui, file_name);
+
+        let text = if truncate {
+            Self::truncate_filename(ui, item, available_width)
+        } else {
+            file_name.to_owned()
+        };
+
+        let mut re =
+            ui.selectable_label(primary_selected || item.selected, format!("{icons}{text}"));
+
+        if truncate {
+            re = re.on_hover_text(file_name);
+        }
 
         if item.is_dir() {
             self.ui_update_path_context_menu(&re, item);
@@ -2395,14 +2419,85 @@ impl FileDialog {
         }
     }
 
-    /// Calculate the width of the specified text using the current font configuration.
+    /// Calculates the width of a single char.
+    fn calc_char_width(ui: &egui::Ui, char: char) -> f32 {
+        ui.fonts(|f| f.glyph_width(&egui::TextStyle::Body.resolve(ui.style()), char))
+    }
+
+    /// Calculates the width of the specified text using the current font configuration.
+    /// Does not take new lines or text breaks into account!
     fn calc_text_width(ui: &egui::Ui, text: &str) -> f32 {
         let mut width = 0.0;
+
         for char in text.chars() {
-            width += ui.fonts(|f| f.glyph_width(&egui::TextStyle::Body.resolve(ui.style()), char));
+            width += Self::calc_char_width(ui, char);
         }
 
         width
+    }
+
+    fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
+        const TRUNCATE_STR: &str = "...";
+
+        let path = item.as_path();
+
+        let file_stem = if path.is_file() {
+            path.file_stem().and_then(|f| f.to_str()).unwrap_or("")
+        } else {
+            item.file_name()
+        };
+
+        let extension = if path.is_file() {
+            path.extension().map_or(String::new(), |ext| {
+                format!(".{}", ext.to_str().unwrap_or(""))
+            })
+        } else {
+            String::new()
+        };
+
+        let extension_width = Self::calc_text_width(ui, &extension);
+        let reserved = extension_width + Self::calc_text_width(ui, TRUNCATE_STR);
+
+        if max_length <= reserved {
+            return format!("{TRUNCATE_STR}{extension}");
+        }
+
+        let mut width = reserved;
+        let mut front = String::new();
+        let mut back = String::new();
+
+        for (i, char) in file_stem.chars().enumerate() {
+            let w = Self::calc_char_width(ui, char);
+
+            if width + w > max_length {
+                break;
+            }
+
+            front.push(char);
+            width += w;
+
+            let back_index = file_stem.len() - i - 1;
+
+            if back_index <= i {
+                break;
+            }
+
+            if let Some(char) = file_stem.chars().nth(back_index) {
+                let w = Self::calc_char_width(ui, char);
+
+                if width + w > max_length {
+                    break;
+                }
+
+                back.push(char);
+                width += w;
+            }
+        }
+
+        format!(
+            "{front}{TRUNCATE_STR}{}{extension}",
+            back.chars().rev().collect::<String>()
+        )
     }
 }
 
@@ -2661,6 +2756,12 @@ impl FileDialog {
             .pinned_folders
             .iter()
             .any(|p| path.path_eq(p))
+    }
+
+    fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
+        self.selected_item
+            .as_ref()
+            .map_or(false, |x| x.path_eq(item))
     }
 
     /// Resets the dialog to use default values.
