@@ -41,7 +41,7 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Select file").clicked() {
-                self.file_dialog.select_file();
+                self.file_dialog.picked();
             }
 
             self.file_dialog.set_right_panel_width(300.0);
@@ -51,7 +51,7 @@ impl eframe::App for MyApp {
                 .update_with_right_panel_ui(ctx, &mut |ui, dia| {
                     self.information_panel.ui(ui, dia);
                 })
-                .selected()
+                .picked()
             {
                 self.selected_file = Some(path.to_path_buf());
             }
