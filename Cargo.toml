@@ -49,7 +49,7 @@ default_fonts = ["egui/default_fonts"]
 metadata_view = ["dep:chrono", "image-meta", "indexmap"]
 
 [lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "warn"
 
 [lints.clippy]
 nursery = { level = "deny", priority = 0 }

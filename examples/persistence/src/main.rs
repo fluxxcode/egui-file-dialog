@@ -5,7 +5,7 @@ use egui_file_dialog::FileDialog;
 
 struct MyApp {
     file_dialog: FileDialog,
-    selected_file: Option<PathBuf>,
+    picked_file: Option<PathBuf>,
 }
 
 impl MyApp {
@@ -21,7 +21,7 @@ impl MyApp {
 
         Self {
             file_dialog,
-            selected_file: None,
+            picked_file: None,
         }
     }
 }
@@ -38,16 +38,16 @@ impl eframe::App for MyApp {
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Select file").clicked() {
-                self.file_dialog.select_file();
+            if ui.button("Pick file").clicked() {
+                self.file_dialog.pick_file();
             }
 
-            ui.label(format!("Selected file: {:?}", self.selected_file));
+            ui.label(format!("Picked file: {:?}", self.picked_file));
 
             self.file_dialog.update(ctx);
 
-            if let Some(path) = self.file_dialog.take_selected() {
-                self.selected_file = Some(path);
+            if let Some(path) = self.file_dialog.take_picked() {
+                self.picked_file = Some(path);
             }
         });
     }

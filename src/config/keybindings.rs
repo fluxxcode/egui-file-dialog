@@ -122,7 +122,7 @@ pub struct FileDialogKeyBindings {
 }
 
 impl FileDialogKeyBindings {
-    /// Checks wether any of the given keybindings is pressed.
+    /// Checks whether any of the given keybindings is pressed.
     pub fn any_pressed(
         ctx: &egui::Context,
         keybindings: &Vec<KeyBinding>,
@@ -156,7 +156,7 @@ impl Default for FileDialogKeyBindings {
                 KeyBinding::keyboard_shortcut(Modifiers::ALT, Key::ArrowRight),
             ],
             reload: vec![KeyBinding::key(egui::Key::F5)],
-            new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::N)],
+            new_folder: vec![KeyBinding::keyboard_shortcut(Modifiers::COMMAND, Key::N)],
             edit_path: vec![KeyBinding::key(Key::Slash)],
             home_edit_path: vec![
                 KeyBinding::keyboard_shortcut(Modifiers::SHIFT, egui::Key::Backtick),
@@ -164,7 +164,7 @@ impl Default for FileDialogKeyBindings {
             ],
             selection_up: vec![KeyBinding::key(Key::ArrowUp)],
             selection_down: vec![KeyBinding::key(Key::ArrowDown)],
-            select_all: vec![KeyBinding::keyboard_shortcut(Modifiers::CTRL, Key::A)],
+            select_all: vec![KeyBinding::keyboard_shortcut(Modifiers::COMMAND, Key::A)],
         }
     }
 }
