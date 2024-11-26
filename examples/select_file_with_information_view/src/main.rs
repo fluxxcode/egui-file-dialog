@@ -21,9 +21,7 @@ impl MyApp {
                         egui::ScrollArea::vertical()
                             .max_height(150.0)
                             .show(ui, |ui| {
-                                ui.add(
-                                    egui::TextEdit::multiline(&mut content).code_editor(),
-                                );
+                                ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });
                     }
                 })

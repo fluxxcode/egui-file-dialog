@@ -74,9 +74,7 @@ impl Default for InformationPanel {
                         egui::ScrollArea::vertical()
                             .max_height(100.0)
                             .show(ui, |ui| {
-                                ui.add(
-                                    egui::TextEdit::multiline(&mut content).code_editor(),
-                                );
+                                ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });
                     }
                 }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
@@ -236,9 +234,7 @@ impl InformationPanel {
                         egui::ScrollArea::vertical()
                             .max_height(100.0)
                             .show(ui, |ui| {
-                                ui.add(
-                                    egui::TextEdit::multiline(&mut content).code_editor(),
-                                );
+                                ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });
                     } else {
                         // if now preview is available, show icon
