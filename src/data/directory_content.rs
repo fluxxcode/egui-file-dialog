@@ -18,17 +18,24 @@ pub fn format_pixels(pixels: u32) -> String {
 }
 
 /// Contains the metadata of a directory item.
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub struct Metadata {
+    pub size: Option<u64>,
+    pub last_modified: Option<SystemTime>,
+    pub created: Option<SystemTime>,
+    pub file_type: Option<String>,
+}
+
+/// Contains the information of a directory item.
 ///
-/// This struct is mainly there so that the metadata can be loaded once and not that
+/// This struct is mainly there so that the information and metadata can be loaded once and not that
 /// a request has to be sent to the OS every frame using, for example, `path.is_file()`.
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct DirectoryEntry {
     path: PathBuf,
-    size: Option<u64>,
-    last_modified: Option<SystemTime>,
-    created: Option<SystemTime>,
-    file_type: Option<String>,
+    metadata: Metadata,
     is_directory: bool,
     is_system_file: bool,
     #[cfg(feature = "metadata_view")]
@@ -41,24 +48,18 @@ pub struct DirectoryEntry {
 impl DirectoryEntry {
     /// Creates a new directory entry from a path
     pub fn from_path(config: &FileDialogConfig, path: &Path) -> Self {
-        let mut size = None;
-        let mut last_modified = None;
-        let mut created = None;
-        let mut file_type = None;
+        let mut metadata = Metadata::default();
 
-        if let Ok(metadata) = fs::metadata(path) {
-            size = Some(metadata.len());
-            last_modified = metadata.modified().ok();
-            created = metadata.created().ok();
-            file_type = Some(format!("{:?}", metadata.file_type()));
+        if let Ok(md) = fs::metadata(path) {
+            metadata.size = Some(md.len());
+            metadata.last_modified = md.modified().ok();
+            metadata.created = md.created().ok();
+            metadata.file_type = Some(format!("{:?}", md.file_type()));
         }
 
         Self {
             path: path.to_path_buf(),
-            size,
-            last_modified,
-            created,
-            file_type,
+            metadata,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
             #[cfg(feature = "metadata_view")]
@@ -66,6 +67,11 @@ impl DirectoryEntry {
             icon: gen_path_icon(config, path),
             selected: false,
         }
+    }
+
+    /// Returns the metadata of the directory entry.
+    pub const fn metadata(&self) -> &Metadata {
+        &self.metadata
     }
 
     /// Checks if the path of the current directory entry matches the other directory entry.
@@ -105,26 +111,6 @@ impl DirectoryEntry {
     /// Clones the path of the directory item.
     pub fn to_path_buf(&self) -> PathBuf {
         self.path.clone()
-    }
-
-    /// Returns the size of the directory item.
-    pub const fn size(&self) -> Option<u64> {
-        self.size
-    }
-
-    /// Clones the `FileType` struct of the directory item.
-    pub fn file_type(&self) -> Option<String> {
-        self.file_type.clone()
-    }
-
-    /// Returns the created date of the directory item.
-    pub const fn created(&self) -> Option<SystemTime> {
-        self.created
-    }
-
-    /// Returns the last modified date of the directory item.
-    pub const fn last_modified(&self) -> Option<SystemTime> {
-        self.last_modified
     }
 
     /// Returns the file name of the directory item.
@@ -171,8 +157,8 @@ impl DirectoryEntry {
 #[cfg(feature = "metadata_view")]
 impl DirectoryEntry {
     /// Clones the content of the directory item, if available
-    pub fn content(&self) -> Option<String> {
-        self.content.clone()
+    pub fn content(&self) -> Option<&str> {
+        self.content.as_deref()
     }
 
     /// Sets the content of the directory item

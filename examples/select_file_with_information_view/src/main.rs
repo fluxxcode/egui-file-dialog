@@ -17,12 +17,12 @@ impl MyApp {
             information_panel: InformationPanel::default()
                 .add_file_preview("csv", |ui, item| {
                     ui.label("CSV preview:");
-                    if let Some(content) = item.content() {
+                    if let Some(mut content) = item.content() {
                         egui::ScrollArea::vertical()
                             .max_height(150.0)
                             .show(ui, |ui| {
                                 ui.add(
-                                    egui::TextEdit::multiline(&mut content.clone()).code_editor(),
+                                    egui::TextEdit::multiline(&mut content).code_editor(),
                                 );
                             });
                     }

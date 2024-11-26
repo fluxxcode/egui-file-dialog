@@ -70,12 +70,12 @@ impl Default for InformationPanel {
             supported_files.insert(
                 text_extension.to_string(),
                 Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
-                    if let Some(content) = item.content() {
+                    if let Some(mut content) = item.content() {
                         egui::ScrollArea::vertical()
                             .max_height(100.0)
                             .show(ui, |ui| {
                                 ui.add(
-                                    egui::TextEdit::multiline(&mut content.clone()).code_editor(),
+                                    egui::TextEdit::multiline(&mut content).code_editor(),
                                 );
                             });
                     }
@@ -232,12 +232,12 @@ impl InformationPanel {
                         self.supported_preview_files.get_mut(&ext.to_lowercase())
                     {
                         show_preview(ui, item);
-                    } else if let Some(content) = item.content() {
+                    } else if let Some(mut content) = item.content() {
                         egui::ScrollArea::vertical()
                             .max_height(100.0)
                             .show(ui, |ui| {
                                 ui.add(
-                                    egui::TextEdit::multiline(&mut content.clone()).code_editor(),
+                                    egui::TextEdit::multiline(&mut content).code_editor(),
                                 );
                             });
                     } else {
@@ -268,7 +268,7 @@ impl InformationPanel {
                             ui.label(item.file_name().to_string());
                             ui.end_row();
 
-                            if let Some(size) = item.size() {
+                            if let Some(size) = item.metadata().size {
                                 ui.label("File Size: ");
                                 if item.is_file() {
                                     ui.label(format_bytes(size));
@@ -278,14 +278,14 @@ impl InformationPanel {
                                 ui.end_row();
                             }
 
-                            if let Some(date) = item.created() {
+                            if let Some(date) = item.metadata().created {
                                 ui.label("Created: ");
                                 let created: DateTime<Local> = date.into();
                                 ui.label(format!("{}", created.format("%Y-%m-%d %H:%M:%S")));
                                 ui.end_row();
                             }
 
-                            if let Some(date) = item.last_modified() {
+                            if let Some(date) = item.metadata().last_modified {
                                 ui.label("Last Modified: ");
                                 let modified: DateTime<Local> = date.into();
                                 ui.label(format!("{}", modified.format("%Y-%m-%d %H:%M:%S")));
