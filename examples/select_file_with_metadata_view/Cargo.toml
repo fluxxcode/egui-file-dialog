@@ -1,5 +1,5 @@
 [package]
-name = "select_file_with_information_panel"
+name = "select_file_with_metadata_view"
 version = "0.1.0"
 edition = "2021"
 
