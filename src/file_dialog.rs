@@ -1078,7 +1078,7 @@ impl FileDialog {
     #[cfg(feature = "metadata_view")]
     pub fn set_selected_content(&mut self, content: Option<String>) {
         if let Some(item) = &mut self.selected_item {
-            item.set_content(content);
+            *item.content_mut() = content;
         }
     }
 

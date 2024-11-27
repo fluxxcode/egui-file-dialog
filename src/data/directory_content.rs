@@ -156,14 +156,14 @@ impl DirectoryEntry {
 
 #[cfg(feature = "metadata_view")]
 impl DirectoryEntry {
-    /// Clones the content of the directory item, if available
+    /// Returns the content of the directory item, if available
     pub fn content(&self) -> Option<&str> {
         self.content.as_deref()
     }
 
-    /// Sets the content of the directory item
-    pub fn set_content(&mut self, content: Option<String>) {
-        self.content = content;
+    /// Mutably borrow content
+    pub fn content_mut(&mut self) -> &mut Option<String> {
+        &mut self.content
     }
 }
 
