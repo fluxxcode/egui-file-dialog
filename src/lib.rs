@@ -204,7 +204,7 @@ pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
     KeyBinding, QuickAccess, QuickAccessPath,
 };
-#[cfg(feature = "metadata_view")]
+#[cfg(feature = "information_view")]
 pub use data::information_panel;
 pub use data::DirectoryEntry;
 pub use file_dialog::{DialogMode, DialogState, FileDialog};

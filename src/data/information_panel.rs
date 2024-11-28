@@ -1,4 +1,4 @@
-#![cfg(feature = "metadata_view")]
+#![cfg(feature = "information_view")]
 
 use crate::data::directory_content::format_pixels;
 use crate::{DirectoryEntry, FileDialog};

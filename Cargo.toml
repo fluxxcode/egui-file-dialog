@@ -46,7 +46,7 @@ chrono = { version = "0.4.38", optional = true }
 default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
-metadata_view = ["dep:chrono", "image-meta", "indexmap"]
+information_view = ["dep:chrono", "image-meta", "indexmap"]
 
 [lints.rust]
 unsafe_code = "warn"

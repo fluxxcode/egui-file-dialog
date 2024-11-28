@@ -5,7 +5,7 @@ use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
 
-#[cfg(feature = "metadata_view")]
+#[cfg(feature = "information_view")]
 pub fn format_pixels(pixels: u32) -> String {
     const K: u32 = 1_000;
     const M: u32 = K * 1_000;

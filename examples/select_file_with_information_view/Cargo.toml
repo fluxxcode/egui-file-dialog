@@ -9,7 +9,7 @@ edition = "2021"
 eframe = { workspace = true }
 egui_extras = { version = "0.29", features = ["all_loaders"] }
 image = { version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "rayon"] }
-egui-file-dialog = { path = "../../", features = ["metadata_view"] }
+egui-file-dialog = { path = "../../", features = ["information_view"] }
 
 [package.metadata.cargo-machete]
 ignored = ["image"]
