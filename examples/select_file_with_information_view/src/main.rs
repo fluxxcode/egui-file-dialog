@@ -39,7 +39,8 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Select file").clicked() {
-                self.file_dialog.picked();
+                self.file_dialog.pick_file();
+                println!("opening window!");
             }
 
             self.file_dialog.set_right_panel_width(300.0);
