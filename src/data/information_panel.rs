@@ -1,6 +1,5 @@
 #![cfg(feature = "information_view")]
 
-use crate::data::directory_content::format_pixels;
 use crate::{DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
@@ -13,6 +12,17 @@ use std::path::PathBuf;
 type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>>;
 type SupportedAdditionalMetaFilesMap =
     HashMap<String, Box<dyn FnMut(&mut IndexMap<String, String>, &PathBuf)>>;
+
+fn format_pixels(pixels: u32) -> String {
+    const K: u32 = 1_000;
+    const M: u32 = K * 1_000;
+
+    if pixels >= K {
+        format!("{:.2} MPx", f64::from(pixels) / f64::from(M))
+    } else {
+        format!("{pixels} Px")
+    }
+}
 
 /// Wrapper for the `DirectoryEntry` struct, that also adds the option to store text content
 pub struct InfoPanelEntry {

@@ -5,18 +5,6 @@ use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
 
-#[cfg(feature = "information_view")]
-pub fn format_pixels(pixels: u32) -> String {
-    const K: u32 = 1_000;
-    const M: u32 = K * 1_000;
-
-    if pixels >= K {
-        format!("{:.2} MPx", f64::from(pixels) / f64::from(M))
-    } else {
-        format!("{pixels} Px")
-    }
-}
-
 /// Contains the metadata of a directory item.
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
