@@ -38,8 +38,6 @@ pub struct DirectoryEntry {
     metadata: Metadata,
     is_directory: bool,
     is_system_file: bool,
-    #[cfg(feature = "metadata_view")]
-    content: Option<String>,
     icon: String,
     /// If the item is marked as selected as part of a multi selection.
     pub selected: bool,
@@ -62,8 +60,6 @@ impl DirectoryEntry {
             metadata,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
-            #[cfg(feature = "metadata_view")]
-            content: None,
             icon: gen_path_icon(config, path),
             selected: false,
         }
@@ -151,19 +147,6 @@ impl DirectoryEntry {
     /// Returns whether the path this `DirectoryEntry` points to is considered hidden.
     pub fn is_hidden(&self) -> bool {
         is_path_hidden(self)
-    }
-}
-
-#[cfg(feature = "metadata_view")]
-impl DirectoryEntry {
-    /// Returns the content of the directory item, if available
-    pub fn content(&self) -> Option<&str> {
-        self.content.as_deref()
-    }
-
-    /// Mutably borrow content
-    pub fn content_mut(&mut self) -> &mut Option<String> {
-        &mut self.content
     }
 }
 

@@ -1069,19 +1069,6 @@ impl FileDialog {
         }
     }
 
-    /// Returns the directory or file that the user selected, or the target file
-    /// if the dialog is in `DialogMode::SaveFile` mode.
-    /// Unlike `FileDialog::selected`, this method returns the selected path only once and
-    /// sets the dialog's state to `DialogState::Closed`.
-    /// Sets the content (text) of the active Directory item
-    ///
-    #[cfg(feature = "metadata_view")]
-    pub fn set_selected_content(&mut self, content: Option<String>) {
-        if let Some(item) = &mut self.selected_item {
-            *item.content_mut() = content;
-        }
-    }
-
     /// Returns a list of the files and folders the user selected, when the dialog is in
     /// `DialogMode::SelectMultiple` mode.
     ///

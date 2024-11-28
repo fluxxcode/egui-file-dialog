@@ -10,9 +10,39 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::path::PathBuf;
 
-type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &DirectoryEntry)>>;
+type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>>;
 type SupportedAdditionalMetaFilesMap =
     HashMap<String, Box<dyn FnMut(&mut IndexMap<String, String>, &PathBuf)>>;
+
+/// Wrapper for the `DirectoryEntry` struct, that also adds the option to store text content
+pub struct InfoPanelEntry {
+    /// Directory Item containing info like path
+    pub directory_entry: DirectoryEntry,
+    /// Optional text content of the file
+    pub content: Option<String>,
+}
+
+impl InfoPanelEntry {
+    /// create a new`InfoPanelEntry` object
+    pub const fn new(item: DirectoryEntry) -> Self {
+        Self {
+            directory_entry: item,
+            content: None,
+        }
+    }
+}
+
+impl InfoPanelEntry {
+    /// Returns the content of the directory item, if available
+    pub fn content(&self) -> Option<&str> {
+        self.content.as_deref()
+    }
+
+    /// Mutably borrow content
+    pub fn content_mut(&mut self) -> &mut Option<String> {
+        &mut self.content
+    }
+}
 
 /// The `InformationPanel` struct provides a panel to display metadata and previews of files.
 /// It supports text-based file previews, image previews, and displays file metadata.
@@ -21,6 +51,7 @@ type SupportedAdditionalMetaFilesMap =
 /// - `load_text_content`: Flag to control whether text content should be loaded for preview.
 /// - `supported_files`: A hashmap mapping file extensions to their respective preview rendering functions.
 pub struct InformationPanel {
+    panel_entry: Option<InfoPanelEntry>,
     /// Flag to control whether text content should be loaded for preview.
     pub load_text_content: bool,
     /// Max chars that should be loaded for preview of text files.
@@ -69,7 +100,7 @@ impl Default for InformationPanel {
         ] {
             supported_files.insert(
                 text_extension.to_string(),
-                Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+                Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                     if let Some(mut content) = item.content() {
                         egui::ScrollArea::vertical()
                             .max_height(100.0)
@@ -77,34 +108,44 @@ impl Default for InformationPanel {
                                 ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });
                     }
-                }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
+                }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
             );
         }
 
         // Add preview support for JPEG and PNG image files
         supported_files.insert(
             "jpg".to_string(),
-            Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+            Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                 ui.label("Image");
-                ui.image(format!("file://{}", item.as_path().display()));
-            }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
+                ui.image(format!(
+                    "file://{}",
+                    item.directory_entry.as_path().display()
+                ));
+            }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
         );
         supported_files.insert(
             "jpeg".to_string(),
-            Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+            Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                 ui.label("Image");
-                ui.image(format!("file://{}", item.as_path().display()));
-            }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
+                ui.image(format!(
+                    "file://{}",
+                    item.directory_entry.as_path().display()
+                ));
+            }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
         );
         supported_files.insert(
             "png".to_string(),
-            Box::new(|ui: &mut Ui, item: &DirectoryEntry| {
+            Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                 ui.label("Image");
-                ui.image(format!("file://{}", item.as_path().display()));
-            }) as Box<dyn FnMut(&mut Ui, &DirectoryEntry)>,
+                ui.image(format!(
+                    "file://{}",
+                    item.directory_entry.as_path().display()
+                ));
+            }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
         );
 
         Self {
+            panel_entry: None,
             load_text_content: true,
             text_content_max_chars: 1000,
             loaded_file_name: PathBuf::new(),
@@ -127,7 +168,7 @@ impl InformationPanel {
     pub fn add_file_preview(
         mut self,
         extension: &str,
-        add_contents: impl FnMut(&mut Ui, &DirectoryEntry) + 'static,
+        add_contents: impl FnMut(&mut Ui, &InfoPanelEntry) + 'static,
     ) -> Self {
         self.supported_preview_files
             .insert(extension.to_string(), Box::new(add_contents));
@@ -197,105 +238,117 @@ impl InformationPanel {
         // Display metadata in a grid format
         let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
 
-        // load file content and additional metadata if it's a new file
-        let path_option = file_dialog.active_entry();
-        if let Some(path) = path_option {
-            if self.loaded_file_name != path.to_path_buf() {
-                self.loaded_file_name = path.to_path_buf();
-                // clear previous meta data
-                self.other_meta_data = IndexMap::default();
-                if let Some(ext) = path.to_path_buf().extension() {
-                    if let Some(ext_str) = ext.to_str() {
-                        if let Some(load_meta_data) = self.additional_meta_files.get_mut(ext_str) {
-                            // load metadata
-                            load_meta_data(&mut self.other_meta_data, &path.to_path_buf());
+        if let Some(item) = file_dialog.active_entry() {
+            // load file content and additional metadata if it's a new file
+            let path_option = file_dialog.active_entry();
+            if let Some(path) = path_option {
+                if self.loaded_file_name != path.to_path_buf() {
+                    self.loaded_file_name = path.to_path_buf();
+                    // clear previous meta data
+                    self.other_meta_data = IndexMap::default();
+                    if let Some(ext) = path.to_path_buf().extension() {
+                        if let Some(ext_str) = ext.to_str() {
+                            if let Some(load_meta_data) =
+                                self.additional_meta_files.get_mut(ext_str)
+                            {
+                                // load metadata
+                                load_meta_data(&mut self.other_meta_data, &path.to_path_buf());
+                            }
+                        }
+                    }
+                    let content = self.load_content(path.to_path_buf());
+                    self.panel_entry = Some(InfoPanelEntry::new(item.clone()));
+                    if let Some(panel_entry) = &mut self.panel_entry {
+                        // load content
+                        if panel_entry.content().is_none() {
+                            *panel_entry.content_mut() = content;
                         }
                     }
                 }
-                // load content
-                file_dialog.set_selected_content(self.load_content(path.to_path_buf()));
-            }
-        }
 
-        if let Some(item) = file_dialog.active_entry() {
-            if item.is_dir() {
-                // show folder icon
-                ui.vertical_centered(|ui| {
-                    ui.label(egui::RichText::from("📁").size(120.0));
-                });
-            } else {
-                // Display file content preview based on its extension
-                if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
-                    if let Some(show_preview) =
-                        self.supported_preview_files.get_mut(&ext.to_lowercase())
-                    {
-                        show_preview(ui, item);
-                    } else if let Some(mut content) = item.content() {
-                        egui::ScrollArea::vertical()
-                            .max_height(100.0)
-                            .show(ui, |ui| {
-                                ui.add(egui::TextEdit::multiline(&mut content).code_editor());
-                            });
-                    } else {
-                        // if now preview is available, show icon
-                        ui.vertical_centered(|ui| {
-                            ui.label(egui::RichText::from(item.icon()).size(120.0));
-                        });
+                if item.is_dir() {
+                    // show folder icon
+                    ui.vertical_centered(|ui| {
+                        ui.label(egui::RichText::from("📁").size(120.0));
+                    });
+                } else {
+                    // Display file content preview based on its extension
+                    if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
+                        if let Some(panel_entry) = &self.panel_entry {
+                            if let Some(show_preview) =
+                                self.supported_preview_files.get_mut(&ext.to_lowercase())
+                            {
+                                show_preview(ui, panel_entry);
+                            } else if let Some(mut content) = panel_entry.content() {
+                                egui::ScrollArea::vertical()
+                                    .max_height(100.0)
+                                    .show(ui, |ui| {
+                                        ui.add(
+                                            egui::TextEdit::multiline(&mut content).code_editor(),
+                                        );
+                                    });
+                            } else {
+                                // if now preview is available, show icon
+                                ui.vertical_centered(|ui| {
+                                    ui.label(egui::RichText::from(item.icon()).size(120.0));
+                                });
+                            }
+                        }
                     }
                 }
-            }
 
-            let spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
-            ui.separator();
+                let spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
+                ui.separator();
 
-            ui.add_space(spacing);
+                ui.add_space(spacing);
 
-            // show all metadata
-            egui::ScrollArea::vertical()
-                .id_salt("meta_data_scroll")
-                .show(ui, |ui| {
-                    egui::Grid::new("meta_data")
-                        .num_columns(2)
-                        .striped(true)
-                        .min_col_width(width)
-                        .max_col_width(width)
-                        .show(ui, |ui| {
-                            ui.label("Filename: ");
-                            ui.label(item.file_name().to_string());
-                            ui.end_row();
+                // show all metadata
+                egui::ScrollArea::vertical()
+                    .id_salt("meta_data_scroll")
+                    .show(ui, |ui| {
+                        egui::Grid::new("meta_data")
+                            .num_columns(2)
+                            .striped(true)
+                            .min_col_width(width)
+                            .max_col_width(width)
+                            .show(ui, |ui| {
+                                ui.label("Filename: ");
+                                ui.label(item.file_name().to_string());
+                                ui.end_row();
 
-                            if let Some(size) = item.metadata().size {
-                                ui.label("File Size: ");
-                                if item.is_file() {
-                                    ui.label(format_bytes(size));
-                                } else {
-                                    ui.label("NAN");
+                                if let Some(size) = item.metadata().size {
+                                    ui.label("File Size: ");
+                                    if item.is_file() {
+                                        ui.label(format_bytes(size));
+                                    } else {
+                                        ui.label("NAN");
+                                    }
+                                    ui.end_row();
                                 }
-                                ui.end_row();
-                            }
 
-                            if let Some(date) = item.metadata().created {
-                                ui.label("Created: ");
-                                let created: DateTime<Local> = date.into();
-                                ui.label(format!("{}", created.format("%Y-%m-%d %H:%M:%S")));
-                                ui.end_row();
-                            }
+                                if let Some(date) = item.metadata().created {
+                                    ui.label("Created: ");
+                                    let created: DateTime<Local> = date.into();
+                                    ui.label(format!("{}", created.format("%Y-%m-%d %H:%M:%S")));
+                                    ui.end_row();
+                                }
 
-                            if let Some(date) = item.metadata().last_modified {
-                                ui.label("Last Modified: ");
-                                let modified: DateTime<Local> = date.into();
-                                ui.label(format!("{}", modified.format("%Y-%m-%d %H:%M:%S")));
-                                ui.end_row();
-                            }
+                                if let Some(date) = item.metadata().last_modified {
+                                    ui.label("Last Modified: ");
+                                    let modified: DateTime<Local> = date.into();
+                                    ui.label(format!("{}", modified.format("%Y-%m-%d %H:%M:%S")));
+                                    ui.end_row();
+                                }
 
-                            // show additional metadata, if present
-                            for (key, value) in self.other_meta_data.clone() {
-                                ui.label(key);
-                                ui.label(value);
-                                ui.end_row();
-                            }
-                        });
-                });
+                                // show additional metadata, if present
+                                for (key, value) in self.other_meta_data.clone() {
+                                    ui.label(key);
+                                    ui.label(value);
+                                    ui.end_row();
+                                }
+                            });
+                    });
+            }
         }
     }
 }
