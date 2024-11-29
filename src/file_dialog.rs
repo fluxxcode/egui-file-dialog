@@ -6,8 +6,11 @@ use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
     DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
 };
+use crate::information_panel::format_bytes;
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
+use chrono::{DateTime, Local};
 use egui::text::{CCursor, CCursorRange};
+use egui_extras::{Column, TableBuilder, TableRow};
 use std::fmt::Debug;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -2193,6 +2196,7 @@ impl FileDialog {
 
     /// Updates the contents of the currently open directory.
     /// TODO: Refactor
+    #[allow(clippy::too_many_lines)]
     fn ui_update_central_panel_content(&mut self, ui: &mut egui::Ui) {
         // Temporarily take ownership of the directory content.
         let mut data = std::mem::take(&mut self.directory_content);
@@ -2207,10 +2211,37 @@ impl FileDialog {
 
         // If we should return after updating the directory entries.
         let mut should_return = false;
-
+        
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            let scroll_area = egui::containers::ScrollArea::vertical().auto_shrink([false, false]);
-
+            let shift_modifier = ui.input(|i| i.modifiers.shift_only());
+            let command_modifier = ui.input(|i| i.modifiers.command);
+            let shift_only_modifier = ui.input(|i| i.modifiers.shift_only());
+            
+            // Create the table
+            let table = TableBuilder::new(ui)
+                .sense(egui::Sense::click())
+                .sense(egui::Sense::hover())
+                .striped(true)
+                .resizable(true)
+                .column(Column::auto()) // "Name" column
+                .column(Column::auto()) // "File Size" column
+                .column(Column::auto()) // "Date Created" column
+                .column(Column::remainder()) // "Date Modified" column
+                .header(20.0, |mut header| {
+                    header.col(|ui| {
+                        ui.strong("Name");
+                    });
+                    header.col(|ui| {
+                        ui.strong("File Size");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Date Created");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Date Modified");
+                    });
+                });
+            
             if self.search_value.is_empty()
                 && !self.create_directory_dialog.is_open()
                 && !self.scroll_to_selection
@@ -2218,17 +2249,92 @@ impl FileDialog {
                 // Only update visible items when the search value is empty,
                 // the create directory dialog is closed and we are currently not scrolling
                 // to the current item.
-                scroll_area.show_rows(ui, ui.spacing().interact_size.y, data.len(), |ui, range| {
-                    for item in data.iter_range_mut(range) {
-                        if self.ui_update_central_panel_entry(
-                            ui,
-                            item,
-                            &mut reset_multi_selection,
-                            &mut batch_select_item_b,
-                        ) {
-                            should_return = true;
+                table.body(|body| {
+                    body.rows(20.0, data.len(), |mut row| {
+                        if let Some(item) = &mut data.get(row.index()) {
+                            self.ui_update_central_panel_entry(&mut row, item);
+
+                            if row.response().clicked() {
+                                println!("clicked!");
+                            }
+
+                            let primary_selected = self.is_primary_selected(item);
+
+                            // The user wants to select the item as the primary selected item
+                            if row.response().clicked() && !command_modifier && !shift_modifier {
+                                self.select_item(&mut item.clone());
+
+                                // Reset the multi selection except the now primary selected item
+                                if self.mode == DialogMode::SelectMultiple {
+                                    reset_multi_selection = true;
+                                }
+                            }
+
+                            if item.is_dir() {
+                                self.ui_update_path_context_menu(&row.response(), item);
+
+                                if row.response().context_menu_opened() {
+                                    self.select_item(item);
+                                }
+                            }
+
+                            if primary_selected && self.scroll_to_selection {
+                                row.response().scroll_to_me(Some(egui::Align::Center));
+                                self.scroll_to_selection = false;
+                            }
+
+                            // The user wants to select or unselect the item as part of a
+                            // multi selection
+                            if self.mode == DialogMode::SelectMultiple
+                                && row.response().clicked()
+                                && command_modifier
+                            {
+                                if primary_selected {
+                                    // If the clicked item is the primary selected item,
+                                    // deselect it and remove it from the multi selection
+                                    item.selected = false;
+                                    self.selected_item = None;
+                                } else {
+                                    item.selected = !item.selected;
+
+                                    // If the item was selected, make it the primary selected item
+                                    if item.selected {
+                                        self.select_item(item);
+                                    }
+                                }
+                            }
+
+                            // The user wants to select every item between the last selected item
+                            // and the current item
+                            if self.mode == DialogMode::SelectMultiple
+                                && row.response().clicked()
+                                && shift_only_modifier
+                            {
+                                if let Some(selected_item) = self.selected_item.clone() {
+                                    // We perform a batch selection from the item that was
+                                    // primarily selected before the user clicked on this item.
+                                    batch_select_item_b = Some(selected_item);
+
+                                    // And now make this item the primary selected item
+                                    item.selected = true;
+                                    self.select_item(item);
+                                }
+                            }
+
+                            // The user double clicked on the directory entry.
+                            // Either open the directory or submit the dialog.
+                            if row.response().double_clicked() && !command_modifier {
+                                if item.is_dir() {
+                                    self.load_directory(&item.to_path_buf());
+                                    should_return = true;
+                                }
+
+                                self.select_item(item);
+
+                                self.submit();
+                            }
                         }
-                    }
+                    });
                 });
             } else {
                 // Update each element if the search value is not empty as we apply the
@@ -2236,22 +2342,104 @@ impl FileDialog {
                 // because we don't know how many files the search value applies to.
                 // We also have to update every item when the create directory dialog is open as
                 // it's displayed as the last element.
-                scroll_area.show(ui, |ui| {
-                    for item in data.filtered_iter_mut(&self.search_value.clone()) {
-                        if self.ui_update_central_panel_entry(
-                            ui,
-                            item,
-                            &mut reset_multi_selection,
-                            &mut batch_select_item_b,
-                        ) {
-                            should_return = true;
-                        }
-                    }
 
-                    if let Some(entry) = self.ui_update_create_directory_dialog(ui) {
-                        data.push(entry);
-                    }
+                table.body(|body| {
+                    body.rows(
+                        20.0,
+                        data.filtered_count(&self.search_value.clone()),
+                        |mut row| {
+                            if let Some(item) =
+                                &mut data.filtered_get(row.index(), &self.search_value.clone())
+                            {
+                                self.ui_update_central_panel_entry(&mut row, item);
+
+                                if row.response().clicked() {
+                                    println!("clicked!");
+                                }
+
+                                let primary_selected = self.is_primary_selected(item);
+
+                                // The user wants to select the item as the primary selected item
+                                if row.response().clicked() && !command_modifier && !shift_modifier
+                                {
+                                    self.select_item(&mut item.clone());
+
+                                    // Reset the multi selection except the now primary selected item
+                                    if self.mode == DialogMode::SelectMultiple {
+                                        reset_multi_selection = true;
+                                    }
+                                }
+
+                                if item.is_dir() {
+                                    self.ui_update_path_context_menu(&row.response(), item);
+
+                                    if row.response().context_menu_opened() {
+                                        self.select_item(item);
+                                    }
+                                }
+
+                                if primary_selected && self.scroll_to_selection {
+                                    row.response().scroll_to_me(Some(egui::Align::Center));
+                                    self.scroll_to_selection = false;
+                                }
+
+                                // The user wants to select or unselect the item as part of a
+                                // multi selection
+                                if self.mode == DialogMode::SelectMultiple
+                                    && row.response().clicked()
+                                    && command_modifier
+                                {
+                                    if primary_selected {
+                                        // If the clicked item is the primary selected item,
+                                        // deselect it and remove it from the multi selection
+                                        item.selected = false;
+                                        self.selected_item = None;
+                                    } else {
+                                        item.selected = !item.selected;
+
+                                        // If the item was selected, make it the primary selected item
+                                        if item.selected {
+                                            self.select_item(item);
+                                        }
+                                    }
+                                }
+
+                                // The user wants to select every item between the last selected item
+                                // and the current item
+                                if self.mode == DialogMode::SelectMultiple
+                                    && row.response().clicked()
+                                    && shift_only_modifier
+                                {
+                                    if let Some(selected_item) = self.selected_item.clone() {
+                                        // We perform a batch selection from the item that was
+                                        // primarily selected before the user clicked on this item.
+                                        batch_select_item_b = Some(selected_item);
+
+                                        // And now make this item the primary selected item
+                                        item.selected = true;
+                                        self.select_item(item);
+                                    }
+                                }
+
+                                // The user double clicked on the directory entry.
+                                // Either open the directory or submit the dialog.
+                                if row.response().double_clicked() && !command_modifier {
+                                    if item.is_dir() {
+                                        self.load_directory(&item.to_path_buf());
+                                        should_return = true;
+                                    }
+
+                                    self.select_item(item);
+
+                                    self.submit();
+                                }
+                            }
+                        },
+                    );
                 });
+            }
+            if let Some(entry) = self.ui_update_create_directory_dialog(ui) {
+                data.push(entry);
             }
         });
 
@@ -2285,16 +2473,13 @@ impl FileDialog {
 
     /// Updates a single directory content entry.
     /// TODO: Refactor
-    fn ui_update_central_panel_entry(
-        &mut self,
-        ui: &mut egui::Ui,
-        item: &mut DirectoryEntry,
-        reset_multi_selection: &mut bool,
-        batch_select_item_b: &mut Option<DirectoryEntry>,
-    ) -> bool {
+    fn ui_update_central_panel_entry(&self, row: &mut TableRow, item: &DirectoryEntry) {
         let file_name = item.file_name();
         let primary_selected = self.is_primary_selected(item);
         let pinned = self.is_pinned(item);
+
+        let selected = item.selected;
+        let metadata = item.metadata();
 
         let icons = if pinned {
             format!("{} {} ", item.icon(), self.config.pinned_icon)
@@ -2302,105 +2487,66 @@ impl FileDialog {
             format!("{} ", item.icon())
         };
 
-        let icons_width = Self::calc_text_width(ui, &icons);
+        let mut truncate = false;
+        row.set_selected(primary_selected || selected);
 
-        // Calc available width for the file name and include a small margin
-        let available_width = ui.available_width() - icons_width - 15.0;
+        row.col(|ui| {
+            let icons_width = Self::calc_text_width(ui, &icons);
 
-        let truncate = self.config.truncate_filenames
-            && available_width < Self::calc_text_width(ui, file_name);
+            let text_width = Self::calc_text_width(ui, file_name);
 
-        let text = if truncate {
-            Self::truncate_filename(ui, item, available_width)
-        } else {
-            file_name.to_owned()
-        };
+            // Calc available width for the file name and include a small margin
+            let available_width = ui.available_width() - icons_width - 15.0;
 
-        let mut re =
-            ui.selectable_label(primary_selected || item.selected, format!("{icons}{text}"));
+            truncate = self.config.truncate_filenames && available_width < text_width;
 
-        if truncate {
-            re = re.on_hover_text(file_name);
-        }
-
-        if item.is_dir() {
-            self.ui_update_path_context_menu(&re, item);
-
-            if re.context_menu_opened() {
-                self.select_item(item);
-            }
-        }
-
-        if primary_selected && self.scroll_to_selection {
-            re.scroll_to_me(Some(egui::Align::Center));
-            self.scroll_to_selection = false;
-        }
-
-        // The user wants to select the item as the primary selected item
-        if re.clicked()
-            && !ui.input(|i| i.modifiers.command)
-            && !ui.input(|i| i.modifiers.shift_only())
-        {
-            self.select_item(item);
-
-            // Reset the multi selection except the now primary selected item
-            if self.mode == DialogMode::SelectMultiple {
-                *reset_multi_selection = true;
-            }
-        }
-
-        // The user wants to select or unselect the item as part of a
-        // multi selection
-        if self.mode == DialogMode::SelectMultiple
-            && re.clicked()
-            && ui.input(|i| i.modifiers.command)
-        {
-            if primary_selected {
-                // If the clicked item is the primary selected item,
-                // deselect it and remove it from the multi selection
-                item.selected = false;
-                self.selected_item = None;
+            let text = if truncate {
+                Self::truncate_filename(ui, item, available_width)
             } else {
-                item.selected = !item.selected;
-
-                // If the item was selected, make it the primary selected item
-                if item.selected {
-                    self.select_item(item);
-                }
+                file_name.to_owned()
+            };
+            let display_name = format!("{icons} {text}");
+            let name_response = ui.add(egui::Label::new(display_name).selectable(false));
+            if truncate {
+                name_response.on_hover_text(file_name);
             }
-        }
+        });
 
-        // The user wants to select every item between the last selected item
-        // and the current item
-        if self.mode == DialogMode::SelectMultiple
-            && re.clicked()
-            && ui.input(|i| i.modifiers.shift_only())
-        {
-            if let Some(selected_item) = self.selected_item.clone() {
-                // We perform a batch selection from the item that was
-                // primarily selected before the user clicked on this item.
-                *batch_select_item_b = Some(selected_item);
-
-                // And now make this item the primary selected item
-                item.selected = true;
-                self.select_item(item);
-            }
-        }
-
-        // The user double clicked on the directory entry.
-        // Either open the directory or submit the dialog.
-        if re.double_clicked() && !ui.input(|i| i.modifiers.command) {
+        row.col(|ui| {
             if item.is_dir() {
-                self.load_directory(&item.to_path_buf());
-                return true;
+                ui.add(egui::Label::new(String::new()).selectable(false));
+            } else if let Some(size) = metadata.size {
+                ui.add(egui::Label::new(format_bytes(size)).selectable(false))
+                    .clicked();
+            } else {
+                ui.add(egui::Label::new(String::new()).selectable(false));
             }
+        });
 
-            self.select_item(item);
+        row.col(|ui| {
+            if let Some(created) = metadata.created {
+                let created: DateTime<Local> = created.into();
+                ui.add(
+                    egui::Label::new(format!("{}", created.format("%Y-%m-%d %H:%M:%S")))
+                        .selectable(false),
+                )
+                .clicked();
+            } else {
+                ui.add(egui::Label::new(String::new()).selectable(false));
+            }
+        });
 
-            self.submit();
-        }
-
-        false
+        row.col(|ui| {
+            if let Some(last_modified) = metadata.last_modified {
+                let last_modified: DateTime<Local> = last_modified.into();
+                ui.add(
+                    egui::Label::new(format!("{}", last_modified.format("%Y-%m-%d %H:%M:%S")))
+                        .selectable(false),
+                );
+            } else {
+                ui.add(egui::Label::new(String::new()).selectable(false));
+            }
+        });
     }
 
     fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) -> Option<DirectoryEntry> {

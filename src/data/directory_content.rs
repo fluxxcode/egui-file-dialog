@@ -299,13 +299,18 @@ impl DirectoryContent {
         &self.state
     }
 
-    /// Returns an iterator in the given range of the directory cotnents.
+    /// Returns an iterator in the given range of the directory contents.
     /// No filters are applied using this iterator.
     pub fn iter_range_mut(
         &mut self,
         range: std::ops::Range<usize>,
     ) -> impl Iterator<Item = &mut DirectoryEntry> {
         self.content[range].iter_mut()
+    }
+
+    /// Returns one directory entry by index
+    pub fn get(&mut self, i: usize) -> Option<&mut DirectoryEntry> {
+        self.content.get_mut(i)
     }
 
     pub fn filtered_iter<'s>(
@@ -324,6 +329,24 @@ impl DirectoryContent {
         self.content
             .iter_mut()
             .filter(|p| apply_search_value(p, search_value))
+    }
+
+    pub fn filtered_get<'s>(
+        &'s mut self,
+        index: usize,
+        search_value: &'s str,
+    ) -> Option<&'s mut DirectoryEntry> {
+        self.content
+            .iter_mut()
+            .filter(|p| apply_search_value(p, search_value))
+            .nth(index)
+    }
+
+    pub fn filtered_count(&self, search_value: &str) -> usize {
+        self.content
+            .iter()
+            .filter(|p| apply_search_value(p, search_value))
+            .count()
     }
 
     /// Marks each element in the content as unselected.
