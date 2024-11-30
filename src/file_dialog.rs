@@ -10,6 +10,7 @@ use crate::information_panel::format_bytes;
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 use chrono::{DateTime, Local};
 use egui::text::{CCursor, CCursorRange};
+use egui::TextStyle;
 use egui_extras::{Column, TableBuilder, TableRow};
 use std::fmt::Debug;
 use std::io;
@@ -449,6 +450,11 @@ impl FileDialog {
     /// Sets the width of the right panel.
     pub fn set_right_panel_width(&mut self, width: f32) {
         self.config.right_panel_width = Some(width);
+    }
+
+    /// Gets the width of the right panel.
+    pub fn get_right_panel_width(&mut self) -> Option<f32> {
+        self.config.right_panel_width
     }
 
     /// Clears the width of the right panel by setting it to None.
@@ -2218,15 +2224,22 @@ impl FileDialog {
             let command_modifier = ui.input(|i| i.modifiers.command);
             let shift_only_modifier = ui.input(|i| i.modifiers.shift_only());
 
+            let row_height = ui
+                .style()
+                .text_styles
+                .get(&TextStyle::Body)
+                .map_or(15.0, |font_id| 1.0 + ui.fonts(|f| f.row_height(font_id)));
+
             // Create the table
             let table = TableBuilder::new(ui)
                 .sense(egui::Sense::click())
-                .sense(egui::Sense::hover())
                 .striped(true)
                 .resizable(true)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
                 .column(Column::auto().at_least(80.0)) // "Name" column
-                .column(Column::auto().at_least(40.0)) // "File Size" column
+                .column(Column::auto().at_least(70.0)) // "File Size" column
                 .column(Column::auto().at_least(60.0)) // "Date Created" column
+                // todo: this is not detecting the right panel / info panel!!
                 .column(Column::remainder()) // "Date Modified" column
                 .header(20.0, |mut header| {
                     header.col(|ui| {
@@ -2236,10 +2249,10 @@ impl FileDialog {
                         ui.strong("File Size");
                     });
                     header.col(|ui| {
-                        ui.strong("Date Created");
+                        ui.strong("Created");
                     });
                     header.col(|ui| {
-                        ui.strong("Date Modified");
+                        ui.strong("Modified");
                     });
                 });
 
@@ -2251,13 +2264,9 @@ impl FileDialog {
                 // the create directory dialog is closed and we are currently not scrolling
                 // to the current item.
                 table.body(|body| {
-                    body.rows(20.0, data.len(), |mut row| {
+                    body.rows(row_height, data.len(), |mut row| {
                         if let Some(item) = &mut data.get(row.index()) {
                             self.ui_update_central_panel_entry(&mut row, item);
-
-                            if row.response().clicked() {
-                                println!("clicked!");
-                            }
 
                             let primary_selected = self.is_primary_selected(item);
 
@@ -2346,17 +2355,13 @@ impl FileDialog {
 
                 table.body(|body| {
                     body.rows(
-                        20.0,
+                        row_height,
                         data.filtered_count(&self.search_value.clone()),
                         |mut row| {
                             if let Some(item) =
                                 &mut data.filtered_get(row.index(), &self.search_value.clone())
                             {
                                 self.ui_update_central_panel_entry(&mut row, item);
-
-                                if row.response().clicked() {
-                                    println!("clicked!");
-                                }
 
                                 let primary_selected = self.is_primary_selected(item);
 
@@ -2526,12 +2531,11 @@ impl FileDialog {
 
         row.col(|ui| {
             if let Some(created) = metadata.created {
-
                 // Calc available width for the file name and include a small margin
                 let available_width = ui.available_width() - 10.0;
-                
-                let text =  Self::truncate_date(ui, &created, available_width);
-                
+
+                let text = Self::truncate_date(ui, &created, available_width);
+
                 ui.add(egui::Label::new(text).selectable(false));
             } else {
                 ui.add(egui::Label::new(String::new()).selectable(false));
@@ -2540,11 +2544,10 @@ impl FileDialog {
 
         row.col(|ui| {
             if let Some(last_modified) = metadata.last_modified {
-
                 // Calc available width for the file name and include a small margin
                 let available_width = ui.available_width() - 10.0;
 
-                let text =  Self::truncate_date(ui, &last_modified, available_width);
+                let text = Self::truncate_date(ui, &last_modified, available_width);
 
                 ui.add(egui::Label::new(text).selectable(false));
             } else {
@@ -2709,7 +2712,7 @@ impl FileDialog {
         let date: DateTime<Local> = (*date).into();
         let today = Local::now().date_naive(); // NaiveDate for today
         let yesterday = today.pred(); // NaiveDate for yesterday
-        
+
         let text = if date.date_naive() == today {
             date.format("Today, %H:%M").to_string()
         } else if date.date_naive() == yesterday {
@@ -2731,7 +2734,6 @@ impl FileDialog {
         } else {
             text
         }
-
     }
 
     fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
