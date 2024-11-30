@@ -14,6 +14,7 @@ use egui_extras::{Column, TableBuilder, TableRow};
 use std::fmt::Debug;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -2211,21 +2212,21 @@ impl FileDialog {
 
         // If we should return after updating the directory entries.
         let mut should_return = false;
-        
+
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             let shift_modifier = ui.input(|i| i.modifiers.shift_only());
             let command_modifier = ui.input(|i| i.modifiers.command);
             let shift_only_modifier = ui.input(|i| i.modifiers.shift_only());
-            
+
             // Create the table
             let table = TableBuilder::new(ui)
                 .sense(egui::Sense::click())
                 .sense(egui::Sense::hover())
                 .striped(true)
                 .resizable(true)
-                .column(Column::auto()) // "Name" column
-                .column(Column::auto()) // "File Size" column
-                .column(Column::auto()) // "Date Created" column
+                .column(Column::auto().at_least(80.0)) // "Name" column
+                .column(Column::auto().at_least(40.0)) // "File Size" column
+                .column(Column::auto().at_least(60.0)) // "Date Created" column
                 .column(Column::remainder()) // "Date Modified" column
                 .header(20.0, |mut header| {
                     header.col(|ui| {
@@ -2241,7 +2242,7 @@ impl FileDialog {
                         ui.strong("Date Modified");
                     });
                 });
-            
+
             if self.search_value.is_empty()
                 && !self.create_directory_dialog.is_open()
                 && !self.scroll_to_selection
@@ -2525,12 +2526,13 @@ impl FileDialog {
 
         row.col(|ui| {
             if let Some(created) = metadata.created {
-                let created: DateTime<Local> = created.into();
-                ui.add(
-                    egui::Label::new(format!("{}", created.format("%Y-%m-%d %H:%M:%S")))
-                        .selectable(false),
-                )
-                .clicked();
+
+                // Calc available width for the file name and include a small margin
+                let available_width = ui.available_width() - 10.0;
+                
+                let text =  Self::truncate_date(ui, &created, available_width);
+                
+                ui.add(egui::Label::new(text).selectable(false));
             } else {
                 ui.add(egui::Label::new(String::new()).selectable(false));
             }
@@ -2538,11 +2540,13 @@ impl FileDialog {
 
         row.col(|ui| {
             if let Some(last_modified) = metadata.last_modified {
-                let last_modified: DateTime<Local> = last_modified.into();
-                ui.add(
-                    egui::Label::new(format!("{}", last_modified.format("%Y-%m-%d %H:%M:%S")))
-                        .selectable(false),
-                );
+
+                // Calc available width for the file name and include a small margin
+                let available_width = ui.available_width() - 10.0;
+
+                let text =  Self::truncate_date(ui, &last_modified, available_width);
+
+                ui.add(egui::Label::new(text).selectable(false));
             } else {
                 ui.add(egui::Label::new(String::new()).selectable(false));
             }
@@ -2699,6 +2703,35 @@ impl FileDialog {
         }
 
         width
+    }
+
+    fn truncate_date(ui: &egui::Ui, date: &SystemTime, max_length: f32) -> String {
+        let date: DateTime<Local> = (*date).into();
+        let today = Local::now().date_naive(); // NaiveDate for today
+        let yesterday = today.pred(); // NaiveDate for yesterday
+        
+        let text = if date.date_naive() == today {
+            date.format("Today, %H:%M").to_string()
+        } else if date.date_naive() == yesterday {
+            date.format("Yesterday, %H:%M").to_string()
+        } else {
+            date.format("%Y-%m-%d, %H:%M").to_string()
+        };
+
+        let text_width = Self::calc_text_width(ui, &text);
+
+        if max_length <= text_width {
+            if date.date_naive() == today {
+                date.format("%H:%M").to_string()
+            } else if date.date_naive() == yesterday {
+                "Yesterday".to_string()
+            } else {
+                date.format("%y-%m-%d").to_string()
+            }
+        } else {
+            text
+        }
+
     }
 
     fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
