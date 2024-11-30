@@ -12,10 +12,53 @@ use chrono::{DateTime, Local};
 use egui::text::{CCursor, CCursorRange};
 use egui::TextStyle;
 use egui_extras::{Column, TableBuilder, TableRow};
-use std::fmt::Debug;
+use std::cmp::PartialEq;
+use std::fmt::{Debug, Display, Formatter};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+
+/// Enum to set what we sort the directory entry by
+#[derive(PartialEq, Eq, Debug)]
+pub enum SortBy {
+    Filename,
+    Size,
+    DateCreated,
+    DateLastModified,
+}
+
+/// Sets the sort order
+#[derive(Debug)]
+pub enum SortOrder {
+    Ascending,
+    Descending,
+}
+
+impl SortOrder {
+    pub fn invert(&mut self) {
+        match self {
+            Self::Ascending => {
+                *self = Self::Descending;
+            }
+            Self::Descending => {
+                *self = Self::Ascending;
+            }
+        }
+    }
+}
+
+impl Display for SortOrder {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ascending => {
+                write!(f, "🔼")
+            }
+            Self::Descending => {
+                write!(f, "🔽")
+            }
+        }
+    }
+}
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -159,6 +202,12 @@ pub struct FileDialog {
     /// This is used to prevent the dialog from closing when pressing the escape key
     /// inside a text input.
     any_focused_last_frame: bool,
+
+    /// sort by
+    sort_by: SortBy,
+
+    /// sort order
+    sort_order: SortOrder,
 }
 
 /// This tests if file dialog is send and sync.
@@ -233,6 +282,8 @@ impl FileDialog {
             init_search: false,
 
             any_focused_last_frame: false,
+            sort_by: SortBy::Filename,
+            sort_order: SortOrder::Ascending,
         }
     }
 
@@ -2242,17 +2293,113 @@ impl FileDialog {
                 // todo: this is not detecting the right panel / info panel!!
                 .column(Column::remainder()) // "Date Modified" column
                 .header(20.0, |mut header| {
+                    let label = match self.sort_by {
+                        SortBy::Filename => {
+                            format!("Name{}", self.sort_order)
+                        }
+                        _ => "Name".to_string(),
+                    };
+
                     header.col(|ui| {
-                        ui.strong("Name");
+                        let available_width = ui.available_width(); // Get the available width for the column
+                        if ui
+                            .add_sized(
+                                [available_width, ui.spacing().interact_size.y], // Full-width button
+                                egui::SelectableLabel::new(self.sort_by == SortBy::Filename, label),
+                            )
+                            .clicked()
+                        {
+                            match self.sort_by {
+                                SortBy::Filename => {
+                                    self.sort_order.invert();
+                                }
+                                _ => {
+                                    self.sort_by = SortBy::Filename;
+                                }
+                            }
+                            data.sort_directory_entries(&self.sort_by,&self.sort_order);
+                        }
                     });
+
+                    let label = match self.sort_by {
+                        SortBy::Size => {
+                            format!("File Size{}", self.sort_order)
+                        }
+                        _ => "File Size".to_string(),
+                    };
                     header.col(|ui| {
-                        ui.strong("File Size");
+                        let available_width = ui.available_width(); // Get the available width for the column
+                        if ui
+                            .add_sized(
+                                [available_width, ui.spacing().interact_size.y], // Full-width button
+                                egui::SelectableLabel::new(self.sort_by == SortBy::Size, label),
+                            )
+                            .clicked()
+                        {
+                            match self.sort_by {
+                                SortBy::Size => {
+                                    self.sort_order.invert();
+                                }
+                                _ => {
+                                    self.sort_by = SortBy::Size;
+                                }
+                            }
+                            data.sort_directory_entries(&self.sort_by,&self.sort_order);
+                        }
                     });
+
+                    let label = match self.sort_by {
+                        SortBy::DateCreated => {
+                            format!("Created{}", self.sort_order)
+                        }
+                        _ => "Created".to_string(),
+                    };
                     header.col(|ui| {
-                        ui.strong("Created");
+                        let available_width = ui.available_width(); // Get the available width for the column
+                        if ui
+                            .add_sized(
+                                [available_width, ui.spacing().interact_size.y], // Full-width button
+                                egui::SelectableLabel::new(self.sort_by == SortBy::DateCreated, label),
+                            )
+                            .clicked()
+                        {
+                            match self.sort_by {
+                                SortBy::DateCreated => {
+                                    self.sort_order.invert();
+                                }
+                                _ => {
+                                    self.sort_by = SortBy::DateCreated;
+                                }
+                            }
+                            data.sort_directory_entries(&self.sort_by,&self.sort_order);
+                        }
                     });
+
+                    let label = match self.sort_by {
+                        SortBy::DateLastModified => {
+                            format!("Modified{}", self.sort_order)
+                        }
+                        _ => "Modified".to_string(),
+                    };
                     header.col(|ui| {
-                        ui.strong("Modified");
+                        let available_width = ui.available_width(); // Get the available width for the column
+                        if ui
+                            .add_sized(
+                                [available_width, ui.spacing().interact_size.y], // Full-width button
+                                egui::SelectableLabel::new(self.sort_by == SortBy::DateLastModified, label),
+                            )
+                            .clicked()
+                        {
+                            match self.sort_by {
+                                SortBy::DateLastModified => {
+                                    self.sort_order.invert();
+                                }
+                                _ => {
+                                    self.sort_by = SortBy::DateLastModified;
+                                }
+                            }
+                            data.sort_directory_entries(&self.sort_by,&self.sort_order);
+                        }
                     });
                 });
 

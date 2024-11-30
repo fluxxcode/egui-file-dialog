@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
+use crate::file_dialog::{SortBy, SortOrder};
 
 /// Contains the metadata of a directory item.
 #[derive(Debug, Default, Clone)]
@@ -343,10 +344,39 @@ impl DirectoryContent {
     }
 
     pub fn filtered_count(&self, search_value: &str) -> usize {
-        self.content
-            .iter()
-            .filter(|p| apply_search_value(p, search_value))
-            .count()
+        self.filtered_iter(search_value).count()
+    }
+
+    pub fn sort_directory_entries(&mut self, sort_by: &SortBy, order: &SortOrder) {
+        self.content.sort_by(|a, b| {
+            let cmp = match sort_by {
+                SortBy::Filename => {
+                    let a_name = a.path.file_name().unwrap_or_default().to_string_lossy();
+                    let b_name = b.path.file_name().unwrap_or_default().to_string_lossy();
+                    a_name.cmp(&b_name)
+                }
+                SortBy::Size => {
+                    let a_size = a.metadata.size.unwrap_or(0);
+                    let b_size = b.metadata.size.unwrap_or(0);
+                    a_size.cmp(&b_size)
+                }
+                SortBy::DateCreated => {
+                    let a_created = a.metadata.created.unwrap_or(SystemTime::UNIX_EPOCH);
+                    let b_created = b.metadata.created.unwrap_or(SystemTime::UNIX_EPOCH);
+                    a_created.cmp(&b_created)
+                }
+                SortBy::DateLastModified => {
+                    let a_modified = a.metadata.last_modified.unwrap_or(SystemTime::UNIX_EPOCH);
+                    let b_modified = b.metadata.last_modified.unwrap_or(SystemTime::UNIX_EPOCH);
+                    a_modified.cmp(&b_modified)
+                }
+            };
+
+            match order {
+                SortOrder::Ascending => cmp,
+                SortOrder::Descending => cmp.reverse(),
+            }
+        });
     }
 
     /// Marks each element in the content as unselected.
