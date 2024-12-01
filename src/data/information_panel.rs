@@ -280,10 +280,10 @@ impl InformationPanel {
             // Display file content preview based on its extension
             if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
                 if let Some(panel_entry) = &self.panel_entry {
-                    if let Some(show_preview) =
+                    if let Some(preview_handler) =
                         self.supported_preview_files.get_mut(&ext.to_lowercase())
                     {
-                        show_preview(ui, panel_entry);
+                        preview_handler(ui, panel_entry);
                     } else if let Some(mut content) = panel_entry.content() {
                         egui::ScrollArea::vertical()
                             .max_height(100.0)
