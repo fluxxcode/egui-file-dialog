@@ -339,14 +339,14 @@ impl InformationPanel {
                                 if let Some(date) = item.metadata().created {
                                     ui.label("Created: ");
                                     let created: DateTime<Local> = date.into();
-                                    ui.label(format!("{}", created.format("%Y-%m-%d %H:%M:%S")));
+                                    ui.label(format!("{}", created.format("%d.%m.%Y, %H:%M:%S")));
                                     ui.end_row();
                                 }
 
                                 if let Some(date) = item.metadata().last_modified {
                                     ui.label("Last Modified: ");
                                     let modified: DateTime<Local> = date.into();
-                                    ui.label(format!("{}", modified.format("%Y-%m-%d %H:%M:%S")));
+                                    ui.label(format!("{}", modified.format("%d.%m.%Y, %H:%M:%S")));
                                     ui.end_row();
                                 }
 
