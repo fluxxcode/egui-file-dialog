@@ -2567,7 +2567,7 @@ impl FileDialog {
                 // Calc available width for the file name and include a small margin
                 let available_width = ui.available_width() - 10.0;
 
-                let text = Self::truncate_date(ui, &created, available_width);
+                let text = Self::truncate_date(ui, created, available_width);
 
                 ui.add(egui::Label::new(text).selectable(false));
             } else {
@@ -2580,7 +2580,7 @@ impl FileDialog {
                 // Calc available width for the file name and include a small margin
                 let available_width = ui.available_width() - 10.0;
 
-                let text = Self::truncate_date(ui, &last_modified, available_width);
+                let text = Self::truncate_date(ui, last_modified, available_width);
 
                 ui.add(egui::Label::new(text).selectable(false));
             } else {
@@ -2741,8 +2741,8 @@ impl FileDialog {
         width
     }
 
-    fn truncate_date(ui: &egui::Ui, date: &SystemTime, max_length: f32) -> String {
-        let date: DateTime<Local> = (*date).into();
+    fn truncate_date(ui: &egui::Ui, date: SystemTime, max_length: f32) -> String {
+        let date: DateTime<Local> = date.into();
         let today = Local::now().date_naive(); // NaiveDate for today
         let yesterday = today.pred_opt().map_or(today, |day| day); // NaiveDate for yesterday
 
