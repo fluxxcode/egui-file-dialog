@@ -33,7 +33,7 @@ pub struct InfoPanelEntry {
 }
 
 impl InfoPanelEntry {
-    /// create a new`InfoPanelEntry` object
+    /// Create a new `InfoPanelEntry` object
     pub const fn new(item: DirectoryEntry) -> Self {
         Self {
             directory_entry: item,
