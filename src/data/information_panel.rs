@@ -256,21 +256,22 @@ impl InformationPanel {
             // load file content and additional metadata if it's a new file
             let path_option = file_dialog.active_entry();
             if let Some(path) = path_option {
-                if self.loaded_file_name != path.to_path_buf() {
-                    self.loaded_file_name = path.to_path_buf();
+                let path_buf = path.to_path_buf();
+                if self.loaded_file_name != path_buf {
+                    self.loaded_file_name = path_buf.clone();
                     // clear previous meta data
                     self.other_meta_data = IndexMap::default();
-                    if let Some(ext) = path.to_path_buf().extension() {
+                    if let Some(ext) = path_buf.extension() {
                         if let Some(ext_str) = ext.to_str() {
                             if let Some(load_meta_data) =
                                 self.additional_meta_files.get_mut(ext_str)
                             {
                                 // load metadata
-                                load_meta_data(&mut self.other_meta_data, &path.to_path_buf());
+                                load_meta_data(&mut self.other_meta_data, &path_buf);
                             }
                         }
                     }
-                    let content = self.load_content(path.to_path_buf());
+                    let content = self.load_content(path_buf);
                     self.panel_entry = Some(InfoPanelEntry::new(item.clone()));
                     if let Some(panel_entry) = &mut self.panel_entry {
                         // load content
