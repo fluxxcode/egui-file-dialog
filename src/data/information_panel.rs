@@ -131,30 +131,39 @@ impl Default for InformationPanel {
             "jpg".to_string(),
             Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                 ui.label("Image");
-                ui.image(format!(
+                let image = egui::Image::new(format!(
                     "file://{}",
                     item.directory_entry.as_path().display()
                 ));
+                ui.vertical_centered(|ui| {
+                    ui.add(image.max_height(ui.available_width()));
+                });
             }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
         );
         supported_files.insert(
             "jpeg".to_string(),
             Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                 ui.label("Image");
-                ui.image(format!(
+                let image = egui::Image::new(format!(
                     "file://{}",
                     item.directory_entry.as_path().display()
                 ));
+                ui.vertical_centered(|ui| {
+                    ui.add(image.max_height(ui.available_width()));
+                });
             }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
         );
         supported_files.insert(
             "png".to_string(),
             Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                 ui.label("Image");
-                ui.image(format!(
+                let image = egui::Image::new(format!(
                     "file://{}",
                     item.directory_entry.as_path().display()
                 ));
+                ui.vertical_centered(|ui| {
+                    ui.add(image.max_height(ui.available_width()));
+                });
             }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
         );
 
