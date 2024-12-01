@@ -66,9 +66,13 @@ pub struct InformationPanel {
     pub load_text_content: bool,
     /// Max chars that should be loaded for preview of text files.
     pub text_content_max_chars: usize,
+    /// Path of the current item that is selected
     loaded_file_name: PathBuf,
+    /// Map that contains the handler for specific file types (by file extension)
     supported_preview_files: SupportedPreviewFilesMap,
+    /// Map that contains the additional metadata loader for specific file types (by file extension)
     additional_meta_files: SupportedAdditionalMetaFilesMap,
+    /// Other metadata (loaded by the loader in `additional_meta_files`)
     other_meta_data: IndexMap<String, String>,
 }
 
