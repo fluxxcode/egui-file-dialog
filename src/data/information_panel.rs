@@ -226,6 +226,7 @@ impl InformationPanel {
 
         Ok(buffer.to_string())
     }
+
     fn load_content(&self, path: PathBuf) -> Option<String> {
         if self.load_text_content {
             Self::load_text_file_preview(path, self.text_content_max_chars).ok()
