@@ -1,10 +1,10 @@
 use crate::config::{FileDialogConfig, FileFilter};
+use crate::file_dialog::{SortBy, SortOrder};
 use egui::mutex::Mutex;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
-use crate::file_dialog::{SortBy, SortOrder};
 
 /// Contains the metadata of a directory item.
 #[derive(Debug, Default, Clone)]
@@ -298,15 +298,6 @@ impl DirectoryContent {
         }
 
         &self.state
-    }
-
-    /// Returns an iterator in the given range of the directory contents.
-    /// No filters are applied using this iterator.
-    pub fn iter_range_mut(
-        &mut self,
-        range: std::ops::Range<usize>,
-    ) -> impl Iterator<Item = &mut DirectoryEntry> {
-        self.content[range].iter_mut()
     }
 
     /// Returns one directory entry by index
