@@ -254,117 +254,123 @@ impl InformationPanel {
 
         if let Some(item) = file_dialog.active_entry() {
             // load file content and additional metadata if it's a new file
-            let path_option = file_dialog.active_entry();
-            if let Some(path) = path_option {
-                let path_buf = path.to_path_buf();
-                if self.loaded_file_name != path_buf {
-                    self.loaded_file_name = path_buf.clone();
-                    // clear previous meta data
-                    self.other_meta_data = IndexMap::default();
-                    if let Some(ext) = path_buf.extension() {
-                        if let Some(ext_str) = ext.to_str() {
-                            if let Some(load_meta_data) =
-                                self.additional_meta_files.get_mut(ext_str)
-                            {
-                                // load metadata
-                                load_meta_data(&mut self.other_meta_data, &path_buf);
-                            }
-                        }
-                    }
-                    let content = self.load_content(path_buf);
-                    self.panel_entry = Some(InfoPanelEntry::new(item.clone()));
-                    if let Some(panel_entry) = &mut self.panel_entry {
-                        // load content
-                        if panel_entry.content().is_none() {
-                            *panel_entry.content_mut() = content;
-                        }
-                    }
-                }
+            self.load_meta_data(item);
 
-                if item.is_dir() {
-                    // show folder icon
-                    ui.vertical_centered(|ui| {
-                        ui.label(egui::RichText::from("📁").size(120.0));
-                    });
-                } else {
-                    // Display file content preview based on its extension
-                    if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
-                        if let Some(panel_entry) = &self.panel_entry {
-                            if let Some(show_preview) =
-                                self.supported_preview_files.get_mut(&ext.to_lowercase())
-                            {
-                                show_preview(ui, panel_entry);
-                            } else if let Some(mut content) = panel_entry.content() {
-                                egui::ScrollArea::vertical()
-                                    .max_height(100.0)
-                                    .show(ui, |ui| {
-                                        ui.add(
-                                            egui::TextEdit::multiline(&mut content).code_editor(),
-                                        );
-                                    });
-                            } else {
-                                // if now preview is available, show icon
-                                ui.vertical_centered(|ui| {
-                                    ui.label(egui::RichText::from(item.icon()).size(120.0));
-                                });
-                            }
-                        }
-                    }
-                }
+            // show preview of selected item
+            self.display_preview(ui, item);
 
-                let spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
-                ui.separator();
+            let spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
+            ui.separator();
 
-                ui.add_space(spacing);
+            ui.add_space(spacing);
 
-                // show all metadata
-                egui::ScrollArea::vertical()
-                    .id_salt("meta_data_scroll")
-                    .show(ui, |ui| {
-                        egui::Grid::new("meta_data")
-                            .num_columns(2)
-                            .striped(true)
-                            .min_col_width(width)
-                            .max_col_width(width)
+            // show all metadata
+            self.display_meta_data(ui, width, item);
+        }
+    }
+
+    fn display_preview(&mut self, ui: &mut Ui, item: &DirectoryEntry) {
+        if item.is_dir() {
+            // show folder icon
+            ui.vertical_centered(|ui| {
+                ui.label(egui::RichText::from("📁").size(120.0));
+            });
+        } else {
+            // Display file content preview based on its extension
+            if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
+                if let Some(panel_entry) = &self.panel_entry {
+                    if let Some(show_preview) =
+                        self.supported_preview_files.get_mut(&ext.to_lowercase())
+                    {
+                        show_preview(ui, panel_entry);
+                    } else if let Some(mut content) = panel_entry.content() {
+                        egui::ScrollArea::vertical()
+                            .max_height(100.0)
                             .show(ui, |ui| {
-                                ui.label("Filename: ");
-                                ui.label(item.file_name().to_string());
-                                ui.end_row();
-
-                                if let Some(size) = item.metadata().size {
-                                    ui.label("File Size: ");
-                                    if item.is_file() {
-                                        ui.label(format_bytes(size));
-                                    } else {
-                                        ui.label("NAN");
-                                    }
-                                    ui.end_row();
-                                }
-
-                                if let Some(date) = item.metadata().created {
-                                    ui.label("Created: ");
-                                    let created: DateTime<Local> = date.into();
-                                    ui.label(format!("{}", created.format("%d.%m.%Y, %H:%M:%S")));
-                                    ui.end_row();
-                                }
-
-                                if let Some(date) = item.metadata().last_modified {
-                                    ui.label("Last Modified: ");
-                                    let modified: DateTime<Local> = date.into();
-                                    ui.label(format!("{}", modified.format("%d.%m.%Y, %H:%M:%S")));
-                                    ui.end_row();
-                                }
-
-                                // show additional metadata, if present
-                                for (key, value) in self.other_meta_data.clone() {
-                                    ui.label(key);
-                                    ui.label(value);
-                                    ui.end_row();
-                                }
+                                ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });
-                    });
+                    } else {
+                        // if now preview is available, show icon
+                        ui.vertical_centered(|ui| {
+                            ui.label(egui::RichText::from(item.icon()).size(120.0));
+                        });
+                    }
+                }
             }
         }
+    }
+
+    fn load_meta_data(&mut self, item: &DirectoryEntry) {
+        let path_buf = item.to_path_buf();
+        if self.loaded_file_name != path_buf {
+            self.loaded_file_name.clone_from(&path_buf);
+            // clear previous meta data
+            self.other_meta_data = IndexMap::default();
+            if let Some(ext) = path_buf.extension() {
+                if let Some(ext_str) = ext.to_str() {
+                    if let Some(load_meta_data) = self.additional_meta_files.get_mut(ext_str) {
+                        // load metadata
+                        load_meta_data(&mut self.other_meta_data, &path_buf);
+                    }
+                }
+            }
+            let content = self.load_content(path_buf);
+            self.panel_entry = Some(InfoPanelEntry::new(item.clone()));
+            if let Some(panel_entry) = &mut self.panel_entry {
+                // load content
+                if panel_entry.content().is_none() {
+                    *panel_entry.content_mut() = content;
+                }
+            }
+        }
+    }
+
+    fn display_meta_data(&self, ui: &mut Ui, width: f32, item: &DirectoryEntry) {
+        egui::ScrollArea::vertical()
+            .id_salt("meta_data_scroll")
+            .show(ui, |ui| {
+                egui::Grid::new("meta_data")
+                    .num_columns(2)
+                    .striped(true)
+                    .min_col_width(width)
+                    .max_col_width(width)
+                    .show(ui, |ui| {
+                        ui.label("Filename: ");
+                        ui.label(item.file_name().to_string());
+                        ui.end_row();
+
+                        if let Some(size) = item.metadata().size {
+                            ui.label("File Size: ");
+                            if item.is_file() {
+                                ui.label(format_bytes(size));
+                            } else {
+                                ui.label("NAN");
+                            }
+                            ui.end_row();
+                        }
+
+                        if let Some(date) = item.metadata().created {
+                            ui.label("Created: ");
+                            let created: DateTime<Local> = date.into();
+                            ui.label(format!("{}", created.format("%d.%m.%Y, %H:%M:%S")));
+                            ui.end_row();
+                        }
+
+                        if let Some(date) = item.metadata().last_modified {
+                            ui.label("Last Modified: ");
+                            let modified: DateTime<Local> = date.into();
+                            ui.label(format!("{}", modified.format("%d.%m.%Y, %H:%M:%S")));
+                            ui.end_row();
+                        }
+
+                        // show additional metadata, if present
+                        for (key, value) in self.other_meta_data.clone() {
+                            ui.label(key);
+                            ui.label(value);
+                            ui.end_row();
+                        }
+                    });
+            });
     }
 }
 

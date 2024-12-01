@@ -442,7 +442,7 @@ impl FileDialog {
         self
     }
 
-    /// Sets the width of the right panel by setting it to None.
+    /// Sets the width of the right panel.
     pub fn set_right_panel_width(&mut self, width: f32) {
         self.config.right_panel_width = Some(width);
     }
@@ -1069,8 +1069,10 @@ impl FileDialog {
         }
     }
 
-    /// Returns a list of the files and folders the user selected, when the dialog is in
-    /// `DialogMode::SelectMultiple` mode.
+    /// Returns the directory or file that the user selected, or the target file
+    /// if the dialog is in `DialogMode::SaveFile` mode.
+    /// Unlike `FileDialog::selected`, this method returns the selected path only once and
+    /// sets the dialog's state to `DialogState::Closed`.
     ///
     /// None is returned when the user has not yet selected an item.
     #[deprecated(
