@@ -62,7 +62,7 @@ struct MyApp {
     file_dialog: FileDialog,
     language: Language,
 
-    selected_file: Option<PathBuf>,
+    picked_file: Option<PathBuf>,
 }
 
 impl MyApp {
@@ -71,7 +71,7 @@ impl MyApp {
             file_dialog: FileDialog::new().id("egui_file_dialog"),
             language: Language::English,
 
-            selected_file: None,
+            picked_file: None,
         }
     }
 
@@ -99,15 +99,15 @@ impl eframe::App for MyApp {
                 self.update_labels();
             }
 
-            if ui.button("Select file").clicked() {
-                self.file_dialog.select_file();
+            if ui.button("Picked file").clicked() {
+                self.file_dialog.pick_file();
             }
-            ui.label(format!("Selected file: {:?}", self.selected_file));
+            ui.label(format!("Picked file: {:?}", self.picked_file));
 
             self.file_dialog.update(ctx);
 
-            if let Some(path) = self.file_dialog.take_selected() {
-                self.selected_file = Some(path);
+            if let Some(path) = self.file_dialog.take_picked() {
+                self.picked_file = Some(path);
             }
         });
     }

@@ -5,14 +5,14 @@ use egui_file_dialog::FileDialog;
 
 struct MyApp {
     file_dialog: FileDialog,
-    selected_items: Option<Vec<PathBuf>>,
+    picked_items: Option<Vec<PathBuf>>,
 }
 
 impl MyApp {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
             file_dialog: FileDialog::new(),
-            selected_items: None,
+            picked_items: None,
         }
     }
 }
@@ -20,13 +20,13 @@ impl MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Select multiple").clicked() {
-                self.file_dialog.select_multiple();
+            if ui.button("Pick multiple").clicked() {
+                self.file_dialog.pick_multiple();
             }
 
-            ui.label("Selected items:");
+            ui.label("Picked items:");
 
-            if let Some(items) = &self.selected_items {
+            if let Some(items) = &self.picked_items {
                 for item in items {
                     ui.label(format!("{:?}", item));
                 }
@@ -36,8 +36,8 @@ impl eframe::App for MyApp {
 
             self.file_dialog.update(ctx);
 
-            if let Some(items) = self.file_dialog.take_selected_multiple() {
-                self.selected_items = Some(items);
+            if let Some(items) = self.file_dialog.take_picked_multiple() {
+                self.picked_items = Some(items);
             }
         });
     }

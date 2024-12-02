@@ -1,5 +1,5 @@
 [package]
-name = "select_directory"
+name = "pick_file"
 version = "0.1.0"
 edition = "2021"
 

@@ -26,13 +26,11 @@ The file dialog is intended for use by desktop applications, allowing the use of
 
 The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
-**Currently only tested on Linux and Windows!**
-
 ## Features
 - Select a file or a directory
 - Save a file (Prompt user for a destination path)
   - Dialog to ask the user if the existing file should be overwritten
-- Select multiple files and folders at once (ctrl/shift + click)
+- Select multiple files and folders at once (ctrl/shift + click on linux/windows and cmd/shift + click on macOS)
 - Open the dialog in a normal or modal window
 - Create a new folder
 - Keyboard navigation
@@ -127,12 +125,12 @@ The following table lists all available keybindings and their default values.
 | back | Go back | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace` |
 | forward | Go forward | `Mouse button 2` <br/> `ALT` + `→` |
 | reload | Reload the file dialog data and the currently open directory | `F5` |
-| new_folder | Open the dialog to create a new folder | `CTRL` + `N` |
+| new_folder | Open the dialog to create a new folder | `CTRL` + `N` on linux/windows or `CMD` + `N` on macOS |
 | edit_path | Text edit the current path | `/` |
 | home_edit_path | Open the home directory and start text editing the path | `~` |
 | selection_up | Move the selection one item up | `↑` |
 | selection_down | Move the selection one item down | `↓` |
-| select_all | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` |
+| select_all | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` on linux/windows or `CMD` + `A` on macOS |
 
 ## Customization
 Many things can be customized so that the dialog can be used in different situations. \

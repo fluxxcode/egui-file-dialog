@@ -42,7 +42,7 @@ serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
 
 [lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "warn"
 
 [lints.clippy]
 nursery = { level = "deny", priority = 0 }
