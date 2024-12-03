@@ -16,7 +16,7 @@ impl MyApp {
         // Alternatively, you can also use the `FileDialog::storage` builder method.
         if let Some(storage) = cc.storage {
             *file_dialog.storage_mut() =
-                eframe::get_value(storage, "file_dialog_storage").unwrap_or_default()
+                eframe::get_value(storage, "file_dialog_storage").unwrap_or_default();
         }
 
         Self {

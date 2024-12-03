@@ -1,4 +1,5 @@
 # egui-file-dialog
+
 [![Latest version](https://img.shields.io/crates/v/egui-file-dialog.svg)](https://crates.io/crates/egui-file-dialog)
 [![Documentation](https://img.shields.io/docsrs/egui-file-dialog)](https://docs.rs/egui-file-dialog)
 [![Dependency status](https://deps.rs/repo/github/fluxxcode/egui-file-dialog/status.svg)](https://deps.rs/repo/github/fluxxcode/egui-file-dialog)
@@ -27,6 +28,7 @@ The file dialog is intended for use by desktop applications, allowing the use of
 The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
 ## Features
+
 - Select a file or a directory
 - Save a file (Prompt user for a destination path)
   - Dialog to ask the user if the existing file should be overwritten
@@ -51,11 +53,13 @@ The latest changes included in the next release can be found in the [CHANGELOG.m
   - Add a right panel with custom UI using
 
 ## Example
+
 Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples) folder.
 
 The following example shows the basic use of the file dialog with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.
 
 Cargo.toml:
+
 ```toml
 [dependencies]
 eframe = "0.29.1"
@@ -63,6 +67,7 @@ egui-file-dialog = "0.7.0"
 ```
 
 main.rs:
+
 ```rust
 use std::path::PathBuf;
 
@@ -114,25 +119,33 @@ fn main() -> eframe::Result<()> {
 }
 ```
 
+## Examples
+
+The examples can be found in the [examples](examples) folder.
+More Description can be found in the [EXAMPLES.](examples/EXAMPLES.md) file.
+
 ## Keybindings
+
 Keybindings can be used in the file dialog for easier navigation. All keybindings can be configured from the backend with `FileDialogKeyBindings` and `FileDialog::keybindings`. \
 The following table lists all available keybindings and their default values.
-| Name | Description | Default |
-| --- | --- | --- |
-| submit | Submit the current action or open the currently selected folder | `Enter` |
-| cancel | Cancel the current action | `Escape` |
-| parent | Open the parent directory | `ALT` + `↑` |
-| back | Go back | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace` |
-| forward | Go forward | `Mouse button 2` <br/> `ALT` + `→` |
-| reload | Reload the file dialog data and the currently open directory | `F5` |
-| new_folder | Open the dialog to create a new folder | `CTRL` + `N` on linux/windows or `CMD` + `N` on macOS |
-| edit_path | Text edit the current path | `/` |
-| home_edit_path | Open the home directory and start text editing the path | `~` |
-| selection_up | Move the selection one item up | `↑` |
-| selection_down | Move the selection one item down | `↓` |
-| select_all | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` on linux/windows or `CMD` + `A` on macOS |
+
+| Name           | Description                                                                                        | Default                                               |
+| -------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| submit         | Submit the current action or open the currently selected folder                                    | `Enter`                                               |
+| cancel         | Cancel the current action                                                                          | `Escape`                                              |
+| parent         | Open the parent directory                                                                          | `ALT` + `↑`                                           |
+| back           | Go back                                                                                            | `Mouse button 1` <br/> `ALT` + `←` <br/> `Backspace`  |
+| forward        | Go forward                                                                                         | `Mouse button 2` <br/> `ALT` + `→`                    |
+| reload         | Reload the file dialog data and the currently open directory                                       | `F5`                                                  |
+| new_folder     | Open the dialog to create a new folder                                                             | `CTRL` + `N` on linux/windows or `CMD` + `N` on macOS |
+| edit_path      | Text edit the current path                                                                         | `/`                                                   |
+| home_edit_path | Open the home directory and start text editing the path                                            | `~`                                                   |
+| selection_up   | Move the selection one item up                                                                     | `↑`                                                   |
+| selection_down | Move the selection one item down                                                                   | `↓`                                                   |
+| select_all     | Select every item in the directory when using the file dialog to select multiple files and folders | `CTRL` + `A` on linux/windows or `CMD` + `A` on macOS |
 
 ## Customization
+
 Many things can be customized so that the dialog can be used in different situations. \
 A few highlights of the customization are listed below. For all possible customization options, see the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html).
 
@@ -146,6 +159,7 @@ Since the dialog uses the egui style to look like the rest of the application, t
 
 The following example shows how a single file dialog can be customized. \
 If you need to configure multiple file dialog objects with the same or almost the same options, it is a good idea to use `FileDialogConfig` and `FileDialog::with_config` (See `FileDialogConfig` on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialogConfig.html)).
+
 ```rust
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -186,12 +200,14 @@ FileDialog::new()
         Arc::new(|p| p.extension().unwrap_or_default() == "rs"),
     );
 ```
+
 With the options the dialog then looks like this:
 <img src="media/customization_demo.png">
 
 If you want to display your own information in the file dialog, you can update the file dialog with
 `update_with_right_panel_ui` instead of `update`. This allows e.g. to display custom image previews or further
 information about the selected item. See [custom-right-panel](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples/custom-right-panel) for the full example.
+
 ```rust
 fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
     // Update the dialog with a custom right panel
@@ -202,9 +218,11 @@ fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
     });
 }
 ```
+
 <img src="media/right_panel_demo.png">
 
 ## Multilingual support
+
 For desktop applications it is often necessary to offer different languages. While the dialog currently only offers English labels by default, the labels are fully customizable. This makes it possible to adapt the labels to different languages.
 
 The following example shows how the labels can be changed to display the file dialog in English or German. \
@@ -243,6 +261,7 @@ fn update_labels(language: &Language, file_dialog: &mut FileDialog) {
 ```
 
 ## Persistent data
+
 The file dialog currently requires the following persistent data to be stored across multiple file dialog objects:
 
 - Folders the user pinned to the left sidebar (`FileDialog::show_pinned_folders`)
@@ -292,3 +311,7 @@ impl eframe::App for MyApp {
     }
 }
 ```
+
+## Development
+
+Feel free to contribute to the project. If you have any questions or need help, please open an issue.
