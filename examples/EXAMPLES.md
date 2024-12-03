@@ -61,7 +61,7 @@ cargo run --example pick_file
 
 ## Sandbox
 
-Sandbox app used during development of the file exporter.
+Sandbox app used during development of the file dialog.
 
 ```shell
 cargo run --example sandbox
