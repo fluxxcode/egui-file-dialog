@@ -25,6 +25,7 @@ fn format_pixels(pixels: u32) -> String {
 }
 
 /// Wrapper for the `DirectoryEntry` struct, that also adds the option to store text content
+#[derive(Debug)]
 pub struct InfoPanelEntry {
     /// Directory Item containing info like path
     pub directory_entry: DirectoryEntry,
@@ -283,7 +284,7 @@ impl InformationPanel {
         if item.is_dir() {
             // show folder icon
             ui.vertical_centered(|ui| {
-                ui.label(egui::RichText::from("📁").size(120.0));
+                ui.label(egui::RichText::from(item.icon()).size(120.0));
             });
         } else {
             // Display file content preview based on its extension
@@ -306,6 +307,11 @@ impl InformationPanel {
                         });
                     }
                 }
+            } else {
+                // if now ext is available, show icon anyway
+                ui.vertical_centered(|ui| {
+                    ui.label(egui::RichText::from(item.icon()).size(120.0));
+                });
             }
         }
     }
