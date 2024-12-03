@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 eframe = { workspace = true, features = ["serde", "ron"] }
-egui-file-dialog = { path = "../../" }
+egui-file-dialog.workspace = true

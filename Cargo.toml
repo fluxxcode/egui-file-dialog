@@ -6,6 +6,7 @@ eframe = { version = "0.29.1", default-features = false, features = [
     "glow",
     "persistence",
 ] }
+egui-file-dialog = { path = "." }
 
 [package]
 name = "egui-file-dialog"
