@@ -35,6 +35,7 @@
 ### 📚 Documentation
 
 - Updated `README.md` to include latest features [#176](https://github.com/fluxxcode/egui-file-dialog/pull/176)
+- Updated `README.md` to use new `pick_*` methods [#214](https://github.com/fluxxcode/egui-file-dialog/pull/214)
 
 ## 2024-10-01 - v0.7.0 - egui update and QoL changes
 
