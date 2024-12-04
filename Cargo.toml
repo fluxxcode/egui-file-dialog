@@ -1,13 +1,3 @@
-[workspace]
-members = ["examples/*"]
-
-[workspace.dependencies]
-eframe = { version = "0.29.1", default-features = false, features = [
-    "glow",
-    "persistence",
-] }
-egui-file-dialog = { path = "." }
-
 [package]
 name = "egui-file-dialog"
 description = "An easy-to-use file dialog for egui"
@@ -23,18 +13,21 @@ license = "MIT"
 
 [dependencies]
 egui = { version = "0.29.1", default-features = false }
-
-# Used to fetch user folders
+# fetch user folders
 directories = "5.0"
-
-# Used to fetch disks
+# canonicalize paths
+dunce = "1.0.5"
+# fetch disks
 sysinfo = { version = "0.32", default-features = false, features = ["disk"] }
-
-# Used for persistent storage
+# persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
 
-# Used to canonicalize paths
-dunce = "1.0.5"
+[dev-dependencies]
+eframe = { version = "0.29.1", default-features = false, features = [
+    "glow",
+    "persistence",
+] }
+egui-file-dialog = { path = "." }
 
 # used for meta-data storage
 indexmap = { version = "2.6.0", features = ["serde"], optional = true }

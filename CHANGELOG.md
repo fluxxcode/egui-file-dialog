@@ -31,6 +31,7 @@
 - Only update visible items in the central panel if the search value is empty and the create directory dialog is currently closed [#181](https://github.com/fluxxcode/egui-file-dialog/pull/181)
 - Improve CI [#186](https://github.com/fluxxcode/egui-file-dialog/pull/186) (thanks [@bircni](https://github.com/bircni)!)
 - Use `cmd` for keybindings on MacOS [#205](https://github.com/fluxxcode/egui-file-dialog/pull/205) (thanks [@hacknus](https://github.com/hacknus)!)
+- Cleanup examples [#213](https://github.com/fluxxcode/egui-file-dialog/pull/213) (thanks [@bircni](https://github.com/bircni)!)
 
 ### 📚 Documentation
 
