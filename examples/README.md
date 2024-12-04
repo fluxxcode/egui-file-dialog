@@ -76,3 +76,14 @@ cargo run --example save_file
 ```
 
 ![Screenshot](../media/examples/save_file.png)
+
+
+## Select File with Information View
+Example showing how to select a file and display file information using the `InformationView`.
+
+```shell
+cargo run --example select_file_with_information_view
+```
+
+![Screenshot](../media/examples/information_view.png)
+
