@@ -31,15 +31,15 @@ impl eframe::App for MyApp {
 
             if let Some(items) = &self.picked_items {
                 for item in items {
-                    ui.label(format!("{:?}", item));
+                    ui.label(format!("{item:?}"));
                 }
             } else {
                 ui.label("None");
             }
 
             self.file_dialog
-                .update_with_right_panel_ui(ctx, &mut |ui, dia| match dia.mode() {
-                    DialogMode::SelectMultiple => {
+                .update_with_right_panel_ui(ctx, &mut |ui, dia| {
+                    if dia.mode() == DialogMode::SelectMultiple {
                         ui.heading("Selected items");
                         ui.separator();
                         egui::ScrollArea::vertical()
@@ -50,8 +50,7 @@ impl eframe::App for MyApp {
                                     ui.separator();
                                 }
                             });
-                    }
-                    _ => {
+                    } else {
                         ui.heading("Active item");
                         ui.small(format!("{:#?}", dia.active_entry()));
                     }
