@@ -12,16 +12,15 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = { version = "0.29.1", default-features = false } # ui
-directories = "5.0" # fetch user folders
-dunce = "1.0.5" # canonicalize paths
-sysinfo = { version = "0.32", default-features = false, features = [
-    "disk",
-] } # fetch disks
-serde = { version = "1", features = [
-    "derive",
-], optional = true } # persistent storage
-
+egui = { version = "0.29.1", default-features = false }
+# fetch user folders
+directories = "5.0"
+# canonicalize paths
+dunce = "1.0.5"
+# fetch disks
+sysinfo = { version = "0.32", default-features = false, features = ["disk"] }
+# persistent storage
+serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 eframe = { version = "0.29.1", default-features = false, features = [

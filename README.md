@@ -122,7 +122,7 @@ fn main() -> eframe::Result<()> {
 ## Examples
 
 The examples can be found in the [examples](examples) folder.
-Further descriptions can be found in the [EXAMPLES.](examples/EXAMPLES.md) file.
+Further descriptions can be found in the [EXAMPLES.](examples/README.md) file.
 
 ## Keybindings
 
