@@ -4,12 +4,14 @@ use crate::{DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::Ui;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::PathBuf;
 
 type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>>;
+type SupportedPreviewImagesMap =
+    HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>>;
 type SupportedAdditionalMetaFilesMap =
     HashMap<String, Box<dyn FnMut(&mut IndexMap<String, String>, &PathBuf)>>;
 
@@ -71,10 +73,14 @@ pub struct InformationPanel {
     loaded_file_name: PathBuf,
     /// Map that contains the handler for specific file types (by file extension)
     supported_preview_files: SupportedPreviewFilesMap,
+    /// Map that contains the handler for image types (by file extension)
+    supported_preview_images: SupportedPreviewImagesMap,
     /// Map that contains the additional metadata loader for specific file types (by file extension)
     additional_meta_files: SupportedAdditionalMetaFilesMap,
     /// Other metadata (loaded by the loader in `additional_meta_files`)
     other_meta_data: IndexMap<String, String>,
+    /// Stores the images already loaded by the egui loaders.
+    stored_images: IndexSet<String>,
 }
 
 impl Default for InformationPanel {
@@ -85,6 +91,7 @@ impl Default for InformationPanel {
     /// A new instance of `InformationPanel`.
     fn default() -> Self {
         let mut supported_files = HashMap::new();
+        let mut supported_images = HashMap::new();
         let mut additional_meta_files = HashMap::new();
 
         for ext in ["png", "jpg", "jpeg", "bmp", "gif"] {
@@ -128,44 +135,53 @@ impl Default for InformationPanel {
         }
 
         // Add preview support for JPEG and PNG image files
-        supported_files.insert(
+        supported_images.insert(
             "jpg".to_string(),
-            Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
-                ui.label("Image");
-                let image = egui::Image::new(format!(
-                    "file://{}",
-                    item.directory_entry.as_path().display()
-                ));
-                ui.vertical_centered(|ui| {
-                    ui.add(image.max_height(ui.available_width()));
-                });
-            }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
+            Box::new(
+                |ui: &mut Ui, item: &InfoPanelEntry, stored_images: &mut IndexSet<String>| {
+                    ui.label("Image");
+                    stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
+                    let image = egui::Image::new(format!(
+                        "file://{}",
+                        item.directory_entry.as_path().display()
+                    ));
+                    ui.vertical_centered(|ui| {
+                        ui.add(image.max_height(ui.available_width()));
+                    });
+                },
+            ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
         );
-        supported_files.insert(
+        supported_images.insert(
             "jpeg".to_string(),
-            Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
-                ui.label("Image");
-                let image = egui::Image::new(format!(
-                    "file://{}",
-                    item.directory_entry.as_path().display()
-                ));
-                ui.vertical_centered(|ui| {
-                    ui.add(image.max_height(ui.available_width()));
-                });
-            }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
+            Box::new(
+                |ui: &mut Ui, item: &InfoPanelEntry, stored_images: &mut IndexSet<String>| {
+                    ui.label("Image");
+                    stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
+                    let image = egui::Image::new(format!(
+                        "file://{}",
+                        item.directory_entry.as_path().display()
+                    ));
+                    ui.vertical_centered(|ui| {
+                        ui.add(image.max_height(ui.available_width()));
+                    });
+                },
+            ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
         );
-        supported_files.insert(
+        supported_images.insert(
             "png".to_string(),
-            Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
-                ui.label("Image");
-                let image = egui::Image::new(format!(
-                    "file://{}",
-                    item.directory_entry.as_path().display()
-                ));
-                ui.vertical_centered(|ui| {
-                    ui.add(image.max_height(ui.available_width()));
-                });
-            }) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>,
+            Box::new(
+                |ui: &mut Ui, item: &InfoPanelEntry, stored_images: &mut IndexSet<String>| {
+                    ui.label("Image");
+                    stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
+                    let image = egui::Image::new(format!(
+                        "file://{}",
+                        item.directory_entry.as_path().display()
+                    ));
+                    ui.vertical_centered(|ui| {
+                        ui.add(image.max_height(ui.available_width()));
+                    });
+                },
+            ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
         );
 
         Self {
@@ -174,8 +190,10 @@ impl Default for InformationPanel {
             text_content_max_chars: 1000,
             loaded_file_name: PathBuf::new(),
             supported_preview_files: supported_files,
+            supported_preview_images: supported_images,
             additional_meta_files,
             other_meta_data: IndexMap::default(),
+            stored_images: IndexSet::default(),
         }
     }
 }
@@ -294,6 +312,18 @@ impl InformationPanel {
                         self.supported_preview_files.get_mut(&ext.to_lowercase())
                     {
                         preview_handler(ui, panel_entry);
+                    } else if let Some(preview_handler) =
+                        self.supported_preview_images.get_mut(&ext.to_lowercase())
+                    {
+                        preview_handler(ui, panel_entry, &mut self.stored_images);
+                        let number_of_stored_images = self.stored_images.len();
+                        if number_of_stored_images > 10 {
+                            if let Some(last_image) = self.stored_images.first() {
+                                ui.ctx()
+                                    .forget_image(format!("file://{last_image}").as_str());
+                            }
+                            self.stored_images.shift_remove_index(0);
+                        }
                     } else if let Some(mut content) = panel_entry.content() {
                         egui::ScrollArea::vertical()
                             .max_height(100.0)
