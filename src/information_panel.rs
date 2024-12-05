@@ -318,11 +318,7 @@ impl InformationPanel {
                         preview_handler(ui, panel_entry, &mut self.stored_images);
                         let number_of_stored_images = self.stored_images.len();
                         if number_of_stored_images > 10 {
-                            if let Some(last_image) = self.stored_images.first() {
-                                ui.ctx()
-                                    .forget_image(format!("file://{last_image}").as_str());
-                            }
-                            self.stored_images.shift_remove_index(0);
+                            self.forget_last_stored_image(ui);
                         }
                     } else if let Some(mut content) = panel_entry.content() {
                         egui::ScrollArea::vertical()
@@ -344,6 +340,22 @@ impl InformationPanel {
                 });
             }
         }
+    }
+
+    fn forget_last_stored_image(&mut self, ui: &Ui) {
+        if let Some(last_image) = self.stored_images.first() {
+            ui.ctx()
+                .forget_image(format!("file://{last_image}").as_str());
+        }
+        self.stored_images.shift_remove_index(0);
+    }
+
+    #[allow(dead_code)]
+    fn forget_all_stored_images(&mut self, ui: &Ui) {
+        for image in &self.stored_images {
+            ui.ctx().forget_image(format!("file://{image}").as_str());
+        }
+        self.stored_images.clear();
     }
 
     fn load_meta_data(&mut self, item: &DirectoryEntry) {
