@@ -350,8 +350,8 @@ impl InformationPanel {
         self.stored_images.shift_remove_index(0);
     }
 
-    #[allow(dead_code)]
-    fn forget_all_stored_images(&mut self, ui: &Ui) {
+    /// removes all loaded preview images from the egui-loaders to reduce memory usage.
+    pub fn forget_all_stored_images(&mut self, ui: &Ui) {
         for image in &self.stored_images {
             ui.ctx().forget_image(format!("file://{image}").as_str());
         }

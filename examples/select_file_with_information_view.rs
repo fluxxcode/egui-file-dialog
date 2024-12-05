@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use eframe::egui;
 use egui_file_dialog::information_panel::InformationPanel;
-use egui_file_dialog::FileDialog;
+use egui_file_dialog::{DialogState, FileDialog};
 
 struct MyApp {
     file_dialog: FileDialog,
@@ -52,6 +52,13 @@ impl eframe::App for MyApp {
                 .picked()
             {
                 self.selected_file = Some(path.to_path_buf());
+            }
+
+            match self.file_dialog.state() {
+                DialogState::Closed | DialogState::Cancelled => {
+                    self.information_panel.forget_all_stored_images(ui);
+                }
+                _ => {}
             }
 
             ui.label(format!("Selected file: {:?}", self.selected_file));
