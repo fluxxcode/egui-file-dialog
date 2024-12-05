@@ -302,7 +302,7 @@ impl InformationPanel {
         if item.is_dir() {
             // show folder icon
             ui.vertical_centered(|ui| {
-                ui.label(egui::RichText::from(item.icon()).size(120.0));
+                ui.label(egui::RichText::from(item.icon()).size(ui.available_width() / 3.0));
             });
         } else {
             // Display file content preview based on its extension
@@ -322,21 +322,23 @@ impl InformationPanel {
                         }
                     } else if let Some(mut content) = panel_entry.content() {
                         egui::ScrollArea::vertical()
-                            .max_height(100.0)
+                            .max_height(ui.available_width() / 3.0)
                             .show(ui, |ui| {
                                 ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });
                     } else {
                         // if now preview is available, show icon
                         ui.vertical_centered(|ui| {
-                            ui.label(egui::RichText::from(item.icon()).size(120.0));
+                            ui.label(
+                                egui::RichText::from(item.icon()).size(ui.available_width() / 3.0),
+                            );
                         });
                     }
                 }
             } else {
                 // if now ext is available, show icon anyway
                 ui.vertical_centered(|ui| {
-                    ui.label(egui::RichText::from(item.icon()).size(120.0));
+                    ui.label(egui::RichText::from(item.icon()).size(ui.available_width() / 3.0));
                 });
             }
         }
