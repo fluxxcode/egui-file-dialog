@@ -3,7 +3,7 @@
 use crate::{DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
-use egui::Ui;
+use egui::{Direction, Layout, Ui, Vec2};
 use indexmap::{IndexMap, IndexSet};
 use std::fs::File;
 use std::io::{self, Read};
@@ -145,8 +145,12 @@ impl Default for InformationPanel {
                         "file://{}",
                         item.directory_entry.as_path().display()
                     ));
-                    ui.vertical_centered(|ui| {
-                        ui.add(image.max_height(ui.available_width()));
+                    let size = Vec2 {
+                        x: ui.available_width(),
+                        y: ui.available_width() / 4.0 * 3.0,
+                    };
+                    ui.allocate_ui_with_layout(size, Layout::centered_and_justified(Direction::TopDown), |ui| {
+                        ui.add(image);
                     });
                 },
             ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
@@ -161,8 +165,12 @@ impl Default for InformationPanel {
                         "file://{}",
                         item.directory_entry.as_path().display()
                     ));
-                    ui.vertical_centered(|ui| {
-                        ui.add(image.max_height(ui.available_width()));
+                    let size = Vec2 {
+                        x: ui.available_width(),
+                        y: ui.available_width() / 4.0 * 3.0,
+                    };
+                    ui.allocate_ui_with_layout(size, Layout::centered_and_justified(Direction::TopDown), |ui| {
+                        ui.add(image);
                     });
                 },
             ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
@@ -177,8 +185,12 @@ impl Default for InformationPanel {
                         "file://{}",
                         item.directory_entry.as_path().display()
                     ));
-                    ui.vertical_centered(|ui| {
-                        ui.add(image.max_height(ui.available_width()));
+                    let size = Vec2 {
+                        x: ui.available_width(),
+                        y: ui.available_width() / 4.0 * 3.0,
+                    };
+                    ui.allocate_ui_with_layout(size, Layout::centered_and_justified(Direction::TopDown), |ui| {
+                            ui.add(image);
                     });
                 },
             ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
