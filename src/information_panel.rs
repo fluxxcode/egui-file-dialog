@@ -324,7 +324,7 @@ impl InformationPanel {
                                         );
                                     });
                             } else {
-                                // if now preview is available, show icon
+                                // if no preview is available, show icon
                                 ui.label(
                                     egui::RichText::from(item.icon())
                                         .size(ui.available_width() / 3.0),
@@ -332,7 +332,7 @@ impl InformationPanel {
                             }
                         }
                     } else {
-                        // if now ext is available, show icon anyway
+                        // if no ext is available, show icon anyway
                         ui.label(
                             egui::RichText::from(item.icon()).size(ui.available_width() / 3.0),
                         );
