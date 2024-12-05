@@ -1,20 +1,29 @@
+use crate::config::{FileDialogConfig, FileFilter};
+use egui::mutex::Mutex;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{fs, io, thread};
 
-use egui::mutex::Mutex;
-
-use crate::config::{FileDialogConfig, FileFilter};
-
 /// Contains the metadata of a directory item.
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub struct Metadata {
+    pub size: Option<u64>,
+    pub last_modified: Option<SystemTime>,
+    pub created: Option<SystemTime>,
+    pub file_type: Option<String>,
+}
+
+/// Contains the information of a directory item.
 ///
-/// This struct is mainly there so that the metadata can be loaded once and not that
+/// This struct is mainly there so that the information and metadata can be loaded once and not that
 /// a request has to be sent to the OS every frame using, for example, `path.is_file()`.
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct DirectoryEntry {
     path: PathBuf,
+    metadata: Metadata,
     is_directory: bool,
     is_system_file: bool,
     icon: String,
@@ -25,13 +34,28 @@ pub struct DirectoryEntry {
 impl DirectoryEntry {
     /// Creates a new directory entry from a path
     pub fn from_path(config: &FileDialogConfig, path: &Path) -> Self {
+        let mut metadata = Metadata::default();
+
+        if let Ok(md) = fs::metadata(path) {
+            metadata.size = Some(md.len());
+            metadata.last_modified = md.modified().ok();
+            metadata.created = md.created().ok();
+            metadata.file_type = Some(format!("{:?}", md.file_type()));
+        }
+
         Self {
             path: path.to_path_buf(),
+            metadata,
             is_directory: path.is_dir(),
             is_system_file: !path.is_dir() && !path.is_file(),
             icon: gen_path_icon(config, path),
             selected: false,
         }
+    }
+
+    /// Returns the metadata of the directory entry.
+    pub const fn metadata(&self) -> &Metadata {
+        &self.metadata
     }
 
     /// Checks if the path of the current directory entry matches the other directory entry.

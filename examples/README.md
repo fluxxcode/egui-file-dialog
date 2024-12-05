@@ -76,3 +76,25 @@ cargo run --example save_file
 ```
 
 ![Screenshot](../media/examples/save_file.png)
+
+
+## Pick File with Information View
+
+Example showing how to pick a file and display file information using the `InformationView`.
+
+Requires the feature `information_view` as well as these dependencies:
+
+```toml
+[dependencies]
+egui-file-dialog = { version = "*", features = ["information_view"] }
+egui_extras = { version = "0.29", features = ["all_loaders"] }
+# required by the egui loaders
+image = { version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "rayon"] }
+```
+
+```shell
+cargo run --example pick_file_with_information_view
+```
+
+![Screenshot](../media/examples/information_view.png)
+

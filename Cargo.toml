@@ -21,18 +21,28 @@ dunce = "1.0.5"
 sysinfo = { version = "0.32", default-features = false, features = ["disk"] }
 # persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
+# meta-data storage
+indexmap = { version = "2.6.0", features = ["serde"], optional = true }
+
+# info panel meta-data display
+image-meta = { version = "0.1.2", optional = true }
+chrono = { version = "0.4.38", optional = true }
 
 [dev-dependencies]
 eframe = { version = "0.29.1", default-features = false, features = [
     "glow",
     "persistence",
 ] }
-egui-file-dialog = { path = "." }
+egui-file-dialog = { path = "." , features = ["information_view"] }
+egui_extras = { version = "0.29", features = ["all_loaders"] }
+# required by the egui loaders
+image = { version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "rayon"] }
 
 [features]
 default = ["serde", "default_fonts"]
 serde = ["dep:serde"]
 default_fonts = ["egui/default_fonts"]
+information_view = ["dep:chrono", "image-meta", "indexmap"]
 
 [lints.rust]
 unsafe_code = "warn"
@@ -54,3 +64,4 @@ struct_field_names = { level = "allow", priority = 13 }
 missing_fields_in_debug = { level = "allow", priority = 14 }
 missing_errors_doc = { level = "allow", priority = 15 }
 module_name_repetitions = { level = "allow", priority = 16 }
+cast_precision_loss = { level = "allow", priority = 17 }
