@@ -199,12 +199,12 @@ mod create_directory_dialog;
 mod data;
 mod file_dialog;
 mod modals;
+/// Information panel showing the preview and metadata of the selected item
+pub mod information_panel;
 
 pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
     KeyBinding, QuickAccess, QuickAccessPath,
 };
-#[cfg(feature = "information_view")]
-pub use data::information_panel;
 pub use data::DirectoryEntry;
 pub use file_dialog::{DialogMode, DialogState, FileDialog};
