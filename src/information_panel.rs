@@ -386,49 +386,51 @@ impl InformationPanel {
     }
 
     fn display_meta_data(&self, ui: &mut Ui, id: egui::Id, width: f32, item: &DirectoryEntry) {
-        egui::ScrollArea::vertical().id_salt(id.with("meta_data_scroll")).show(ui, |ui| {
-            egui::Grid::new(id.with("meta_data_grid"))
-                .num_columns(2)
-                .striped(true)
-                .min_col_width(width)
-                .max_col_width(width)
-                .show(ui, |ui| {
-                    ui.label("Filename: ");
-                    ui.label(item.file_name().to_string());
-                    ui.end_row();
+        egui::ScrollArea::vertical()
+            .id_salt(id.with("meta_data_scroll"))
+            .show(ui, |ui| {
+                egui::Grid::new(id.with("meta_data_grid"))
+                    .num_columns(2)
+                    .striped(true)
+                    .min_col_width(width)
+                    .max_col_width(width)
+                    .show(ui, |ui| {
+                        ui.label("Filename: ");
+                        ui.label(item.file_name().to_string());
+                        ui.end_row();
 
-                    if let Some(size) = item.metadata().size {
-                        ui.label("File Size: ");
-                        if item.is_file() {
-                            ui.label(format_bytes(size));
-                        } else {
-                            ui.label("NAN");
+                        if let Some(size) = item.metadata().size {
+                            ui.label("File Size: ");
+                            if item.is_file() {
+                                ui.label(format_bytes(size));
+                            } else {
+                                ui.label("NAN");
+                            }
+                            ui.end_row();
                         }
-                        ui.end_row();
-                    }
 
-                    if let Some(date) = item.metadata().created {
-                        ui.label("Created: ");
-                        let created: DateTime<Local> = date.into();
-                        ui.label(format!("{}", created.format("%d.%m.%Y, %H:%M:%S")));
-                        ui.end_row();
-                    }
+                        if let Some(date) = item.metadata().created {
+                            ui.label("Created: ");
+                            let created: DateTime<Local> = date.into();
+                            ui.label(format!("{}", created.format("%d.%m.%Y, %H:%M:%S")));
+                            ui.end_row();
+                        }
 
-                    if let Some(date) = item.metadata().last_modified {
-                        ui.label("Last Modified: ");
-                        let modified: DateTime<Local> = date.into();
-                        ui.label(format!("{}", modified.format("%d.%m.%Y, %H:%M:%S")));
-                        ui.end_row();
-                    }
+                        if let Some(date) = item.metadata().last_modified {
+                            ui.label("Last Modified: ");
+                            let modified: DateTime<Local> = date.into();
+                            ui.label(format!("{}", modified.format("%d.%m.%Y, %H:%M:%S")));
+                            ui.end_row();
+                        }
 
-                    // show additional metadata, if present
-                    for (key, value) in self.other_meta_data.clone() {
-                        ui.label(key);
-                        ui.label(value);
-                        ui.end_row();
-                    }
-                });
-        });
+                        // show additional metadata, if present
+                        for (key, value) in self.other_meta_data.clone() {
+                            ui.label(key);
+                            ui.label(value);
+                            ui.end_row();
+                        }
+                    });
+            });
     }
 }
 
