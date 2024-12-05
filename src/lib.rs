@@ -198,9 +198,9 @@ mod config;
 mod create_directory_dialog;
 mod data;
 mod file_dialog;
-mod modals;
 /// Information panel showing the preview and metadata of the selected item
 pub mod information_panel;
+mod modals;
 
 pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
