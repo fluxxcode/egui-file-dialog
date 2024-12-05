@@ -139,19 +139,7 @@ impl Default for InformationPanel {
             "jpg".to_string(),
             Box::new(
                 |ui: &mut Ui, item: &InfoPanelEntry, stored_images: &mut IndexSet<String>| {
-                    ui.label("Image");
-                    stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
-                    let image = egui::Image::new(format!(
-                        "file://{}",
-                        item.directory_entry.as_path().display()
-                    ));
-                    let size = Vec2 {
-                        x: ui.available_width(),
-                        y: ui.available_width() / 4.0 * 3.0,
-                    };
-                    ui.allocate_ui_with_layout(size, Layout::centered_and_justified(Direction::TopDown), |ui| {
-                        ui.add(image);
-                    });
+                    Self::show_image_preview(ui, item, stored_images);
                 },
             ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
         );
@@ -159,19 +147,7 @@ impl Default for InformationPanel {
             "jpeg".to_string(),
             Box::new(
                 |ui: &mut Ui, item: &InfoPanelEntry, stored_images: &mut IndexSet<String>| {
-                    ui.label("Image");
-                    stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
-                    let image = egui::Image::new(format!(
-                        "file://{}",
-                        item.directory_entry.as_path().display()
-                    ));
-                    let size = Vec2 {
-                        x: ui.available_width(),
-                        y: ui.available_width() / 4.0 * 3.0,
-                    };
-                    ui.allocate_ui_with_layout(size, Layout::centered_and_justified(Direction::TopDown), |ui| {
-                        ui.add(image);
-                    });
+                    Self::show_image_preview(ui, item, stored_images);
                 },
             ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
         );
@@ -179,19 +155,7 @@ impl Default for InformationPanel {
             "png".to_string(),
             Box::new(
                 |ui: &mut Ui, item: &InfoPanelEntry, stored_images: &mut IndexSet<String>| {
-                    ui.label("Image");
-                    stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
-                    let image = egui::Image::new(format!(
-                        "file://{}",
-                        item.directory_entry.as_path().display()
-                    ));
-                    let size = Vec2 {
-                        x: ui.available_width(),
-                        y: ui.available_width() / 4.0 * 3.0,
-                    };
-                    ui.allocate_ui_with_layout(size, Layout::centered_and_justified(Direction::TopDown), |ui| {
-                            ui.add(image);
-                    });
+                    Self::show_image_preview(ui, item, stored_images);
                 },
             ) as Box<dyn FnMut(&mut Ui, &InfoPanelEntry, &mut IndexSet<String>)>,
         );
@@ -211,6 +175,30 @@ impl Default for InformationPanel {
 }
 
 impl InformationPanel {
+    fn show_image_preview(
+        ui: &mut Ui,
+        item: &InfoPanelEntry,
+        stored_images: &mut IndexSet<String>,
+    ) {
+        ui.label("Image");
+        stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
+        let image = egui::Image::new(format!(
+            "file://{}",
+            item.directory_entry.as_path().display()
+        ));
+        let size = Vec2 {
+            x: ui.available_width(),
+            y: ui.available_width() / 4.0 * 3.0,
+        };
+        ui.allocate_ui_with_layout(
+            size,
+            Layout::centered_and_justified(Direction::TopDown),
+            |ui| {
+                ui.add(image);
+            },
+        );
+    }
+
     /// Adds support for previewing a custom file type.
     ///
     /// # Arguments
