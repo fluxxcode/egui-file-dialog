@@ -79,6 +79,7 @@ cargo run --example save_file
 
 
 ## Pick File with Information View
+
 Example showing how to pick a file and display file information using the `InformationView`.
 
 Requires the feature `information_view` as well as these dependencies:
