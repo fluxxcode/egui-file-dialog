@@ -19,7 +19,7 @@ impl MyApp {
                     ui.label("CSV preview:");
                     if let Some(mut content) = item.content() {
                         egui::ScrollArea::vertical()
-                            .max_height(150.0)
+                            .max_height(ui.available_height())
                             .show(ui, |ui| {
                                 ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });

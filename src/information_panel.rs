@@ -125,7 +125,7 @@ impl Default for InformationPanel {
                 Box::new(|ui: &mut Ui, item: &InfoPanelEntry| {
                     if let Some(mut content) = item.content() {
                         egui::ScrollArea::vertical()
-                            .max_height(100.0)
+                            .max_height(ui.available_height())
                             .show(ui, |ui| {
                                 ui.add(egui::TextEdit::multiline(&mut content).code_editor());
                             });
@@ -180,23 +180,12 @@ impl InformationPanel {
         item: &InfoPanelEntry,
         stored_images: &mut IndexSet<String>,
     ) {
-        ui.label("Image");
         stored_images.insert(format!("{}", item.directory_entry.as_path().display()));
         let image = egui::Image::new(format!(
             "file://{}",
             item.directory_entry.as_path().display()
         ));
-        let size = Vec2 {
-            x: ui.available_width(),
-            y: ui.available_width() / 4.0 * 3.0,
-        };
-        ui.allocate_ui_with_layout(
-            size,
-            Layout::centered_and_justified(Direction::TopDown),
-            |ui| {
-                ui.add(image);
-            },
-        );
+        ui.add(image);
     }
 
     /// Adds support for previewing a custom file type.
@@ -299,49 +288,58 @@ impl InformationPanel {
     }
 
     fn display_preview(&mut self, ui: &mut Ui, item: &DirectoryEntry) {
-        if item.is_dir() {
-            // show folder icon
-            ui.vertical_centered(|ui| {
-                ui.label(egui::RichText::from(item.icon()).size(ui.available_width() / 3.0));
-            });
-        } else {
-            // Display file content preview based on its extension
-            if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
-                if let Some(panel_entry) = &self.panel_entry {
-                    if let Some(preview_handler) =
-                        self.supported_preview_files.get_mut(&ext.to_lowercase())
-                    {
-                        preview_handler(ui, panel_entry);
-                    } else if let Some(preview_handler) =
-                        self.supported_preview_images.get_mut(&ext.to_lowercase())
-                    {
-                        preview_handler(ui, panel_entry, &mut self.stored_images);
-                        let number_of_stored_images = self.stored_images.len();
-                        if number_of_stored_images > 10 {
-                            self.forget_last_stored_image(ui);
+        let size = Vec2 {
+            x: ui.available_width(),
+            y: ui.available_width() / 4.0 * 3.0,
+        };
+        ui.allocate_ui_with_layout(
+            size,
+            Layout::centered_and_justified(Direction::TopDown),
+            |ui| {
+                if item.is_dir() {
+                    // show folder icon
+                    ui.label(egui::RichText::from(item.icon()).size(ui.available_width() / 3.0));
+                } else {
+                    // Display file content preview based on its extension
+                    if let Some(ext) = item.as_path().extension().and_then(|ext| ext.to_str()) {
+                        if let Some(panel_entry) = &self.panel_entry {
+                            if let Some(preview_handler) =
+                                self.supported_preview_files.get_mut(&ext.to_lowercase())
+                            {
+                                preview_handler(ui, panel_entry);
+                            } else if let Some(preview_handler) =
+                                self.supported_preview_images.get_mut(&ext.to_lowercase())
+                            {
+                                preview_handler(ui, panel_entry, &mut self.stored_images);
+                                let number_of_stored_images = self.stored_images.len();
+                                if number_of_stored_images > 10 {
+                                    self.forget_last_stored_image(ui);
+                                }
+                            } else if let Some(mut content) = panel_entry.content() {
+                                egui::ScrollArea::vertical()
+                                    .max_height(ui.available_height())
+                                    .show(ui, |ui| {
+                                        ui.add(
+                                            egui::TextEdit::multiline(&mut content).code_editor(),
+                                        );
+                                    });
+                            } else {
+                                // if now preview is available, show icon
+                                ui.label(
+                                    egui::RichText::from(item.icon())
+                                        .size(ui.available_width() / 3.0),
+                                );
+                            }
                         }
-                    } else if let Some(mut content) = panel_entry.content() {
-                        egui::ScrollArea::vertical()
-                            .max_height(ui.available_width() / 3.0)
-                            .show(ui, |ui| {
-                                ui.add(egui::TextEdit::multiline(&mut content).code_editor());
-                            });
                     } else {
-                        // if now preview is available, show icon
-                        ui.vertical_centered(|ui| {
-                            ui.label(
-                                egui::RichText::from(item.icon()).size(ui.available_width() / 3.0),
-                            );
-                        });
+                        // if now ext is available, show icon anyway
+                        ui.label(
+                            egui::RichText::from(item.icon()).size(ui.available_width() / 3.0),
+                        );
                     }
                 }
-            } else {
-                // if now ext is available, show icon anyway
-                ui.vertical_centered(|ui| {
-                    ui.label(egui::RichText::from(item.icon()).size(ui.available_width() / 3.0));
-                });
-            }
-        }
+            },
+        );
     }
 
     fn forget_last_stored_image(&mut self, ui: &Ui) {
