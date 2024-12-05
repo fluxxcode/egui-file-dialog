@@ -399,7 +399,7 @@ impl InformationPanel {
 
     fn display_meta_data(&self, ui: &mut Ui, id: egui::Id, width: f32, item: &DirectoryEntry) {
         egui::ScrollArea::vertical().id_salt(id.with("meta_data_scroll")).show(ui, |ui| {
-            egui::Grid::new("meta_data")
+            egui::Grid::new(id.with("meta_data_grid"))
                 .num_columns(2)
                 .striped(true)
                 .min_col_width(width)
