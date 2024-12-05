@@ -92,7 +92,7 @@ image = { version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "
 ```
 
 ```shell
-cargo run --example select_file_with_information_view
+cargo run --example pick_file_with_information_view
 ```
 
 ![Screenshot](../media/examples/information_view.png)
