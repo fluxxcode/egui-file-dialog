@@ -78,8 +78,8 @@ cargo run --example save_file
 ![Screenshot](../media/examples/save_file.png)
 
 
-## Select File with Information View
-Example showing how to select a file and display file information using the `InformationView`.
+## Pick File with Information View
+Example showing how to pick a file and display file information using the `InformationView`.
 
 Requires the feature `information_view` as well as these dependencies:
 
