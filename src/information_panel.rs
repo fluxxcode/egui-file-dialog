@@ -280,6 +280,7 @@ impl InformationPanel {
 
         // Display metadata in a grid format
         let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
+        let meta_id = file_dialog.config_mut().id.unwrap_or_else(||egui::Id::from("meta_data_scroll"));
 
         if let Some(item) = file_dialog.active_entry() {
             // load file content and additional metadata if it's a new file
@@ -294,7 +295,7 @@ impl InformationPanel {
             ui.add_space(spacing);
 
             // show all metadata
-            self.display_meta_data(ui, width, item);
+            self.display_meta_data(ui, meta_id, width, item);
         }
     }
 
@@ -385,9 +386,15 @@ impl InformationPanel {
         }
     }
 
-    fn display_meta_data(&self, ui: &mut Ui, width: f32, item: &DirectoryEntry) {
+    fn display_meta_data(
+        &self,
+        ui: &mut Ui,
+        id: egui::Id,
+        width: f32,
+        item: &DirectoryEntry,
+    ) {
         egui::ScrollArea::vertical()
-            .id_salt("meta_data_scroll")
+            .id_salt(id)
             .show(ui, |ui| {
                 egui::Grid::new("meta_data")
                     .num_columns(2)
