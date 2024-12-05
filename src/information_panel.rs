@@ -280,7 +280,6 @@ impl InformationPanel {
 
         // Display metadata in a grid format
         let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
-        let meta_id = file_dialog.config_mut().id.unwrap_or_else(||egui::Id::from("meta_data_scroll"));
 
         if let Some(item) = file_dialog.active_entry() {
             // load file content and additional metadata if it's a new file
@@ -295,7 +294,7 @@ impl InformationPanel {
             ui.add_space(spacing);
 
             // show all metadata
-            self.display_meta_data(ui, meta_id, width, item);
+            self.display_meta_data(ui, file_dialog.get_window_id(), width, item);
         }
     }
 
@@ -386,58 +385,50 @@ impl InformationPanel {
         }
     }
 
-    fn display_meta_data(
-        &self,
-        ui: &mut Ui,
-        id: egui::Id,
-        width: f32,
-        item: &DirectoryEntry,
-    ) {
-        egui::ScrollArea::vertical()
-            .id_salt(id)
-            .show(ui, |ui| {
-                egui::Grid::new("meta_data")
-                    .num_columns(2)
-                    .striped(true)
-                    .min_col_width(width)
-                    .max_col_width(width)
-                    .show(ui, |ui| {
-                        ui.label("Filename: ");
-                        ui.label(item.file_name().to_string());
+    fn display_meta_data(&self, ui: &mut Ui, id: egui::Id, width: f32, item: &DirectoryEntry) {
+        egui::ScrollArea::vertical().id_salt(id).show(ui, |ui| {
+            egui::Grid::new("meta_data")
+                .num_columns(2)
+                .striped(true)
+                .min_col_width(width)
+                .max_col_width(width)
+                .show(ui, |ui| {
+                    ui.label("Filename: ");
+                    ui.label(item.file_name().to_string());
+                    ui.end_row();
+
+                    if let Some(size) = item.metadata().size {
+                        ui.label("File Size: ");
+                        if item.is_file() {
+                            ui.label(format_bytes(size));
+                        } else {
+                            ui.label("NAN");
+                        }
                         ui.end_row();
+                    }
 
-                        if let Some(size) = item.metadata().size {
-                            ui.label("File Size: ");
-                            if item.is_file() {
-                                ui.label(format_bytes(size));
-                            } else {
-                                ui.label("NAN");
-                            }
-                            ui.end_row();
-                        }
+                    if let Some(date) = item.metadata().created {
+                        ui.label("Created: ");
+                        let created: DateTime<Local> = date.into();
+                        ui.label(format!("{}", created.format("%d.%m.%Y, %H:%M:%S")));
+                        ui.end_row();
+                    }
 
-                        if let Some(date) = item.metadata().created {
-                            ui.label("Created: ");
-                            let created: DateTime<Local> = date.into();
-                            ui.label(format!("{}", created.format("%d.%m.%Y, %H:%M:%S")));
-                            ui.end_row();
-                        }
+                    if let Some(date) = item.metadata().last_modified {
+                        ui.label("Last Modified: ");
+                        let modified: DateTime<Local> = date.into();
+                        ui.label(format!("{}", modified.format("%d.%m.%Y, %H:%M:%S")));
+                        ui.end_row();
+                    }
 
-                        if let Some(date) = item.metadata().last_modified {
-                            ui.label("Last Modified: ");
-                            let modified: DateTime<Local> = date.into();
-                            ui.label(format!("{}", modified.format("%d.%m.%Y, %H:%M:%S")));
-                            ui.end_row();
-                        }
-
-                        // show additional metadata, if present
-                        for (key, value) in self.other_meta_data.clone() {
-                            ui.label(key);
-                            ui.label(value);
-                            ui.end_row();
-                        }
-                    });
-            });
+                    // show additional metadata, if present
+                    for (key, value) in self.other_meta_data.clone() {
+                        ui.label(key);
+                        ui.label(value);
+                        ui.end_row();
+                    }
+                });
+        });
     }
 }
 

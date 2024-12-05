@@ -1178,6 +1178,11 @@ impl FileDialog {
     pub fn state(&self) -> DialogState {
         self.state.clone()
     }
+
+    /// Get the window Id
+    pub const fn get_window_id(&self) -> egui::Id {
+        self.window_id
+    }
 }
 
 /// UI methods
