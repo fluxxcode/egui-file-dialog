@@ -21,10 +21,10 @@ dunce = "1.0.5"
 sysinfo = { version = "0.32", default-features = false, features = ["disk"] }
 # persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
-# used for meta-data storage
+# meta-data storage
 indexmap = { version = "2.6.0", features = ["serde"], optional = true }
 
-# Used for info panel
+# info panel meta-data display
 image-meta = { version = "0.1.2", optional = true }
 chrono = { version = "0.4.38", optional = true }
 
