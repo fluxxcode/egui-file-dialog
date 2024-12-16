@@ -32,6 +32,8 @@ chrono = { version = "0.4.39", optional = true }
 eframe = { version = "0.30.0", default-features = false, features = [
     "glow",
     "persistence",
+    "wayland",
+    "x11",
 ] }
 egui-file-dialog = { path = "." , features = ["information_view"] }
 egui_extras = { version = "0.30", features = ["all_loaders"] }
