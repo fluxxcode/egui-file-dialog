@@ -1,6 +1,6 @@
 # egui-file-dialog changelog
 
-## 2024-12-17 - egui update, custom right panel and more
+## 2024-12-17 - v0.8.0 - egui update, custom right panel and more
 
 ### 🚨 Breaking Changes
 
