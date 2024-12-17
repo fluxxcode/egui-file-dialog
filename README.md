@@ -28,11 +28,11 @@ The file dialog is intended for use by desktop applications, allowing the use of
 The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
 ## Features
-
+- Pick a file or a directory
 - Select a file or a directory
 - Save a file (Prompt user for a destination path)
   - Dialog to ask the user if the existing file should be overwritten
-- Select multiple files and folders at once (ctrl/shift + click on linux/windows and cmd/shift + click on macOS)
+- Pick multiple files and folders at once (ctrl/shift + click on linux/windows and cmd/shift + click on macOS)
 - Open the dialog in a normal or modal window
 - Create a new folder
 - Keyboard navigation
@@ -76,7 +76,7 @@ use egui_file_dialog::FileDialog;
 
 struct MyApp {
     file_dialog: FileDialog,
-    selected_file: Option<PathBuf>,
+    picked_file: Option<PathBuf>,
 }
 
 impl MyApp {
@@ -84,7 +84,7 @@ impl MyApp {
         Self {
             // Create a new file dialog object
             file_dialog: FileDialog::new(),
-            selected_file: None,
+            picked_file: None,
         }
     }
 }
@@ -92,19 +92,19 @@ impl MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Select file").clicked() {
-                // Open the file dialog to select a file.
-                self.file_dialog.select_file();
+            if ui.button("Pick file").clicked() {
+                // Open the file dialog to pick a file.
+                self.file_dialog.pick_file();
             }
 
-            ui.label(format!("Selected file: {:?}", self.selected_file));
+            ui.label(format!("Picked file: {:?}", self.picked_file));
 
             // Update the dialog
             self.file_dialog.update(ctx);
 
-            // Check if the user selected a file.
-            if let Some(path) = self.file_dialog.take_selected() {
-                self.selected_file = Some(path.to_path_buf());
+            // Check if the user picked a file.
+            if let Some(path) = self.file_dialog.take_picked() {
+                self.picked_file = Some(path.to_path_buf());
             }
         });
     }
