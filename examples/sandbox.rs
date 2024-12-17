@@ -36,7 +36,7 @@ impl MyApp {
 
         if let Some(storage) = cc.storage {
             *file_dialog.storage_mut() =
-                eframe::get_value(storage, "file_dialog_storage").unwrap_or_default()
+                eframe::get_value(storage, "file_dialog_storage").unwrap_or_default();
         }
 
         Self {
@@ -85,7 +85,7 @@ impl eframe::App for MyApp {
 
             if let Some(items) = &self.picked_multiple {
                 for item in items {
-                    ui.label(format!("{:?}", item));
+                    ui.label(format!("{item:?}"));
                 }
             } else {
                 ui.label("None");
@@ -105,7 +105,7 @@ impl eframe::App for MyApp {
                     DialogMode::SelectDirectory => self.picked_directory = Some(path),
                     DialogMode::SelectFile => self.picked_file = Some(path),
                     DialogMode::SaveFile => self.saved_file = Some(path),
-                    _ => {}
+                    DialogMode::SelectMultiple => {}
                 }
             }
 

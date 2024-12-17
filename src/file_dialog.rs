@@ -442,6 +442,16 @@ impl FileDialog {
         self
     }
 
+    /// Sets the width of the right panel.
+    pub fn set_right_panel_width(&mut self, width: f32) {
+        self.config.right_panel_width = Some(width);
+    }
+
+    /// Clears the width of the right panel by setting it to None.
+    pub fn clear_right_panel_width(&mut self) {
+        self.config.right_panel_width = None;
+    }
+
     /// Do an [update](`Self::update`) with a custom right panel ui.
     ///
     /// Example use cases:
@@ -1168,6 +1178,11 @@ impl FileDialog {
     pub fn state(&self) -> DialogState {
         self.state.clone()
     }
+
+    /// Get the window Id
+    pub const fn get_window_id(&self) -> egui::Id {
+        self.window_id
+    }
 }
 
 /// UI methods
@@ -1213,13 +1228,16 @@ impl FileDialog {
 
             // Optionally, show a custom right panel (see `update_with_custom_right_panel`)
             if let Some(f) = right_panel_fn {
-                egui::SidePanel::right(self.window_id.with("right_panel"))
+                let mut right_panel = egui::SidePanel::right(self.window_id.with("right_panel"))
                     // Unlike the left panel, we have no control over the contents, so
                     // we don't restrict the width. It's up to the user to make the UI presentable.
-                    .resizable(true)
-                    .show_inside(ui, |ui| {
-                        f(ui, self);
-                    });
+                    .resizable(true);
+                if let Some(width) = self.config.right_panel_width {
+                    right_panel = right_panel.default_width(width);
+                }
+                right_panel.show_inside(ui, |ui| {
+                    f(ui, self);
+                });
             }
 
             egui::TopBottomPanel::bottom(self.window_id.with("bottom_panel"))
