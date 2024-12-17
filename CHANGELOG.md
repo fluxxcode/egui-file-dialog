@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### 🚨 Breaking Changes
+
+- Updated `egui` from version `0.29.1` to version `0.30.0` [#221](https://github.com/fluxxcode/egui-file-dialog/pull/221) (thanks [@bircni](https://github.com/bircni)!
+
 ### ✨ Features
 
 - Added `FileDialog::update_with_right_panel_ui` to add a custom right panel to the file dialog [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
