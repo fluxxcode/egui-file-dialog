@@ -12,7 +12,7 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = { version = "0.29.1", default-features = false }
+egui = { version = "0.30.0", default-features = false }
 # fetch user folders
 directories = "5.0"
 # canonicalize paths
@@ -22,19 +22,21 @@ sysinfo = { version = "0.33", default-features = false, features = ["disk"] }
 # persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
 # meta-data storage
-indexmap = { version = "2.6.0", features = ["serde"], optional = true }
+indexmap = { version = "2.7.0", features = ["serde"], optional = true }
 
 # info panel meta-data display
 image-meta = { version = "0.1.2", optional = true }
-chrono = { version = "0.4.38", optional = true }
+chrono = { version = "0.4.39", optional = true }
 
 [dev-dependencies]
-eframe = { version = "0.29.1", default-features = false, features = [
+eframe = { version = "0.30.0", default-features = false, features = [
     "glow",
     "persistence",
+    "wayland",
+    "x11",
 ] }
 egui-file-dialog = { path = "." , features = ["information_view"] }
-egui_extras = { version = "0.29", features = ["all_loaders"] }
+egui_extras = { version = "0.30", features = ["all_loaders"] }
 # required by the egui loaders
 image = { version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "rayon"] }
 
