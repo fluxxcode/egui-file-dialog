@@ -62,8 +62,8 @@ Cargo.toml:
 
 ```toml
 [dependencies]
-eframe = "0.29.1"
-egui-file-dialog = "0.7.0"
+eframe = "0.30.0"
+egui-file-dialog = "0.8.0"
 ```
 
 main.rs:
@@ -118,11 +118,6 @@ fn main() -> eframe::Result<()> {
     )
 }
 ```
-
-## Examples
-
-The examples can be found in the [examples](examples) folder.
-Further descriptions can be found in the [EXAMPLES.](examples/README.md) file.
 
 ## Keybindings
 
