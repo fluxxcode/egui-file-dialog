@@ -5,8 +5,6 @@ use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::{Direction, Layout, Ui, Vec2};
 use indexmap::{IndexMap, IndexSet};
-use std::fs::File;
-use std::io::{self, Read};
 use std::path::PathBuf;
 use std::sync::Arc;
 

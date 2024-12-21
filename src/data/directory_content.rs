@@ -4,7 +4,7 @@ use egui::mutex::Mutex;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
-use std::{fs, io, thread};
+use std::{io, thread};
 
 /// Contains the metadata of a directory item.
 #[derive(Debug, Default, Clone)]
@@ -27,6 +27,7 @@ pub struct DirectoryEntry {
     metadata: Metadata,
     is_directory: bool,
     is_system_file: bool,
+    is_hidden: bool,
     icon: String,
     /// If the item is marked as selected as part of a multi selection.
     pub selected: bool,
@@ -41,6 +42,7 @@ impl DirectoryEntry {
             is_directory: vfs.is_dir(path),
             is_system_file: !vfs.is_dir(path) && !vfs.is_file(path),
             icon: gen_path_icon(config, path),
+            is_hidden: vfs.is_path_hidden(path),
             selected: false,
         }
     }
@@ -126,7 +128,7 @@ impl DirectoryEntry {
 
     /// Returns whether the path this `DirectoryEntry` points to is considered hidden.
     pub fn is_hidden(&self) -> bool {
-        is_path_hidden(self)
+        self.is_hidden
     }
 }
 
@@ -391,22 +393,6 @@ fn load_directory(
     });
 
     Ok(result)
-}
-
-#[cfg(windows)]
-fn is_path_hidden(item: &DirectoryEntry) -> bool {
-    use std::os::windows::fs::MetadataExt;
-
-    fs::metadata(item.as_path()).is_ok_and(|metadata| metadata.file_attributes() & 0x2 > 0)
-}
-
-#[cfg(not(windows))]
-fn is_path_hidden(item: &DirectoryEntry) -> bool {
-    if item.file_name().bytes().next() == Some(b'.') {
-        return true;
-    }
-
-    false
 }
 
 /// Generates the icon for the specific path.

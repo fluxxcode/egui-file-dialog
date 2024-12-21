@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::io::{self, Read};
 
-use crate::data::Metadata;
+use crate::data::{native_load_disks, Disks, Metadata};
 
 /// File system abstraction specific to the needs of egui-file-dialog
 pub trait FileSystem {
@@ -19,6 +19,12 @@ pub trait FileSystem {
 
     /// Read a short preview of a text file
     fn load_text_file_preview(&self, path: &Path, max_chars: usize) -> io::Result<String>;
+
+    /// List out the disks in the system
+    fn get_disks(&self, canonicalize_paths: bool) -> Disks;
+
+    /// Determine if a path is hidden
+    fn is_path_hidden(&self, path: &Path) -> bool;
 }
 
 impl std::fmt::Debug for dyn FileSystem + Send + Sync {
@@ -81,4 +87,31 @@ impl FileSystem for NativeFileSystem {
 
         Ok(buffer.to_string())
     }
+
+    fn get_disks(&self, canonicalize_paths: bool) -> Disks {
+        native_load_disks(canonicalize_paths)
+    }
+
+    fn is_path_hidden(&self, path: &Path) -> bool {
+        is_path_hidden(path)
+    }
+}
+
+#[cfg(windows)]
+fn is_path_hidden(item: &Path) -> bool {
+    use std::os::windows::fs::MetadataExt;
+
+    std::fs::metadata(path).map_or(false, |metadata| metadata.file_attributes() & 0x2 > 0)
+}
+
+#[cfg(not(windows))]
+fn is_path_hidden(path: &Path) -> bool {
+    let Some(file_name) = path.file_name() else { return false };
+    let Some(s) = file_name.to_str() else { return false };
+
+    if s.chars().next() == Some('.') {
+        return true;
+    }
+
+    false
 }

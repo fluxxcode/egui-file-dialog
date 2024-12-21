@@ -195,6 +195,12 @@ impl FileDialog {
     /// Creates a new file dialog instance with default values.
     #[must_use]
     pub fn new() -> Self {
+        Self::from_filesystem(Arc::new(NativeFileSystem))
+    }
+
+    #[must_use]
+    /// Creates a new file dialog instance with the given file system abstraction
+    pub fn from_filesystem(vfs: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
             config: FileDialogConfig::default(),
 
@@ -208,7 +214,7 @@ impl FileDialog {
             window_id: egui::Id::new("file_dialog"),
 
             user_directories: UserDirectories::new(true),
-            system_disks: Disks::new_with_refreshed_list(true),
+            system_disks: vfs.get_disks(true),
 
             directory_stack: Vec::new(),
             directory_offset: 0,
@@ -232,8 +238,8 @@ impl FileDialog {
             init_search: false,
 
             any_focused_last_frame: false,
-
-            vfs: Arc::new(NativeFileSystem),
+            
+            vfs,
         }
     }
 
@@ -2729,7 +2735,7 @@ impl FileDialog {
     /// Including the user directories, system disks and currently open directory.
     fn refresh(&mut self) {
         self.user_directories = UserDirectories::new(self.config.canonicalize_paths);
-        self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
+        self.system_disks = self.vfs.get_disks(self.config.canonicalize_paths);
 
         self.reload_directory();
     }
