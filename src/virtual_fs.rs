@@ -18,6 +18,12 @@ pub trait FileSystem {
     fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>>;
 }
 
+impl std::fmt::Debug for dyn FileSystem + Send + Sync {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<FileSystem>")
+    }
+}
+
 /// Implementation of FileSystem using the standard library
 pub struct NativeFileSystem;
 

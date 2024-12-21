@@ -34,7 +34,7 @@ pub struct DirectoryEntry {
 
 impl DirectoryEntry {
     /// Creates a new directory entry from a path
-    pub fn from_path(config: &FileDialogConfig, path: &Path, vfs: &impl FileSystem) -> Self {
+    pub fn from_path(config: &FileDialogConfig, path: &Path, vfs: &dyn FileSystem) -> Self {
         Self {
             path: path.to_path_buf(),
             metadata: vfs.metadata(path).unwrap_or_default(),
@@ -194,11 +194,12 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
+        vfs: Arc<dyn FileSystem + Sync + Send + 'static>,
     ) -> Self {
         if config.load_via_thread {
-            Self::with_thread(config, path, include_files, file_filter)
+            Self::with_thread(config, path, include_files, file_filter, vfs)
         } else {
-            Self::without_thread(config, path, include_files, file_filter)
+            Self::without_thread(config, path, include_files, file_filter, &*vfs)
         }
     }
 
@@ -207,6 +208,7 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
+        vfs: Arc<dyn FileSystem + Send + Sync + 'static>,
     ) -> Self {
         let (tx, rx) = mpsc::channel();
 
@@ -214,7 +216,7 @@ impl DirectoryContent {
         let p = path.to_path_buf();
         let f = file_filter.cloned();
         thread::spawn(move || {
-            let _ = tx.send(load_directory(&c, &p, include_files, f.as_ref()));
+            let _ = tx.send(load_directory(&c, &p, include_files, f.as_ref(), &*vfs));
         });
 
         Self {
@@ -229,8 +231,9 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
+        vfs: &dyn FileSystem,
     ) -> Self {
-        match load_directory(config, path, include_files, file_filter) {
+        match load_directory(config, path, include_files, file_filter, vfs) {
             Ok(c) => Self {
                 state: DirectoryContentState::Success,
                 content: c,
@@ -350,38 +353,31 @@ fn load_directory(
     path: &Path,
     include_files: bool,
     file_filter: Option<&FileFilter>,
-    vfs: &impl FileSystem,
+    vfs: &dyn FileSystem,
 ) -> io::Result<Vec<DirectoryEntry>> {
-    let paths = fs::read_dir(path)?;
-
     let mut result: Vec<DirectoryEntry> = Vec::new();
-    for path in paths {
-        match path {
-            Ok(entry) => {
-                let entry = DirectoryEntry::from_path(config, entry.path().as_path(), vfs);
+    for path in vfs.read_dir(path)? {
+        let entry = DirectoryEntry::from_path(config, &path, vfs);
 
-                if !config.storage.show_system_files && entry.is_system_file() {
-                    continue;
-                }
+        if !config.storage.show_system_files && entry.is_system_file() {
+            continue;
+        }
 
-                if !include_files && entry.is_file() {
-                    continue;
-                }
+        if !include_files && entry.is_file() {
+            continue;
+        }
 
-                if !config.storage.show_hidden && entry.is_hidden() {
-                    continue;
-                }
+        if !config.storage.show_hidden && entry.is_hidden() {
+            continue;
+        }
 
-                if let Some(file_filter) = file_filter {
-                    if entry.is_file() && !(file_filter.filter)(entry.as_path()) {
-                        continue;
-                    }
-                }
-
-                result.push(entry);
+        if let Some(file_filter) = file_filter {
+            if entry.is_file() && !(file_filter.filter)(entry.as_path()) {
+                continue;
             }
-            Err(_) => continue,
-        };
+        }
+
+        result.push(entry);
     }
 
     result.sort_by(|a, b| {

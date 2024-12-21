@@ -7,10 +7,12 @@ use crate::data::{
     DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
+use crate::{FileSystem, NativeFileSystem};
 use egui::text::{CCursor, CCursorRange};
 use std::fmt::Debug;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -154,6 +156,8 @@ pub struct FileDialog {
     /// This is used to prevent the dialog from closing when pressing the escape key
     /// inside a text input.
     any_focused_last_frame: bool,
+
+    vfs: Arc<dyn FileSystem + Send + Sync>,
 }
 
 /// This tests if file dialog is send and sync.
@@ -228,6 +232,8 @@ impl FileDialog {
             init_search: false,
 
             any_focused_last_frame: false,
+
+            vfs: Arc::new(NativeFileSystem),
         }
     }
 
@@ -1111,7 +1117,7 @@ impl FileDialog {
                     } else if let Some(parent) = path.parent() {
                         // Else, go to the parent directory
                         self.load_directory(parent);
-                        self.select_item(&mut DirectoryEntry::from_path(&self.config, path));
+                        self.select_item(&mut DirectoryEntry::from_path(&self.config, path, &*self.vfs));
                         self.scroll_to_selection = true;
                         repaint = true;
                     }
@@ -2011,7 +2017,7 @@ impl FileDialog {
             DirectoryContentState::Finished => {
                 if self.mode == DialogMode::PickDirectory {
                     if let Some(dir) = self.current_directory() {
-                        let mut dir_entry = DirectoryEntry::from_path(&self.config, dir);
+                        let mut dir_entry = DirectoryEntry::from_path(&self.config, dir, &*self.vfs);
                         self.select_item(&mut dir_entry);
                     }
                 }
@@ -2654,7 +2660,7 @@ impl FileDialog {
 
     /// Function that processes a newly created folder.
     fn process_new_folder(&mut self, created_dir: &Path) -> DirectoryEntry {
-        let mut entry = DirectoryEntry::from_path(&self.config, created_dir);
+        let mut entry = DirectoryEntry::from_path(&self.config, created_dir, &*self.vfs);
 
         self.directory_content.push(entry.clone());
 
@@ -3105,6 +3111,7 @@ impl FileDialog {
             path,
             self.show_files,
             self.get_selected_file_filter(),
+            self.vfs.clone(),
         );
 
         self.create_directory_dialog.close();
