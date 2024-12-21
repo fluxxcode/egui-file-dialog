@@ -1,4 +1,5 @@
 use crate::config::{FileDialogConfig, FileFilter};
+use crate::FileSystem;
 use egui::mutex::Mutex;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
@@ -33,21 +34,12 @@ pub struct DirectoryEntry {
 
 impl DirectoryEntry {
     /// Creates a new directory entry from a path
-    pub fn from_path(config: &FileDialogConfig, path: &Path) -> Self {
-        let mut metadata = Metadata::default();
-
-        if let Ok(md) = fs::metadata(path) {
-            metadata.size = Some(md.len());
-            metadata.last_modified = md.modified().ok();
-            metadata.created = md.created().ok();
-            metadata.file_type = Some(format!("{:?}", md.file_type()));
-        }
-
+    pub fn from_path(config: &FileDialogConfig, path: &Path, vfs: &impl FileSystem) -> Self {
         Self {
             path: path.to_path_buf(),
-            metadata,
-            is_directory: path.is_dir(),
-            is_system_file: !path.is_dir() && !path.is_file(),
+            metadata: vfs.metadata(path).unwrap_or_default(),
+            is_directory: vfs.is_dir(path),
+            is_system_file: !vfs.is_dir(path) && !vfs.is_file(path),
             icon: gen_path_icon(config, path),
             selected: false,
         }
@@ -358,6 +350,7 @@ fn load_directory(
     path: &Path,
     include_files: bool,
     file_filter: Option<&FileFilter>,
+    vfs: &impl FileSystem,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let paths = fs::read_dir(path)?;
 
@@ -365,7 +358,7 @@ fn load_directory(
     for path in paths {
         match path {
             Ok(entry) => {
-                let entry = DirectoryEntry::from_path(config, entry.path().as_path());
+                let entry = DirectoryEntry::from_path(config, entry.path().as_path(), vfs);
 
                 if !config.storage.show_system_files && entry.is_system_file() {
                     continue;
