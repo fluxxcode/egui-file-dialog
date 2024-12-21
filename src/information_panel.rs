@@ -1,6 +1,6 @@
 #![cfg(feature = "information_view")]
 
-use crate::{DirectoryEntry, FileDialog};
+use crate::{DirectoryEntry, FileDialog, FileSystem, NativeFileSystem};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::{Direction, Layout, Ui, Vec2};
@@ -8,6 +8,7 @@ use indexmap::{IndexMap, IndexSet};
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::PathBuf;
+use std::sync::Arc;
 
 type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>>;
 type SupportedPreviewImagesMap =
@@ -81,6 +82,8 @@ pub struct InformationPanel {
     other_meta_data: IndexMap<String, String>,
     /// Stores the images already loaded by the egui loaders.
     stored_images: IndexSet<String>,
+
+    vfs: Arc<dyn FileSystem + Send + Sync>,
 }
 
 impl Default for InformationPanel {
@@ -170,6 +173,7 @@ impl Default for InformationPanel {
             additional_meta_files,
             other_meta_data: IndexMap::default(),
             stored_images: IndexSet::default(),
+            vfs: Arc::new(NativeFileSystem),
         }
     }
 }
@@ -224,33 +228,9 @@ impl InformationPanel {
         self
     }
 
-    /// Reads a preview of the file if it is detected as a text file.
-    fn load_text_file_preview(path: PathBuf, max_chars: usize) -> io::Result<String> {
-        let mut file = File::open(path)?;
-        let mut chunk = [0; 96]; // Temporary buffer
-        let mut buffer = String::new();
-
-        // Add the first chunk to the buffer as text
-        let mut total_read = 0;
-
-        // Continue reading if needed
-        while total_read < max_chars {
-            let bytes_read = file.read(&mut chunk)?;
-            if bytes_read == 0 {
-                break; // End of file
-            }
-            let chars_read: String = String::from_utf8(chunk[..bytes_read].to_vec())
-                .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
-            total_read += chars_read.len();
-            buffer.push_str(&chars_read);
-        }
-
-        Ok(buffer.to_string())
-    }
-
     fn load_content(&self, path: PathBuf) -> Option<String> {
         if self.load_text_content {
-            Self::load_text_file_preview(path, self.text_content_max_chars).ok()
+            self.vfs.load_text_file_preview(&path, self.text_content_max_chars).ok()
         } else {
             None
         }

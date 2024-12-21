@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
-use std::io;
+use std::io::{self, Read};
 
 use crate::data::Metadata;
 
-/// File system abstraction
+/// File system abstraction specific to the needs of egui-file-dialog
 pub trait FileSystem {
     /// Queries metadata for the given path
     fn metadata(&self, path: &Path) -> io::Result<Metadata>;
@@ -14,8 +14,11 @@ pub trait FileSystem {
     /// Returns true if the path exists and is a file
     fn is_file(&self, path: &Path) -> bool;
 
-    /// Reads
+    /// Get the children of a directory
     fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>>;
+
+    /// Read a short preview of a text file
+    fn load_text_file_preview(&self, path: &Path, max_chars: usize) -> io::Result<String>;
 }
 
 impl std::fmt::Debug for dyn FileSystem + Send + Sync {
@@ -54,5 +57,28 @@ impl FileSystem for NativeFileSystem {
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())
             .collect())
+    }
+
+    fn load_text_file_preview(&self, path: &Path, max_chars: usize) -> io::Result<String> {
+        let mut file = std::fs::File::open(path)?;
+        let mut chunk = [0; 96]; // Temporary buffer
+        let mut buffer = String::new();
+
+        // Add the first chunk to the buffer as text
+        let mut total_read = 0;
+
+        // Continue reading if needed
+        while total_read < max_chars {
+            let bytes_read = file.read(&mut chunk)?;
+            if bytes_read == 0 {
+                break; // End of file
+            }
+            let chars_read: String = String::from_utf8(chunk[..bytes_read].to_vec())
+                .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
+            total_read += chars_read.len();
+            buffer.push_str(&chars_read);
+        }
+
+        Ok(buffer.to_string())
     }
 }
