@@ -220,7 +220,7 @@ impl FileDialog {
             directory_offset: 0,
             directory_content: DirectoryContent::default(),
 
-            create_directory_dialog: CreateDirectoryDialog::new(),
+            create_directory_dialog: CreateDirectoryDialog::from_filestem(vfs.clone()),
 
             path_edit_visible: false,
             path_edit_value: String::new(),

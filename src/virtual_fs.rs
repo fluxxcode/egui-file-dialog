@@ -25,6 +25,9 @@ pub trait FileSystem {
 
     /// Determine if a path is hidden
     fn is_path_hidden(&self, path: &Path) -> bool;
+
+    /// Creates a new directory
+    fn create_dir(&self, path: &Path) -> io::Result<()>;
 }
 
 impl std::fmt::Debug for dyn FileSystem + Send + Sync {
@@ -94,6 +97,10 @@ impl FileSystem for NativeFileSystem {
 
     fn is_path_hidden(&self, path: &Path) -> bool {
         is_path_hidden(path)
+    }
+
+    fn create_dir(&self, path: &Path) -> io::Result<()> {
+        std::fs::create_dir(path)
     }
 }
 

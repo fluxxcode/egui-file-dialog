@@ -1,7 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
-use crate::{FileDialogConfig, FileDialogLabels};
+use crate::{FileDialogConfig, FileDialogLabels, FileSystem};
 
 pub struct CreateDirectoryResponse {
     /// Contains the path to the directory that was created.
@@ -47,11 +48,13 @@ pub struct CreateDirectoryDialog {
     scroll_to_error: bool,
     /// If the text input should request focus in the next frame
     request_focus: bool,
+
+    vfs: Arc<dyn FileSystem + Send + Sync>,
 }
 
 impl CreateDirectoryDialog {
     /// Creates a new dialog with default values
-    pub const fn new() -> Self {
+    pub fn from_filestem(vfs: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
             open: false,
             init: false,
@@ -61,6 +64,7 @@ impl CreateDirectoryDialog {
             error: None,
             scroll_to_error: false,
             request_focus: true,
+            vfs,
         }
     }
 
@@ -177,7 +181,7 @@ impl CreateDirectoryDialog {
         if let Some(mut dir) = self.directory.clone() {
             dir.push(self.input.as_str());
 
-            match fs::create_dir(&dir) {
+            match self.vfs.create_dir(&dir) {
                 Ok(()) => {
                     self.close();
                     return CreateDirectoryResponse::new(dir.as_path());
