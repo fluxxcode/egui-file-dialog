@@ -87,7 +87,7 @@ Requires the feature `information_view` as well as these dependencies:
 ```toml
 [dependencies]
 egui-file-dialog = { version = "*", features = ["information_view"] }
-egui_extras = { version = "0.29", features = ["all_loaders"] }
+egui_extras = { version = "0.30", features = ["all_loaders"] }
 # required by the egui loaders
 image = { version = "0.25.5", features = ["bmp", "jpeg", "gif", "png", "tiff", "rayon"] }
 ```
@@ -97,4 +97,3 @@ cargo run --example pick_file_with_information_view
 ```
 
 ![Screenshot](../media/examples/information_view.png)
-

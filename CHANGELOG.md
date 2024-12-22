@@ -1,11 +1,16 @@
 # egui-file-dialog changelog
 
-## Unreleased
+## 2024-12-17 - v0.8.0 - egui update, custom right panel and more
+
+### 🚨 Breaking Changes
+
+- Updated `egui` from version `0.29.1` to version `0.30.0` [#221](https://github.com/fluxxcode/egui-file-dialog/pull/221) (thanks [@bircni](https://github.com/bircni)!)
 
 ### ✨ Features
 
 - Added `FileDialog::update_with_right_panel_ui` to add a custom right panel to the file dialog [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Added `FileDialog::active_selected_entries` and `FileDialog::active_entry` to get information about the current active item/s [#170](https://github.com/fluxxcode/egui-file-dialog/pull/170) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+- Added new `InformationPanel` to optionally display file information and image previews in the right panel [#184](https://github.com/fluxxcode/egui-file-dialog/pull/184) (thanks [@hacknus](https://github.com/hacknus) and [@bircni](https://github.com/bircni)!)
 - Added option to show system files in the hamburger menu [#173](https://github.com/fluxxcode/egui-file-dialog/pull/173) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 - Support mapped network devices on Windows [#189](https://github.com/fluxxcode/egui-file-dialog/pull/189)
 - Added the ability to drag and drop files and folders to open their respective path [#192](https://github.com/fluxxcode/egui-file-dialog/pull/192) (thanks [@hacknus](https://github.com/hacknus)!)
@@ -13,7 +18,7 @@
 - Files and folders are now truncated in the middle and no longer divided onto separate lines. This can be disabled using `FileDialog::truncate_filenames` [#203](https://github.com/fluxxcode/egui-file-dialog/pull/203) (thanks [@hacknus](https://github.com/hacknus)!)
 
 ### ☢️ Deprecated
-- Deprecated all `select_*` methods and added new equivalent `pick_*` methods [207](https://github.com/fluxxcode/egui-file-dialog/pull/207)
+- Deprecated all `select_*` methods and added new equivalent `pick_*` methods [#207](https://github.com/fluxxcode/egui-file-dialog/pull/207)
 
 ### 🐛 Bug Fixes
 
@@ -24,7 +29,7 @@
 ### 🔧 Changes
 
 - Use path edit as file to save [#160](https://github.com/fluxxcode/egui-file-dialog/pull/160)
-- Updated sysinfo to version `0.32` [#161](https://github.com/fluxxcode/egui-file-dialog/pull/161)
+- Updated sysinfo to version `0.33` [#220](https://github.com/fluxxcode/egui-file-dialog/pull/220)
 - Made default egui fonts an optional feature `default_fonts` [#163](https://github.com/fluxxcode/egui-file-dialog/pull/163) (thanks [@StarStarJ](https://github.com/StarStarJ)!)
 - Filter directory when loading to improve performance [#169](https://github.com/fluxxcode/egui-file-dialog/pull/169)
 - Implement non blocking directory loading [#177](https://github.com/fluxxcode/egui-file-dialog/pull/177)
@@ -36,6 +41,7 @@
 ### 📚 Documentation
 
 - Updated `README.md` to include latest features [#176](https://github.com/fluxxcode/egui-file-dialog/pull/176)
+- Updated `README.md` to use new `pick_*` methods [#214](https://github.com/fluxxcode/egui-file-dialog/pull/214)
 
 ## 2024-10-01 - v0.7.0 - egui update and QoL changes
 
