@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::data::DirectoryEntry;
+use crate::{FileSystem, NativeFileSystem};
 
 /// Contains data of the `FileDialog` that should be stored persistently.
 #[derive(Debug, Clone)]
@@ -206,8 +207,14 @@ pub struct FileDialogConfig {
 }
 
 impl Default for FileDialogConfig {
-    /// Creates a new configuration with default values
     fn default() -> Self {
+        Self::default_from_filesystem(&NativeFileSystem)
+    }
+}
+
+impl FileDialogConfig {
+    /// Creates a new configuration with default values
+    pub fn default_from_filesystem(fs: &dyn FileSystem) -> Self {
         Self {
             storage: FileDialogStorage::default(),
             labels: FileDialogLabels::default(),
@@ -215,7 +222,7 @@ impl Default for FileDialogConfig {
 
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
-            initial_directory: std::env::current_dir().unwrap_or_default(),
+            initial_directory: fs.current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             allow_file_overwrite: true,
             allow_path_edit_to_save_file_without_extension: false,

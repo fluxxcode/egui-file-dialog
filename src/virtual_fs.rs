@@ -31,6 +31,9 @@ pub trait FileSystem {
 
     /// Returns the user directories
     fn user_dirs(&self, canonicalize_paths: bool) -> Option<UserDirectories>;
+
+    /// Get the current working directory
+    fn current_dir(&self) -> io::Result<PathBuf>;
 }
 
 impl std::fmt::Debug for dyn FileSystem + Send + Sync {
@@ -121,6 +124,10 @@ impl FileSystem for NativeFileSystem {
         }
 
         None
+    }
+
+    fn current_dir(&self) -> io::Result<PathBuf> {
+        std::env::current_dir()
     }
 }
 

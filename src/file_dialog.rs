@@ -202,7 +202,7 @@ impl FileDialog {
     /// Creates a new file dialog instance with the given file system abstraction
     pub fn from_filesystem(vfs: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
-            config: FileDialogConfig::default(),
+            config: FileDialogConfig::default_from_filesystem(&*vfs),
 
             modals: Vec::new(),
 
