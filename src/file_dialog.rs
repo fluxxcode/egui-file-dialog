@@ -213,7 +213,7 @@ impl FileDialog {
 
             window_id: egui::Id::new("file_dialog"),
 
-            user_directories: UserDirectories::new(true),
+            user_directories: vfs.user_dirs(true),
             system_disks: vfs.get_disks(true),
 
             directory_stack: Vec::new(),
@@ -2734,7 +2734,7 @@ impl FileDialog {
     /// Refreshes the dialog.
     /// Including the user directories, system disks and currently open directory.
     fn refresh(&mut self) {
-        self.user_directories = UserDirectories::new(self.config.canonicalize_paths);
+        self.user_directories = self.vfs.user_dirs(self.config.canonicalize_paths);
         self.system_disks = self.vfs.get_disks(self.config.canonicalize_paths);
 
         self.reload_directory();

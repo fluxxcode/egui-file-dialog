@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::io::{self, Read};
 
-use crate::data::{native_load_disks, Disks, Metadata};
+use crate::data::{native_load_disks, Disks, Metadata, UserDirectories};
 
 /// File system abstraction specific to the needs of egui-file-dialog
 pub trait FileSystem {
@@ -28,6 +28,9 @@ pub trait FileSystem {
 
     /// Creates a new directory
     fn create_dir(&self, path: &Path) -> io::Result<()>;
+
+    /// Returns the user directories
+    fn user_dirs(&self, canonicalize_paths: bool) -> Option<UserDirectories>;
 }
 
 impl std::fmt::Debug for dyn FileSystem + Send + Sync {
@@ -101,6 +104,23 @@ impl FileSystem for NativeFileSystem {
 
     fn create_dir(&self, path: &Path) -> io::Result<()> {
         std::fs::create_dir(path)
+    }
+
+    fn user_dirs(&self, canonicalize_paths: bool) -> Option<UserDirectories> {
+        if let Some(dirs) = directories::UserDirs::new() {
+            return Some(UserDirectories {
+                home_dir: UserDirectories::canonicalize(Some(dirs.home_dir()), canonicalize_paths),
+
+                audio_dir: UserDirectories::canonicalize(dirs.audio_dir(), canonicalize_paths),
+                desktop_dir: UserDirectories::canonicalize(dirs.desktop_dir(), canonicalize_paths),
+                document_dir: UserDirectories::canonicalize(dirs.document_dir(), canonicalize_paths),
+                download_dir: UserDirectories::canonicalize(dirs.download_dir(), canonicalize_paths),
+                picture_dir: UserDirectories::canonicalize(dirs.picture_dir(), canonicalize_paths),
+                video_dir: UserDirectories::canonicalize(dirs.video_dir(), canonicalize_paths),
+            });
+        }
+
+        None
     }
 }
 
