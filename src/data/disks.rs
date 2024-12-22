@@ -7,9 +7,9 @@ use std::path::{Path, PathBuf};
 /// the names of the disks are generated dynamically.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Disk {
-    mount_point: PathBuf,
-    display_name: String,
-    is_removable: bool,
+    pub mount_point: PathBuf,
+    pub display_name: String,
+    pub is_removable: bool,
 }
 
 impl Disk {
@@ -78,7 +78,7 @@ impl Disk {
 /// Wrapper above the `sysinfo::Disks` struct
 #[derive(Default, Debug)]
 pub struct Disks {
-    disks: Vec<Disk>,
+    pub disks: Vec<Disk>,
 }
 
 pub fn native_load_disks(canonicalize_paths: bool) -> Disks {

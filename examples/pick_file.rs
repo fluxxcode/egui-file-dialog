@@ -1,7 +1,7 @@
 use std::path::PathBuf;
+use egui_file_dialog::FileDialog;
 
 use eframe::egui;
-use egui_file_dialog::FileDialog;
 
 struct MyApp {
     file_dialog: FileDialog,
