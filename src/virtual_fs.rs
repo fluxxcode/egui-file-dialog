@@ -3,7 +3,22 @@ use std::io::{self, Read};
 
 use crate::data::{native_load_disks, Disks, Metadata, UserDirectories};
 
-/// File system abstraction specific to the needs of egui-file-dialog
+/// An abstraction over the host system, allowing the file dialog to be used to browse e.g. in
+/// memory filesystems.
+///
+/// # Examples
+///
+/// ```
+/// use egui_file_dialog::{FileDialog, FileSystem};
+///
+/// struct MyFileSystem;
+///
+/// impl FileSystem for MyFileSystem { /* ... */ }
+///
+/// let dialog = FileDialog::from_filesystem(Arc::new(MyFileSystem));
+///
+/// /* Use the file dialog as usual */
+/// ```
 pub trait FileSystem {
     /// Queries metadata for the given path
     fn metadata(&self, path: &Path) -> io::Result<Metadata>;
