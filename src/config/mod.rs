@@ -221,7 +221,12 @@ impl Default for FileDialogConfig {
             allow_path_edit_to_save_file_without_extension: false,
             directory_separator: String::from(">"),
             canonicalize_paths: true,
+
+            #[cfg(target_arch = "wasm32")]
+            load_via_thread: false,
+            #[cfg(not(target_arch = "wasm32"))]
             load_via_thread: true,
+
             truncate_filenames: true,
 
             err_icon: String::from("⚠"),
