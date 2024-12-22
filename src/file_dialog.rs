@@ -244,6 +244,16 @@ impl FileDialog {
     }
 
     /// Creates a new file dialog object and initializes it with the specified configuration.
+    pub fn with_config_and_vfs(config: FileDialogConfig, vfs: Arc<dyn FileSystem + Send + Sync>) -> Self {
+        let mut obj = Self::from_filesystem(vfs);
+        *obj.config_mut() = config;
+
+        obj.refresh();
+
+        obj
+    }
+
+    /// Creates a new file dialog object and initializes it with the specified configuration.
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
@@ -2728,7 +2738,7 @@ impl FileDialog {
     /// Configuration variables are retained.
     fn reset(&mut self) {
         let config = self.config.clone();
-        *self = Self::with_config(config);
+        *self = Self::with_config_and_vfs(config, self.vfs.clone());
     }
 
     /// Refreshes the dialog.
