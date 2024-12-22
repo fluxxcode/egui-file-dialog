@@ -207,7 +207,7 @@ pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
     KeyBinding, QuickAccess, QuickAccessPath,
 };
-pub use data::{DirectoryEntry, Metadata, UserDirectories, Disks};
+pub use data::{DirectoryEntry, Metadata, UserDirectories, Disks, Disk};
 pub use file_dialog::{DialogMode, DialogState, FileDialog};
 
 pub use virtual_fs::{FileSystem, NativeFileSystem};
