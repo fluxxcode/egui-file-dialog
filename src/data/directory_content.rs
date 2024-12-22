@@ -41,7 +41,7 @@ impl DirectoryEntry {
             metadata: vfs.metadata(path).unwrap_or_default(),
             is_directory: vfs.is_dir(path),
             is_system_file: !vfs.is_dir(path) && !vfs.is_file(path),
-            icon: gen_path_icon(config, path),
+            icon: gen_path_icon(config, path, vfs),
             is_hidden: vfs.is_path_hidden(path),
             selected: false,
         }
@@ -398,14 +398,14 @@ fn load_directory(
 /// Generates the icon for the specific path.
 /// The default icon configuration is taken into account, as well as any configured
 /// file icon filters.
-fn gen_path_icon(config: &FileDialogConfig, path: &Path) -> String {
+fn gen_path_icon(config: &FileDialogConfig, path: &Path, vfs: &dyn FileSystem) -> String {
     for def in &config.file_icon_filters {
         if (def.filter)(path) {
             return def.icon.clone();
         }
     }
 
-    if path.is_dir() {
+    if vfs.is_dir(path) {
         config.default_folder_icon.clone()
     } else {
         config.default_file_icon.clone()
