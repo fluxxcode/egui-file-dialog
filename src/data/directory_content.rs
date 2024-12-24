@@ -10,10 +10,10 @@ use std::{io, thread};
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Metadata {
-    size: Option<u64>,
-    last_modified: Option<SystemTime>,
-    created: Option<SystemTime>,
-    file_type: Option<String>,
+    pub(crate) size: Option<u64>,
+    pub(crate) last_modified: Option<SystemTime>,
+    pub(crate) created: Option<SystemTime>,
+    pub(crate) file_type: Option<String>,
 }
 
 impl Metadata {
