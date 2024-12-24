@@ -1,4 +1,4 @@
-use egui_file_dialog::{FileDialog, FileSystem};
+use egui_file_dialog::{Disk, Disks, FileDialog, FileSystem};
 use std::{
     path::{Component, Path, PathBuf},
     sync::Arc,
@@ -134,7 +134,9 @@ impl FileSystem for MyFileSystem {
     }
 
     fn get_disks(&self, canonicalize_paths: bool) -> egui_file_dialog::Disks {
-        Default::default()
+        Disks::new(vec![
+            Disk::new(Some("I'm a fake disk"), &PathBuf::from("/disk"), false, true),
+        ])
     }
 
     fn user_dirs(&self, canonicalize_paths: bool) -> Option<egui_file_dialog::UserDirectories> {
