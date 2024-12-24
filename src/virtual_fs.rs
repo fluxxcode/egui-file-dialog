@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::io::{self, Read};
 
-use crate::data::{native_load_disks, Disks, Metadata, UserDirectories};
+use crate::data::{Disks, Metadata, UserDirectories};
 
 /// An abstraction over the host system, allowing the file dialog to be used to browse e.g. in
 /// memory filesystems.
@@ -113,7 +113,7 @@ impl FileSystem for NativeFileSystem {
     }
 
     fn get_disks(&self, canonicalize_paths: bool) -> Disks {
-        native_load_disks(canonicalize_paths)
+        Disks::new_native_disks(canonicalize_paths)
     }
 
     fn is_path_hidden(&self, path: &Path) -> bool {

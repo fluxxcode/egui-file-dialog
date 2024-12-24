@@ -82,10 +82,6 @@ pub struct Disks {
     disks: Vec<Disk>,
 }
 
-pub fn native_load_disks(canonicalize_paths: bool) -> Disks {
-    Disks { disks: load_disks(canonicalize_paths) }
-}
-
 impl Disks {
     /// Create a new set of disks
     pub fn new(disks: Vec<Disk>) -> Self {
@@ -94,14 +90,10 @@ impl Disks {
         }
     }
 
-    /*
-    /// Creates a new Disks object with a refreshed list of the system disks.
-    pub fn new_with_refreshed_list(canonicalize_paths: bool) -> Self {
-        Self {
-            disks: load_disks(canonicalize_paths),
-        }
+    /// Queries the operating system for disks
+    pub fn new_native_disks(canonicalize_paths: bool) -> Disks {
+        Disks { disks: load_disks(canonicalize_paths) }
     }
-    */
 
     /// Very simple wrapper method of the disks `.iter()` method.
     /// No trait is implemented since this is currently only used internal.
