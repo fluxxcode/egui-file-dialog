@@ -4,17 +4,38 @@ use std::path::{Path, PathBuf};
 /// Currently only used to canonicalize the paths.
 #[derive(Default, Clone, Debug)]
 pub struct UserDirectories {
-    pub home_dir: Option<PathBuf>,
+    home_dir: Option<PathBuf>,
 
-    pub audio_dir: Option<PathBuf>,
-    pub desktop_dir: Option<PathBuf>,
-    pub document_dir: Option<PathBuf>,
-    pub download_dir: Option<PathBuf>,
-    pub picture_dir: Option<PathBuf>,
-    pub video_dir: Option<PathBuf>,
+    audio_dir: Option<PathBuf>,
+    desktop_dir: Option<PathBuf>,
+    document_dir: Option<PathBuf>,
+    download_dir: Option<PathBuf>,
+    picture_dir: Option<PathBuf>,
+    video_dir: Option<PathBuf>,
 }
 
 impl UserDirectories {
+    /// Creates a new custom UserDirectories object
+    pub fn new(
+        home_dir: Option<PathBuf>,
+        audio_dir: Option<PathBuf>,
+        desktop_dir: Option<PathBuf>,
+        document_dir: Option<PathBuf>,
+        download_dir: Option<PathBuf>,
+        picture_dir: Option<PathBuf>,
+        video_dir: Option<PathBuf>,
+    ) -> Self {
+        Self {
+            home_dir,
+            audio_dir,
+            desktop_dir,
+            document_dir,
+            download_dir,
+            picture_dir,
+            video_dir,
+        }
+    }
+
     pub fn home_dir(&self) -> Option<&Path> {
         self.home_dir.as_deref()
     }

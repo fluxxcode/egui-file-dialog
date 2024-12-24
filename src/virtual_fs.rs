@@ -126,16 +126,15 @@ impl FileSystem for NativeFileSystem {
 
     fn user_dirs(&self, canonicalize_paths: bool) -> Option<UserDirectories> {
         if let Some(dirs) = directories::UserDirs::new() {
-            return Some(UserDirectories {
-                home_dir: UserDirectories::canonicalize(Some(dirs.home_dir()), canonicalize_paths),
-
-                audio_dir: UserDirectories::canonicalize(dirs.audio_dir(), canonicalize_paths),
-                desktop_dir: UserDirectories::canonicalize(dirs.desktop_dir(), canonicalize_paths),
-                document_dir: UserDirectories::canonicalize(dirs.document_dir(), canonicalize_paths),
-                download_dir: UserDirectories::canonicalize(dirs.download_dir(), canonicalize_paths),
-                picture_dir: UserDirectories::canonicalize(dirs.picture_dir(), canonicalize_paths),
-                video_dir: UserDirectories::canonicalize(dirs.video_dir(), canonicalize_paths),
-            });
+            return Some(UserDirectories::new(
+                UserDirectories::canonicalize(Some(dirs.home_dir()), canonicalize_paths),
+                UserDirectories::canonicalize(dirs.audio_dir(), canonicalize_paths),
+                UserDirectories::canonicalize(dirs.desktop_dir(), canonicalize_paths),
+                UserDirectories::canonicalize(dirs.document_dir(), canonicalize_paths),
+                UserDirectories::canonicalize(dirs.download_dir(), canonicalize_paths),
+                UserDirectories::canonicalize(dirs.picture_dir(), canonicalize_paths),
+                UserDirectories::canonicalize(dirs.video_dir(), canonicalize_paths),
+            ));
         }
 
         None
