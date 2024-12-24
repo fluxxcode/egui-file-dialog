@@ -29,7 +29,7 @@ pub trait FileSystem {
     /// Returns true if the path exists and is a file
     fn is_file(&self, path: &Path) -> bool;
 
-    /// Get the children of a directory
+    /// Gets the children of a directory
     fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>>;
 
     /// Read a short preview of a text file
