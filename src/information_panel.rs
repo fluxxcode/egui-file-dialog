@@ -81,7 +81,7 @@ pub struct InformationPanel {
     /// Stores the images already loaded by the egui loaders.
     stored_images: IndexSet<String>,
 
-    vfs: Arc<dyn FileSystem + Send + Sync>,
+    file_system: Arc<dyn FileSystem + Send + Sync>,
 }
 
 impl Default for InformationPanel {
@@ -171,7 +171,7 @@ impl Default for InformationPanel {
             additional_meta_files,
             other_meta_data: IndexMap::default(),
             stored_images: IndexSet::default(),
-            vfs: Arc::new(NativeFileSystem),
+            file_system: Arc::new(NativeFileSystem),
         }
     }
 }
@@ -228,7 +228,7 @@ impl InformationPanel {
 
     fn load_content(&self, path: PathBuf) -> Option<String> {
         if self.load_text_content {
-            self.vfs.load_text_file_preview(&path, self.text_content_max_chars).ok()
+            self.file_system.load_text_file_preview(&path, self.text_content_max_chars).ok()
         } else {
             None
         }

@@ -10,10 +10,27 @@ use std::{io, thread};
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Metadata {
-    pub size: Option<u64>,
-    pub last_modified: Option<SystemTime>,
-    pub created: Option<SystemTime>,
-    pub file_type: Option<String>,
+    size: Option<u64>,
+    last_modified: Option<SystemTime>,
+    created: Option<SystemTime>,
+    file_type: Option<String>,
+}
+
+impl Metadata {
+    /// Create a new custom metadata
+    pub fn new(
+        size: Option<u64>,
+        last_modified: Option<SystemTime>,
+        created: Option<SystemTime>,
+        file_type: Option<String>,
+    ) -> Self {
+        Self {
+            size,
+            last_modified,
+            created,
+            file_type,
+        }
+    }
 }
 
 /// Contains the information of a directory item.
@@ -35,14 +52,14 @@ pub struct DirectoryEntry {
 
 impl DirectoryEntry {
     /// Creates a new directory entry from a path
-    pub fn from_path(config: &FileDialogConfig, path: &Path, vfs: &dyn FileSystem) -> Self {
+    pub fn from_path(config: &FileDialogConfig, path: &Path, file_system: &dyn FileSystem) -> Self {
         Self {
             path: path.to_path_buf(),
-            metadata: vfs.metadata(path).unwrap_or_default(),
-            is_directory: vfs.is_dir(path),
-            is_system_file: !vfs.is_dir(path) && !vfs.is_file(path),
-            icon: gen_path_icon(config, path, vfs),
-            is_hidden: vfs.is_path_hidden(path),
+            metadata: file_system.metadata(path).unwrap_or_default(),
+            is_directory: file_system.is_dir(path),
+            is_system_file: !file_system.is_dir(path) && !file_system.is_file(path),
+            icon: gen_path_icon(config, path, file_system),
+            is_hidden: file_system.is_path_hidden(path),
             selected: false,
         }
     }
@@ -196,12 +213,12 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
-        vfs: Arc<dyn FileSystem + Sync + Send + 'static>,
+        file_system: Arc<dyn FileSystem + Sync + Send + 'static>,
     ) -> Self {
         if config.load_via_thread {
-            Self::with_thread(config, path, include_files, file_filter, vfs)
+            Self::with_thread(config, path, include_files, file_filter, file_system)
         } else {
-            Self::without_thread(config, path, include_files, file_filter, &*vfs)
+            Self::without_thread(config, path, include_files, file_filter, &*file_system)
         }
     }
 
@@ -210,7 +227,7 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
-        vfs: Arc<dyn FileSystem + Send + Sync + 'static>,
+        file_system: Arc<dyn FileSystem + Send + Sync + 'static>,
     ) -> Self {
         let (tx, rx) = mpsc::channel();
 
@@ -218,7 +235,7 @@ impl DirectoryContent {
         let p = path.to_path_buf();
         let f = file_filter.cloned();
         thread::spawn(move || {
-            let _ = tx.send(load_directory(&c, &p, include_files, f.as_ref(), &*vfs));
+            let _ = tx.send(load_directory(&c, &p, include_files, f.as_ref(), &*file_system));
         });
 
         Self {
@@ -233,9 +250,9 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
-        vfs: &dyn FileSystem,
+        file_system: &dyn FileSystem,
     ) -> Self {
-        match load_directory(config, path, include_files, file_filter, vfs) {
+        match load_directory(config, path, include_files, file_filter, file_system) {
             Ok(c) => Self {
                 state: DirectoryContentState::Success,
                 content: c,
@@ -355,11 +372,11 @@ fn load_directory(
     path: &Path,
     include_files: bool,
     file_filter: Option<&FileFilter>,
-    vfs: &dyn FileSystem,
+    file_system: &dyn FileSystem,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let mut result: Vec<DirectoryEntry> = Vec::new();
-    for path in vfs.read_dir(path)? {
-        let entry = DirectoryEntry::from_path(config, &path, vfs);
+    for path in file_system.read_dir(path)? {
+        let entry = DirectoryEntry::from_path(config, &path, file_system);
 
         if !config.storage.show_system_files && entry.is_system_file() {
             continue;
@@ -398,14 +415,14 @@ fn load_directory(
 /// Generates the icon for the specific path.
 /// The default icon configuration is taken into account, as well as any configured
 /// file icon filters.
-fn gen_path_icon(config: &FileDialogConfig, path: &Path, vfs: &dyn FileSystem) -> String {
+fn gen_path_icon(config: &FileDialogConfig, path: &Path, file_system: &dyn FileSystem) -> String {
     for def in &config.file_icon_filters {
         if (def.filter)(path) {
             return def.icon.clone();
         }
     }
 
-    if vfs.is_dir(path) {
+    if file_system.is_dir(path) {
         config.default_folder_icon.clone()
     } else {
         config.default_file_icon.clone()

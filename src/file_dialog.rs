@@ -157,7 +157,7 @@ pub struct FileDialog {
     /// inside a text input.
     any_focused_last_frame: bool,
 
-    vfs: Arc<dyn FileSystem + Send + Sync>,
+    file_system: Arc<dyn FileSystem + Send + Sync>,
 }
 
 /// This tests if file dialog is send and sync.
@@ -200,9 +200,9 @@ impl FileDialog {
 
     #[must_use]
     /// Creates a new file dialog instance with the given file system abstraction
-    pub fn from_filesystem(vfs: Arc<dyn FileSystem + Send + Sync>) -> Self {
+    pub fn from_filesystem(file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
-            config: FileDialogConfig::default_from_filesystem(&*vfs),
+            config: FileDialogConfig::default_from_filesystem(&*file_system),
 
             modals: Vec::new(),
 
@@ -213,14 +213,14 @@ impl FileDialog {
 
             window_id: egui::Id::new("file_dialog"),
 
-            user_directories: vfs.user_dirs(true),
-            system_disks: vfs.get_disks(true),
+            user_directories: file_system.user_dirs(true),
+            system_disks: file_system.get_disks(true),
 
             directory_stack: Vec::new(),
             directory_offset: 0,
             directory_content: DirectoryContent::default(),
 
-            create_directory_dialog: CreateDirectoryDialog::from_filestem(vfs.clone()),
+            create_directory_dialog: CreateDirectoryDialog::from_filesystem(file_system.clone()),
 
             path_edit_visible: false,
             path_edit_value: String::new(),
@@ -239,13 +239,13 @@ impl FileDialog {
 
             any_focused_last_frame: false,
             
-            vfs,
+            file_system,
         }
     }
 
     /// Creates a new file dialog object and initializes it with the specified configuration.
-    pub fn with_config_and_vfs(config: FileDialogConfig, vfs: Arc<dyn FileSystem + Send + Sync>) -> Self {
-        let mut obj = Self::from_filesystem(vfs);
+    pub fn with_config_and_filesystem(config: FileDialogConfig, file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
+        let mut obj = Self::from_filesystem(file_system);
         *obj.config_mut() = config;
 
         obj.refresh();
@@ -1126,14 +1126,14 @@ impl FileDialog {
             // Check if files were dropped
             if let Some(dropped_file) = i.raw.dropped_files.last() {
                 if let Some(path) = &dropped_file.path {
-                    if self.vfs.is_dir(path) {
+                    if self.file_system.is_dir(path) {
                         // If we dropped a directory, go there
                         self.load_directory(path.as_path());
                         repaint = true;
                     } else if let Some(parent) = path.parent() {
                         // Else, go to the parent directory
                         self.load_directory(parent);
-                        self.select_item(&mut DirectoryEntry::from_path(&self.config, path, &*self.vfs));
+                        self.select_item(&mut DirectoryEntry::from_path(&self.config, path, &*self.file_system));
                         self.scroll_to_selection = true;
                         repaint = true;
                     }
@@ -2033,7 +2033,7 @@ impl FileDialog {
             DirectoryContentState::Finished => {
                 if self.mode == DialogMode::PickDirectory {
                     if let Some(dir) = self.current_directory() {
-                        let mut dir_entry = DirectoryEntry::from_path(&self.config, dir, &*self.vfs);
+                        let mut dir_entry = DirectoryEntry::from_path(&self.config, dir, &*self.file_system);
                         self.select_item(&mut dir_entry);
                     }
                 }
@@ -2676,7 +2676,7 @@ impl FileDialog {
 
     /// Function that processes a newly created folder.
     fn process_new_folder(&mut self, created_dir: &Path) -> DirectoryEntry {
-        let mut entry = DirectoryEntry::from_path(&self.config, created_dir, &*self.vfs);
+        let mut entry = DirectoryEntry::from_path(&self.config, created_dir, &*self.file_system);
 
         self.directory_content.push(entry.clone());
 
@@ -2738,14 +2738,14 @@ impl FileDialog {
     /// Configuration variables are retained.
     fn reset(&mut self) {
         let config = self.config.clone();
-        *self = Self::with_config_and_vfs(config, self.vfs.clone());
+        *self = Self::with_config_and_filesystem(config, self.file_system.clone());
     }
 
     /// Refreshes the dialog.
     /// Including the user directories, system disks and currently open directory.
     fn refresh(&mut self) {
-        self.user_directories = self.vfs.user_dirs(self.config.canonicalize_paths);
-        self.system_disks = self.vfs.get_disks(self.config.canonicalize_paths);
+        self.user_directories = self.file_system.user_dirs(self.config.canonicalize_paths);
+        self.system_disks = self.file_system.get_disks(self.config.canonicalize_paths);
 
         self.reload_directory();
     }
@@ -2808,7 +2808,7 @@ impl FileDialog {
     fn gen_initial_directory(&self, path: &Path) -> PathBuf {
         let mut path = self.canonicalize_path(path);
 
-        if self.vfs.is_file(&path) {
+        if self.file_system.is_file(&path) {
             if let Some(parent) = path.parent() {
                 path = parent.to_path_buf();
             }
@@ -2855,11 +2855,11 @@ impl FileDialog {
             let mut full_path = x.to_path_buf();
             full_path.push(self.file_name_input.as_str());
 
-            if self.vfs.is_dir(&full_path) {
+            if self.file_system.is_dir(&full_path) {
                 return Some(self.config.labels.err_directory_exists.clone());
             }
 
-            if !self.config.allow_file_overwrite && self.vfs.is_file(&full_path) {
+            if !self.config.allow_file_overwrite && self.file_system.is_file(&full_path) {
                 return Some(self.config.labels.err_file_exists.clone());
             }
         } else {
@@ -3003,7 +3003,7 @@ impl FileDialog {
 
         let path = self.canonicalize_path(&PathBuf::from(&self.path_edit_value));
 
-        if self.mode == DialogMode::PickFile && self.vfs.is_file(&path) {
+        if self.mode == DialogMode::PickFile && self.file_system.is_file(&path) {
             self.state = DialogState::Picked(path);
             return;
         }
@@ -3017,7 +3017,7 @@ impl FileDialog {
         if self.mode == DialogMode::SaveFile
             && (path.extension().is_some()
                 || self.config.allow_path_edit_to_save_file_without_extension)
-            && !self.vfs.is_dir(&path)
+            && !self.file_system.is_dir(&path)
             && path.parent().is_some_and(std::path::Path::exists)
         {
             self.submit_save_file(path);
@@ -3127,7 +3127,7 @@ impl FileDialog {
             path,
             self.show_files,
             self.get_selected_file_filter(),
-            self.vfs.clone(),
+            self.file_system.clone(),
         );
 
         self.create_directory_dialog.close();

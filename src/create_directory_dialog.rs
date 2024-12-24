@@ -48,12 +48,12 @@ pub struct CreateDirectoryDialog {
     /// If the text input should request focus in the next frame
     request_focus: bool,
 
-    vfs: Arc<dyn FileSystem + Send + Sync>,
+    file_system: Arc<dyn FileSystem + Send + Sync>,
 }
 
 impl CreateDirectoryDialog {
     /// Creates a new dialog with default values
-    pub fn from_filestem(vfs: Arc<dyn FileSystem + Send + Sync>) -> Self {
+    pub fn from_filesystem(file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
             open: false,
             init: false,
@@ -63,7 +63,7 @@ impl CreateDirectoryDialog {
             error: None,
             scroll_to_error: false,
             request_focus: true,
-            vfs,
+            file_system,
         }
     }
 
@@ -180,7 +180,7 @@ impl CreateDirectoryDialog {
         if let Some(mut dir) = self.directory.clone() {
             dir.push(self.input.as_str());
 
-            match self.vfs.create_dir(&dir) {
+            match self.file_system.create_dir(&dir) {
                 Ok(()) => {
                     self.close();
                     return CreateDirectoryResponse::new(dir.as_path());
