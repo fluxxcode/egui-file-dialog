@@ -1,5 +1,5 @@
-use std::path::{Path, PathBuf};
 use std::io::{self, Read};
+use std::path::{Path, PathBuf};
 
 use crate::data::{Disks, Metadata, UserDirectories};
 
@@ -32,9 +32,6 @@ pub trait FileSystem {
     /// Gets the children of a directory
     fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>>;
 
-    /// Read a short preview of a text file
-    fn load_text_file_preview(&self, path: &Path, max_chars: usize) -> io::Result<String>;
-
     /// List out the disks in the system
     fn get_disks(&self, canonicalize_paths: bool) -> Disks;
 
@@ -49,6 +46,14 @@ pub trait FileSystem {
 
     /// Get the current working directory
     fn current_dir(&self) -> io::Result<PathBuf>;
+
+    /// Read a short preview of a text file
+    fn load_text_file_preview(&self, _path: &Path, _max_chars: usize) -> io::Result<String> {
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "load_text_file_preview not implemented.".to_string(),
+        ))
+    }
 }
 
 impl std::fmt::Debug for dyn FileSystem + Send + Sync {
@@ -154,8 +159,12 @@ fn is_path_hidden(item: &Path) -> bool {
 
 #[cfg(not(windows))]
 fn is_path_hidden(path: &Path) -> bool {
-    let Some(file_name) = path.file_name() else { return false };
-    let Some(s) = file_name.to_str() else { return false };
+    let Some(file_name) = path.file_name() else {
+        return false;
+    };
+    let Some(s) = file_name.to_str() else {
+        return false;
+    };
 
     if s.chars().next() == Some('.') {
         return true;
