@@ -1,5 +1,6 @@
 #![cfg(feature = "information_view")]
 
+use crate::utils::format_bytes;
 use crate::{DirectoryEntry, FileDialog};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
@@ -8,7 +9,6 @@ use indexmap::{IndexMap, IndexSet};
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::PathBuf;
-use crate::utils::format_bytes;
 
 type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>>;
 type SupportedPreviewImagesMap =
