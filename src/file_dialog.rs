@@ -2252,6 +2252,7 @@ impl FileDialog {
 
     /// Updates the contents of the currently open directory.
     /// TODO: Refactor
+    #[allow(clippy::too_many_lines)]
     fn ui_update_central_panel_content(&mut self, ui: &mut egui::Ui) {
         // Temporarily take ownership of the directory content.
         let mut data = std::mem::take(&mut self.directory_content);
@@ -2283,17 +2284,28 @@ impl FileDialog {
                 .column(Column::auto().at_least(60.0)) // "Date Created"
                 .column(Column::remainder().at_least(60.0)) // "Date Modified"
                 .header(row_height, |mut header| {
-                    self.add_sortable_column(&mut header, "Name", SortBy::Filename, &mut data);
-                    self.add_sortable_column(&mut header, "File Size", SortBy::Size, &mut data);
+                    let labels = self.config.labels.clone();
                     self.add_sortable_column(
                         &mut header,
-                        "Created",
+                        &labels.file_name_header,
+                        SortBy::Filename,
+                        &mut data,
+                    );
+                    self.add_sortable_column(
+                        &mut header,
+                        &labels.file_size_header,
+                        SortBy::Size,
+                        &mut data,
+                    );
+                    self.add_sortable_column(
+                        &mut header,
+                        &labels.modified_date_header,
                         SortBy::DateCreated,
                         &mut data,
                     );
                     self.add_sortable_column(
                         &mut header,
-                        "Modified",
+                        &labels.modified_date_header,
                         SortBy::DateLastModified,
                         &mut data,
                     );
