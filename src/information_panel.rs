@@ -8,6 +8,7 @@ use indexmap::{IndexMap, IndexSet};
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::PathBuf;
+use crate::utils::format_bytes;
 
 type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>>;
 type SupportedPreviewImagesMap =
@@ -429,31 +430,5 @@ impl InformationPanel {
                         }
                     });
             });
-    }
-}
-
-/// Formats a file size (in bytes) into a human-readable string (e.g., KB, MB).
-///
-/// # Arguments
-/// - `bytes`: The file size in bytes.
-///
-/// # Returns
-/// A string representing the file size in an appropriate unit.
-pub fn format_bytes(bytes: u64) -> String {
-    const KB: u64 = 1024;
-    const MB: u64 = KB * 1024;
-    const GB: u64 = MB * 1024;
-    const TB: u64 = GB * 1024;
-
-    if bytes >= TB {
-        format!("{:.2} TB", bytes as f64 / TB as f64)
-    } else if bytes >= GB {
-        format!("{:.2} GB", bytes as f64 / GB as f64)
-    } else if bytes >= MB {
-        format!("{:.2} MB", bytes as f64 / MB as f64)
-    } else if bytes >= KB {
-        format!("{:.2} KB", bytes as f64 / KB as f64)
-    } else {
-        format!("{bytes} B")
     }
 }

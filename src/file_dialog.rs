@@ -6,9 +6,8 @@ use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
     DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
 };
-use crate::information_panel::format_bytes;
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
-use chrono::{DateTime, Local};
+use crate::utils::{calc_text_width, format_bytes, truncate_date, truncate_filename};
 use egui::text::{CCursor, CCursorRange};
 use egui::TextStyle;
 use egui_extras::{Column, TableBuilder, TableRow};
@@ -16,7 +15,6 @@ use std::cmp::PartialEq;
 use std::fmt::{Debug, Display, Formatter};
 use std::io;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
 
 /// Enum to set what we sort the directory entry by
 #[derive(PartialEq, Eq, Debug)]
@@ -1989,12 +1987,12 @@ impl FileDialog {
         // Calculate the width of the action buttons
         let label_submit_width = match self.mode {
             DialogMode::SelectDirectory | DialogMode::SelectFile | DialogMode::SelectMultiple => {
-                Self::calc_text_width(ui, &self.config.labels.open_button)
+                calc_text_width(ui, &self.config.labels.open_button)
             }
-            DialogMode::SaveFile => Self::calc_text_width(ui, &self.config.labels.save_button),
+            DialogMode::SaveFile => calc_text_width(ui, &self.config.labels.save_button),
         };
 
-        let mut btn_width = Self::calc_text_width(ui, &self.config.labels.cancel_button);
+        let mut btn_width = calc_text_width(ui, &self.config.labels.cancel_button);
         if label_submit_width > btn_width {
             btn_width = label_submit_width;
         }
@@ -2530,9 +2528,9 @@ impl FileDialog {
         row.set_selected(primary_selected || selected);
 
         row.col(|ui| {
-            let icons_width = Self::calc_text_width(ui, &icons);
+            let icons_width = calc_text_width(ui, &icons);
 
-            let text_width = Self::calc_text_width(ui, file_name);
+            let text_width = calc_text_width(ui, file_name);
 
             // Calc available width for the file name and include a small margin
             let available_width = ui.available_width() - icons_width - 15.0;
@@ -2540,7 +2538,7 @@ impl FileDialog {
             truncate = self.config.truncate_filenames && available_width < text_width;
 
             let text = if truncate {
-                Self::truncate_filename(ui, item, available_width)
+                truncate_filename(ui, item, available_width)
             } else {
                 file_name.to_owned()
             };
@@ -2567,7 +2565,7 @@ impl FileDialog {
                 // Calc available width for the file name and include a small margin
                 let available_width = ui.available_width() - 10.0;
 
-                let text = Self::truncate_date(ui, created, available_width);
+                let text = truncate_date(ui, created, available_width);
 
                 ui.add(egui::Label::new(text).selectable(false));
             } else {
@@ -2580,7 +2578,7 @@ impl FileDialog {
                 // Calc available width for the file name and include a small margin
                 let available_width = ui.available_width() - 10.0;
 
-                let text = Self::truncate_date(ui, last_modified, available_width);
+                let text = truncate_date(ui, last_modified, available_width);
 
                 ui.add(egui::Label::new(text).selectable(false));
             } else {
@@ -2722,115 +2720,6 @@ impl FileDialog {
                 .set_char_range(Some(CCursorRange::one(CCursor::new(data.len()))));
             state.store(&re.ctx, re.id);
         }
-    }
-
-    /// Calculates the width of a single char.
-    fn calc_char_width(ui: &egui::Ui, char: char) -> f32 {
-        ui.fonts(|f| f.glyph_width(&egui::TextStyle::Body.resolve(ui.style()), char))
-    }
-
-    /// Calculates the width of the specified text using the current font configuration.
-    /// Does not take new lines or text breaks into account!
-    fn calc_text_width(ui: &egui::Ui, text: &str) -> f32 {
-        let mut width = 0.0;
-
-        for char in text.chars() {
-            width += Self::calc_char_width(ui, char);
-        }
-
-        width
-    }
-
-    fn truncate_date(ui: &egui::Ui, date: SystemTime, max_length: f32) -> String {
-        let date: DateTime<Local> = date.into();
-        let today = Local::now().date_naive(); // NaiveDate for today
-        let yesterday = today.pred_opt().map_or(today, |day| day); // NaiveDate for yesterday
-
-        let text = if date.date_naive() == today {
-            date.format("Today, %H:%M").to_string()
-        } else if date.date_naive() == yesterday {
-            date.format("Yesterday, %H:%M").to_string()
-        } else {
-            date.format("%d.%m.%Y, %H:%M").to_string()
-        };
-
-        let text_width = Self::calc_text_width(ui, &text);
-
-        if max_length <= text_width {
-            if date.date_naive() == today {
-                date.format("%H:%M").to_string()
-            } else if date.date_naive() == yesterday {
-                "Yesterday".to_string()
-            } else {
-                date.format("%d.%m.%y").to_string()
-            }
-        } else {
-            text
-        }
-    }
-
-    fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
-        const TRUNCATE_STR: &str = "...";
-
-        let path = item.as_path();
-
-        let file_stem = if path.is_file() {
-            path.file_stem().and_then(|f| f.to_str()).unwrap_or("")
-        } else {
-            item.file_name()
-        };
-
-        let extension = if path.is_file() {
-            path.extension().map_or(String::new(), |ext| {
-                format!(".{}", ext.to_str().unwrap_or(""))
-            })
-        } else {
-            String::new()
-        };
-
-        let extension_width = Self::calc_text_width(ui, &extension);
-        let reserved = extension_width + Self::calc_text_width(ui, TRUNCATE_STR);
-
-        if max_length <= reserved {
-            return format!("{TRUNCATE_STR}{extension}");
-        }
-
-        let mut width = reserved;
-        let mut front = String::new();
-        let mut back = String::new();
-
-        for (i, char) in file_stem.chars().enumerate() {
-            let w = Self::calc_char_width(ui, char);
-
-            if width + w > max_length {
-                break;
-            }
-
-            front.push(char);
-            width += w;
-
-            let back_index = file_stem.len() - i - 1;
-
-            if back_index <= i {
-                break;
-            }
-
-            if let Some(char) = file_stem.chars().nth(back_index) {
-                let w = Self::calc_char_width(ui, char);
-
-                if width + w > max_length {
-                    break;
-                }
-
-                back.push(char);
-                width += w;
-            }
-        }
-
-        format!(
-            "{front}{TRUNCATE_STR}{}{extension}",
-            back.chars().rev().collect::<String>()
-        )
     }
 }
 
