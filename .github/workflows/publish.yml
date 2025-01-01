@@ -1,0 +1,20 @@
+name: Upload Rust Crate to crates.io
+
+on:
+  release:
+    types: [ created ]
+
+jobs:
+  crates_io_publish:
+    name: Publish (crates.io)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - run: cargo publish --token ${CRATES_TOKEN}
+        env:
+          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
