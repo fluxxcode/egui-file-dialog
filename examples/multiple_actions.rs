@@ -27,13 +27,13 @@ impl eframe::App for MyApp {
             if ui.button("Pick file a").clicked() {
                 let _ = self
                     .file_dialog
-                    .open(DialogMode::SelectFile, true, Some("pick_a"));
+                    .open(DialogMode::PickFile, true, Some("pick_a"));
             }
 
             if ui.button("Pick file b").clicked() {
                 let _ = self
                     .file_dialog
-                    .open(DialogMode::SelectFile, true, Some("pick_b"));
+                    .open(DialogMode::PickFile, true, Some("pick_b"));
             }
 
             ui.label(format!("Pick file a: {:?}", self.picked_file_a));

@@ -16,13 +16,13 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DialogMode {
     /// When the dialog is currently used to select a single file.
-    SelectFile,
+    PickFile,
 
     /// When the dialog is currently used to select a single directory.
-    SelectDirectory,
+    PickDirectory,
 
     /// When the dialog is currently used to select multiple files and directories.
-    SelectMultiple,
+    PickMultiple,
 
     /// When the dialog is currently used to save a file.
     SaveFile,
@@ -38,10 +38,10 @@ pub enum DialogState {
     Closed,
 
     /// The user has selected a folder or file or specified a destination path for saving a file.
-    Selected(PathBuf),
+    Picked(PathBuf),
 
     /// The user has finished selecting multiple files and folders.
-    SelectedMultiple(Vec<PathBuf>),
+    PickedMultiple(Vec<PathBuf>),
 
     /// The user cancelled the dialog and didn't select anything.
     Cancelled,
@@ -196,7 +196,7 @@ impl FileDialog {
 
             modals: Vec::new(),
 
-            mode: DialogMode::SelectDirectory,
+            mode: DialogMode::PickDirectory,
             state: DialogState::Closed,
             show_files: true,
             operation_id: None,
@@ -310,7 +310,7 @@ impl FileDialog {
     ) -> io::Result<()> {
         self.reset();
 
-        if mode == DialogMode::SelectFile {
+        if mode == DialogMode::PickFile {
             show_files = true;
         }
 
@@ -352,7 +352,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_directory(&mut self) {
-        let _ = self.open(DialogMode::SelectDirectory, false, None);
+        let _ = self.open(DialogMode::PickDirectory, false, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick a file.
@@ -361,7 +361,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_file(&mut self) {
-        let _ = self.open(DialogMode::SelectFile, true, None);
+        let _ = self.open(DialogMode::PickFile, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick multiple
@@ -371,7 +371,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_multiple(&mut self) {
-        let _ = self.open(DialogMode::SelectMultiple, true, None);
+        let _ = self.open(DialogMode::PickMultiple, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -923,7 +923,7 @@ impl FileDialog {
     /// None is returned when the user has not yet selected an item.
     pub fn picked(&self) -> Option<&Path> {
         match &self.state {
-            DialogState::Selected(path) => Some(path),
+            DialogState::Picked(path) => Some(path),
             _ => None,
         }
     }
@@ -936,7 +936,7 @@ impl FileDialog {
     /// None is returned when the user has not yet picked an item.
     pub fn take_picked(&mut self) -> Option<PathBuf> {
         match &mut self.state {
-            DialogState::Selected(path) => {
+            DialogState::Picked(path) => {
                 let path = std::mem::take(path);
                 self.state = DialogState::Closed;
                 Some(path)
@@ -951,7 +951,7 @@ impl FileDialog {
     /// None is returned when the user has not yet picked an item.
     pub fn picked_multiple(&self) -> Option<Vec<&Path>> {
         match &self.state {
-            DialogState::SelectedMultiple(items) => {
+            DialogState::PickedMultiple(items) => {
                 Some(items.iter().map(std::path::PathBuf::as_path).collect())
             }
             _ => None,
@@ -966,7 +966,7 @@ impl FileDialog {
     /// None is returned when the user has not yet picked an item.
     pub fn take_picked_multiple(&mut self) -> Option<Vec<PathBuf>> {
         match &mut self.state {
-            DialogState::SelectedMultiple(items) => {
+            DialogState::PickedMultiple(items) => {
                 let items = std::mem::take(items);
                 self.state = DialogState::Closed;
                 Some(items)
@@ -1206,9 +1206,9 @@ impl FileDialog {
         match &self.config.title {
             Some(title) => title,
             None => match &self.mode {
-                DialogMode::SelectDirectory => &self.config.labels.title_select_directory,
-                DialogMode::SelectFile => &self.config.labels.title_select_file,
-                DialogMode::SelectMultiple => &self.config.labels.title_select_multiple,
+                DialogMode::PickDirectory => &self.config.labels.title_select_directory,
+                DialogMode::PickFile => &self.config.labels.title_select_file,
+                DialogMode::PickMultiple => &self.config.labels.title_select_multiple,
                 DialogMode::SaveFile => &self.config.labels.title_save_file,
             },
         }
@@ -1760,7 +1760,7 @@ impl FileDialog {
 
         // Calculate the width of the action buttons
         let label_submit_width = match self.mode {
-            DialogMode::SelectDirectory | DialogMode::SelectFile | DialogMode::SelectMultiple => {
+            DialogMode::PickDirectory | DialogMode::PickFile | DialogMode::PickMultiple => {
                 Self::calc_text_width(ui, &self.config.labels.open_button)
             }
             DialogMode::SaveFile => Self::calc_text_width(ui, &self.config.labels.save_button),
@@ -1791,16 +1791,16 @@ impl FileDialog {
         let item_spacing = ui.style().spacing.item_spacing;
 
         let render_filter_selection = !self.config.file_filters.is_empty()
-            && (self.mode == DialogMode::SelectFile || self.mode == DialogMode::SelectMultiple);
+            && (self.mode == DialogMode::PickFile || self.mode == DialogMode::PickMultiple);
 
         let filter_selection_width = button_size.x.mul_add(2.0, item_spacing.x);
         let mut filter_selection_separate_line = false;
 
         ui.horizontal(|ui| {
             match &self.mode {
-                DialogMode::SelectDirectory => ui.label(&self.config.labels.selected_directory),
-                DialogMode::SelectFile => ui.label(&self.config.labels.selected_file),
-                DialogMode::SelectMultiple => ui.label(&self.config.labels.selected_items),
+                DialogMode::PickDirectory => ui.label(&self.config.labels.selected_directory),
+                DialogMode::PickFile => ui.label(&self.config.labels.selected_file),
+                DialogMode::PickMultiple => ui.label(&self.config.labels.selected_items),
                 DialogMode::SaveFile => ui.label(&self.config.labels.file_name),
             };
 
@@ -1816,9 +1816,9 @@ impl FileDialog {
             }
 
             match &self.mode {
-                DialogMode::SelectDirectory
-                | DialogMode::SelectFile
-                | DialogMode::SelectMultiple => {
+                DialogMode::PickDirectory
+                | DialogMode::PickFile
+                | DialogMode::PickMultiple => {
                     use egui::containers::scroll_area::ScrollBarVisibility;
 
                     let text = self.get_selection_preview_text();
@@ -1868,11 +1868,11 @@ impl FileDialog {
     fn get_selection_preview_text(&self) -> String {
         if self.is_selection_valid() {
             match &self.mode {
-                DialogMode::SelectDirectory | DialogMode::SelectFile => self
+                DialogMode::PickDirectory | DialogMode::PickFile => self
                     .selected_item
                     .as_ref()
                     .map_or_else(String::new, |item| item.file_name().to_string()),
-                DialogMode::SelectMultiple => {
+                DialogMode::PickMultiple => {
                     let mut result = String::new();
 
                     for (i, item) in self
@@ -1943,9 +1943,9 @@ impl FileDialog {
     fn ui_update_action_buttons(&mut self, ui: &mut egui::Ui, button_size: egui::Vec2) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             let label = match &self.mode {
-                DialogMode::SelectDirectory
-                | DialogMode::SelectFile
-                | DialogMode::SelectMultiple => self.config.labels.open_button.as_str(),
+                DialogMode::PickDirectory
+                | DialogMode::PickFile
+                | DialogMode::PickMultiple => self.config.labels.open_button.as_str(),
                 DialogMode::SaveFile => self.config.labels.save_button.as_str(),
             };
 
@@ -2011,7 +2011,7 @@ impl FileDialog {
                 true
             }
             DirectoryContentState::Finished => {
-                if self.mode == DialogMode::SelectDirectory {
+                if self.mode == DialogMode::PickDirectory {
                     if let Some(dir) = self.current_directory() {
                         let mut dir_entry = DirectoryEntry::from_path(&self.config, dir);
                         self.select_item(&mut dir_entry);
@@ -2177,14 +2177,14 @@ impl FileDialog {
             self.select_item(item);
 
             // Reset the multi selection except the now primary selected item
-            if self.mode == DialogMode::SelectMultiple {
+            if self.mode == DialogMode::PickMultiple {
                 *reset_multi_selection = true;
             }
         }
 
         // The user wants to select or unselect the item as part of a
         // multi selection
-        if self.mode == DialogMode::SelectMultiple
+        if self.mode == DialogMode::PickMultiple
             && re.clicked()
             && ui.input(|i| i.modifiers.command)
         {
@@ -2205,7 +2205,7 @@ impl FileDialog {
 
         // The user wants to select every item between the last selected item
         // and the current item
-        if self.mode == DialogMode::SelectMultiple
+        if self.mode == DialogMode::PickMultiple
             && re.clicked()
             && ui.input(|i| i.modifiers.shift_only())
         {
@@ -2526,7 +2526,7 @@ impl FileDialog {
         }
 
         if FileDialogKeyBindings::any_pressed(ctx, &keybindings.select_all, true)
-            && self.mode == DialogMode::SelectMultiple
+            && self.mode == DialogMode::PickMultiple
         {
             for item in self.directory_content.filtered_iter_mut(&self.search_value) {
                 item.selected = true;
@@ -2674,7 +2674,7 @@ impl FileDialog {
     fn exec_modal_action(&mut self, action: ModalAction) {
         match action {
             ModalAction::None => {}
-            ModalAction::SaveFile(path) => self.state = DialogState::Selected(path),
+            ModalAction::SaveFile(path) => self.state = DialogState::Picked(path),
         };
     }
 
@@ -2740,20 +2740,20 @@ impl FileDialog {
         }
 
         match &self.mode {
-            DialogMode::SelectDirectory | DialogMode::SelectFile => {
+            DialogMode::PickDirectory | DialogMode::PickFile => {
                 // Should always contain a value since `is_selection_valid` is used to
                 // validate the selection.
                 if let Some(item) = self.selected_item.clone() {
-                    self.state = DialogState::Selected(item.to_path_buf());
+                    self.state = DialogState::Picked(item.to_path_buf());
                 }
             }
-            DialogMode::SelectMultiple => {
+            DialogMode::PickMultiple => {
                 let result: Vec<PathBuf> = self
                     .active_selected_entries()
                     .map(crate::DirectoryEntry::to_path_buf)
                     .collect();
 
-                self.state = DialogState::SelectedMultiple(result);
+                self.state = DialogState::PickedMultiple(result);
             }
             DialogMode::SaveFile => {
                 // Should always contain a value since `is_selection_valid` is used to
@@ -2775,7 +2775,7 @@ impl FileDialog {
             return;
         }
 
-        self.state = DialogState::Selected(path);
+        self.state = DialogState::Picked(path);
     }
 
     /// Cancels the dialog.
@@ -2812,15 +2812,15 @@ impl FileDialog {
     /// What is checked depends on the mode the dialog is currently in.
     fn is_selection_valid(&self) -> bool {
         match &self.mode {
-            DialogMode::SelectDirectory => self
+            DialogMode::PickDirectory => self
                 .selected_item
                 .as_ref()
                 .map_or(false, crate::DirectoryEntry::is_dir),
-            DialogMode::SelectFile => self
+            DialogMode::PickFile => self
                 .selected_item
                 .as_ref()
                 .map_or(false, DirectoryEntry::is_file),
-            DialogMode::SelectMultiple => self.get_dir_content_filtered_iter().any(|p| p.selected),
+            DialogMode::PickMultiple => self.get_dir_content_filtered_iter().any(|p| p.selected),
             DialogMode::SaveFile => self.file_name_input_error.is_none(),
         }
     }
@@ -2855,7 +2855,7 @@ impl FileDialog {
     /// Marks the given item as the selected directory item.
     /// Also updates the `file_name_input` to the name of the selected item.
     fn select_item(&mut self, item: &mut DirectoryEntry) {
-        if self.mode == DialogMode::SelectMultiple {
+        if self.mode == DialogMode::PickMultiple {
             item.selected = true;
         }
         self.selected_item = Some(item.clone());
@@ -2985,8 +2985,8 @@ impl FileDialog {
 
         let path = self.canonicalize_path(&PathBuf::from(&self.path_edit_value));
 
-        if self.mode == DialogMode::SelectFile && path.is_file() {
-            self.state = DialogState::Selected(path);
+        if self.mode == DialogMode::PickFile && path.is_file() {
+            self.state = DialogState::Picked(path);
             return;
         }
 

@@ -39,7 +39,7 @@ impl eframe::App for MyApp {
 
             self.file_dialog
                 .update_with_right_panel_ui(ctx, &mut |ui, dia| {
-                    if dia.mode() == DialogMode::SelectMultiple {
+                    if dia.mode() == DialogMode::PickMultiple {
                         ui.heading("Selected items");
                         ui.separator();
                         egui::ScrollArea::vertical()
@@ -57,7 +57,7 @@ impl eframe::App for MyApp {
                 });
 
             match self.file_dialog.mode() {
-                DialogMode::SelectMultiple => {
+                DialogMode::PickMultiple => {
                     if let Some(items) = self.file_dialog.take_picked_multiple() {
                         self.picked_items = Some(items);
                     }
