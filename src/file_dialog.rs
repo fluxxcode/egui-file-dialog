@@ -2260,6 +2260,11 @@ impl FileDialog {
         // If we should return after updating the directory entries.
         let mut should_return = false;
 
+        let scroll_offset = self
+            .selected_item
+            .as_ref()
+            .map_or(0, |item| data.get_index(item).unwrap_or(0));
+
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             let shift_modifier = ui.input(|i| i.modifiers.shift_only());
             let command_modifier = ui.input(|i| i.modifiers.command);
@@ -2271,6 +2276,7 @@ impl FileDialog {
                     .sense(egui::Sense::click())
                     .striped(true)
                     .resizable(true)
+                    .scroll_to_row(scroll_offset, Some(egui::Align::Center))
                     .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
                     .column(Column::remainder().at_least(120.0)) // "Date Modified"
                     .header(row_height, |mut header| {
@@ -2281,30 +2287,13 @@ impl FileDialog {
                             SortBy::Filename,
                             &mut data,
                         );
-                        self.add_sortable_column(
-                            &mut header,
-                            &labels.file_size_header,
-                            SortBy::Size,
-                            &mut data,
-                        );
-                        self.add_sortable_column(
-                            &mut header,
-                            &labels.modified_date_header,
-                            SortBy::DateCreated,
-                            &mut data,
-                        );
-                        self.add_sortable_column(
-                            &mut header,
-                            &labels.modified_date_header,
-                            SortBy::DateLastModified,
-                            &mut data,
-                        );
                     })
             } else {
                 TableBuilder::new(ui)
                     .sense(egui::Sense::click())
                     .striped(true)
                     .resizable(true)
+                    .scroll_to_row(scroll_offset, Some(egui::Align::Center))
                     .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
                     .column(Column::auto().at_least(120.0)) // "Name"
                     .column(Column::auto().at_least(70.0)) // "File Size"
@@ -2436,11 +2425,6 @@ impl FileDialog {
             if row.response().context_menu_opened() {
                 self.select_item(item);
             }
-        }
-
-        if primary_selected && self.scroll_to_selection {
-            row.response().scroll_to_me(Some(egui::Align::Center));
-            self.scroll_to_selection = false;
         }
 
         // The user wants to select or unselect the item as part of a

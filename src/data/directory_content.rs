@@ -305,6 +305,13 @@ impl DirectoryContent {
         self.content.get_mut(i)
     }
 
+    /// Returns one directory entry by index
+    pub fn get_index(&self, item: &DirectoryEntry) -> Option<usize> {
+        self.content
+            .iter()
+            .position(|entry| entry.path == item.path)
+    }
+
     pub fn filtered_iter<'s>(
         &'s self,
         search_value: &'s str,
