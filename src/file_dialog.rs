@@ -62,12 +62,12 @@ pub enum DialogState {
 ///
 /// impl MyApp {
 ///     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-///         if ui.button("Select a file").clicked() {
-///             self.file_dialog.select_file();
+///         if ui.button("Pick a file").clicked() {
+///             self.file_dialog.pick_file();
 ///         }
 ///
-///         if let Some(path) = self.file_dialog.update(ctx).selected() {
-///             println!("Selected file: {:?}", path);
+///         if let Some(path) = self.file_dialog.update(ctx).picked() {
+///             println!("Picked file: {:?}", path);
 ///         }
 ///     }
 /// }
@@ -275,28 +275,28 @@ impl FileDialog {
     /// struct MyApp {
     ///     file_dialog: FileDialog,
     ///
-    ///     selected_file_a: Option<PathBuf>,
-    ///     selected_file_b: Option<PathBuf>,
+    ///     picked_file_a: Option<PathBuf>,
+    ///     picked_file_b: Option<PathBuf>,
     /// }
     ///
     /// impl MyApp {
     ///     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-    ///         if ui.button("Select file a").clicked() {
-    ///             let _ = self.file_dialog.open(DialogMode::SelectFile, true, Some("select_a"));
+    ///         if ui.button("Pick file a").clicked() {
+    ///             let _ = self.file_dialog.open(DialogMode::PickFile, true, Some("pick_a"));
     ///         }
     ///
-    ///         if ui.button("Select file b").clicked() {
-    ///             let _ = self.file_dialog.open(DialogMode::SelectFile, true, Some("select_b"));
+    ///         if ui.button("Pick file b").clicked() {
+    ///             let _ = self.file_dialog.open(DialogMode::PickFile, true, Some("pick_b"));
     ///         }
     ///
     ///         self.file_dialog.update(ctx);
     ///
-    ///         if let Some(path) = self.file_dialog.selected() {
-    ///             if self.file_dialog.operation_id() == Some("select_a") {
-    ///                 self.selected_file_a = Some(path.to_path_buf());
+    ///         if let Some(path) = self.file_dialog.picked() {
+    ///             if self.file_dialog.operation_id() == Some("pick_a") {
+    ///                 self.picked_file_a = Some(path.to_path_buf());
     ///             }
-    ///             if self.file_dialog.operation_id() == Some("select_b") {
-    ///                 self.selected_file_b = Some(path.to_path_buf());
+    ///             if self.file_dialog.operation_id() == Some("pick_b") {
+    ///                 self.picked_file_b = Some(path.to_path_buf());
     ///             }
     ///         }
     ///     }
