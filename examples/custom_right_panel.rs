@@ -45,14 +45,14 @@ impl eframe::App for MyApp {
                         egui::ScrollArea::vertical()
                             .max_height(ui.available_height())
                             .show(ui, |ui| {
-                                for item in dia.active_selected_entries() {
+                                for item in dia.selected_entries() {
                                     ui.small(format!("{item:#?}"));
                                     ui.separator();
                                 }
                             });
                     } else {
                         ui.heading("Active item");
-                        ui.small(format!("{:#?}", dia.active_entry()));
+                        ui.small(format!("{:#?}", dia.selected_entry()));
                     }
                 });
 

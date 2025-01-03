@@ -982,7 +982,7 @@ impl FileDialog {
     ///
     /// For the [`DialogMode::SelectMultiple`] counterpart,
     /// see [`FileDialog::active_selected_entries`].
-    pub const fn active_entry(&self) -> Option<&DirectoryEntry> {
+    pub const fn selected_entry(&self) -> Option<&DirectoryEntry> {
         self.selected_item.as_ref()
     }
 
@@ -991,7 +991,7 @@ impl FileDialog {
     /// For the counterpart in single selection modes, see [`FileDialog::active_entry`].
     ///
     /// [`SelectMultiple`]: DialogMode::SelectMultiple
-    pub fn active_selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
+    pub fn selected_entries(&self) -> impl Iterator<Item = &DirectoryEntry> {
         self.get_dir_content_filtered_iter().filter(|p| p.selected)
     }
 
@@ -2749,7 +2749,7 @@ impl FileDialog {
             }
             DialogMode::PickMultiple => {
                 let result: Vec<PathBuf> = self
-                    .active_selected_entries()
+                    .selected_entries()
                     .map(crate::DirectoryEntry::to_path_buf)
                     .collect();
 

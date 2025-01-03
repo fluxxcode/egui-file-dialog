@@ -270,7 +270,7 @@ impl InformationPanel {
         // Display metadata in a grid format
         let width = file_dialog.config_mut().right_panel_width.unwrap_or(100.0) / 2.0;
 
-        if let Some(item) = file_dialog.active_entry() {
+        if let Some(item) = file_dialog.selected_entry() {
             // load file content and additional metadata if it's a new file
             self.load_meta_data(item);
 
