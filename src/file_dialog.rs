@@ -355,22 +355,6 @@ impl FileDialog {
         let _ = self.open(DialogMode::SelectDirectory, false, None);
     }
 
-    /// Shortcut function to open the file dialog to prompt the user to select a directory.
-    /// If used, no files in the directories will be shown to the user.
-    /// Use the `open()` method instead, if you still want to display files to the user.
-    /// This function resets the file dialog. Configuration variables such as
-    /// `initial_directory` are retained.
-    ///
-    /// The function ignores the result of the initial directory loading operation.
-    #[deprecated(
-        since = "0.8.0",
-        note = "renamed to `FileDialog::pick_directory` for more consistent naming. \
-                Will be removed in a future release, most likely 0.9.0."
-    )]
-    pub fn select_directory(&mut self) {
-        self.pick_directory();
-    }
-
     /// Shortcut function to open the file dialog to prompt the user to pick a file.
     /// This function resets the file dialog. Configuration variables such as
     /// `initial_directory` are retained.
@@ -378,20 +362,6 @@ impl FileDialog {
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_file(&mut self) {
         let _ = self.open(DialogMode::SelectFile, true, None);
-    }
-
-    /// Shortcut function to open the file dialog to prompt the user to select a file.
-    /// This function resets the file dialog. Configuration variables such as
-    /// `initial_directory` are retained.
-    ///
-    /// The function ignores the result of the initial directory loading operation.
-    #[deprecated(
-        since = "0.8.0",
-        note = "renamed to `FileDialog::pick_file` for more consistent naming. \
-                Will be removed in a future release, most likely 0.9.0."
-    )]
-    pub fn select_file(&mut self) {
-        self.pick_file();
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick multiple
@@ -402,21 +372,6 @@ impl FileDialog {
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_multiple(&mut self) {
         let _ = self.open(DialogMode::SelectMultiple, true, None);
-    }
-
-    /// Shortcut function to open the file dialog to prompt the user to select multiple
-    /// files and folders.
-    /// This function resets the file dialog. Configuration variables such as `initial_directory`
-    /// are retained.
-    ///
-    /// The function ignores the result of the initial directory loading operation.
-    #[deprecated(
-        since = "0.8.0",
-        note = "renamed to `FileDialog::pick_multiple` for more consistent naming. \
-                Will be removed in a future release, most likely 0.9.0."
-    )]
-    pub fn select_multiple(&mut self) {
-        self.pick_multiple();
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -480,72 +435,6 @@ impl FileDialog {
 
     // -------------------------------------------------
     // Setter:
-    /// Overwrites the configuration of the file dialog.
-    ///
-    /// This is useful when you want to configure multiple `FileDialog` objects with the
-    /// same configuration. If you only want to configure a single object,
-    /// it's probably easier to use the setter methods like `FileDialog::initial_directory`
-    /// or `FileDialog::default_pos`.
-    ///
-    /// If you want to create a new `FileDialog` object with a config,
-    /// you probably want to use `FileDialog::with_config`.
-    ///
-    /// NOTE: Any configuration that was set before `FileDialog::overwrite_config`
-    /// will be overwritten! \
-    /// This means, for example, that the following code is invalid:
-    /// ```
-    /// pub use egui_file_dialog::{FileDialog, FileDialogConfig};
-    ///
-    /// fn create_file_dialog() -> FileDialog {
-    ///     FileDialog::new()
-    ///        .title("Hello world")
-    ///         // This will overwrite `.title("Hello world")`!
-    ///        .overwrite_config(FileDialogConfig::default())
-    /// }
-    ///
-    /// ```
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use egui_file_dialog::{FileDialog, FileDialogConfig};
-    ///
-    /// struct MyApp {
-    ///     file_dialog_a: FileDialog,
-    ///     file_dialog_b: FileDialog,
-    /// }
-    ///
-    /// impl MyApp {
-    ///     pub fn new() -> Self {
-    ///         let config = FileDialogConfig {
-    ///             default_size: egui::Vec2::new(500.0, 500.0),
-    ///             resizable: false,
-    ///             movable: false,
-    ///             ..Default::default()
-    ///         };
-    ///
-    ///         Self {
-    ///             file_dialog_a: FileDialog::new()
-    ///                 .overwrite_config(config.clone())
-    ///                 .title("File Dialog A")
-    ///                 .id("fd_a"),
-    ///
-    ///             file_dialog_b: FileDialog::new()
-    ///                 .overwrite_config(config)
-    ///                 .title("File Dialog B")
-    ///                 .id("fd_b"),
-    ///         }
-    ///     }
-    /// }
-    /// ```
-    #[deprecated(
-        since = "0.6.0",
-        note = "use `FileDialog::with_config` and `FileDialog::config_mut` instead"
-    )]
-    pub fn overwrite_config(mut self, config: FileDialogConfig) -> Self {
-        self.config = config;
-        self
-    }
 
     /// Mutably borrow internal `config`.
     pub fn config_mut(&mut self) -> &mut FileDialogConfig {
@@ -1039,19 +928,6 @@ impl FileDialog {
         }
     }
 
-    /// Returns the directory or file that the user selected, or the target file
-    /// if the dialog is in `DialogMode::SaveFile` mode.
-    ///
-    /// None is returned when the user has not yet selected an item.
-    #[deprecated(
-        since = "0.8.0",
-        note = "renamed to `FileDialog::picked` for more consistent naming. \
-                Will be removed in a future release, most likely 0.9.0."
-    )]
-    pub fn selected(&self) -> Option<&Path> {
-        self.picked()
-    }
-
     /// Returns the directory or file that the user picked, or the target file
     /// if the dialog is in `DialogMode::SaveFile` mode.
     /// Unlike `FileDialog::picked`, this method returns the picked path only once and
@@ -1069,21 +945,6 @@ impl FileDialog {
         }
     }
 
-    /// Returns the directory or file that the user selected, or the target file
-    /// if the dialog is in `DialogMode::SaveFile` mode.
-    /// Unlike `FileDialog::selected`, this method returns the selected path only once and
-    /// sets the dialog's state to `DialogState::Closed`.
-    ///
-    /// None is returned when the user has not yet selected an item.
-    #[deprecated(
-        since = "0.8.0",
-        note = "renamed to `FileDialog::take_picked` for more consistent naming. \
-                Will be removed in a future release, most likely 0.9.0."
-    )]
-    pub fn take_selected(&mut self) -> Option<PathBuf> {
-        self.take_picked()
-    }
-
     /// Returns a list of the files and folders the user picked, when the dialog is in
     /// `DialogMode::PickMultiple` mode.
     ///
@@ -1095,19 +956,6 @@ impl FileDialog {
             }
             _ => None,
         }
-    }
-
-    /// Returns a list of the files and folders the user selected, when the dialog is in
-    /// `DialogMode::SelectMultiple` mode.
-    ///
-    /// None is returned when the user has not yet selected an item.
-    #[deprecated(
-        since = "0.8.0",
-        note = "renamed to `FileDialog::picked_multiple` for more consistent naming. \
-                Will be removed in a future release, most likely 0.9.0."
-    )]
-    pub fn selected_multiple(&self) -> Option<Vec<&Path>> {
-        self.picked_multiple()
     }
 
     /// Returns a list of the files and folders the user picked, when the dialog is in
@@ -1125,21 +973,6 @@ impl FileDialog {
             }
             _ => None,
         }
-    }
-
-    /// Returns a list of the files and folders the user selected, when the dialog is in
-    /// `DialogMode::SelectMultiple` mode.
-    /// Unlike `FileDialog::selected_multiple`, this method returns the selected paths only once
-    /// and sets the dialog's state to `DialogState::Closed`.
-    ///
-    /// None is returned when the user has not yet selected an item.
-    #[deprecated(
-        since = "0.8.0",
-        note = "renamed to `FileDialog::take_picked_multiple` for more consistent naming. \
-                Will be removed in a future release, most likely 0.9.0."
-    )]
-    pub fn take_selected_multiple(&mut self) -> Option<Vec<PathBuf>> {
-        self.take_picked_multiple()
     }
 
     /// Returns the currently active directory entry.
