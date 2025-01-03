@@ -17,7 +17,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 /// Enum to set what we sort the directory entry by
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum SortBy {
     Filename,
     Size,
@@ -26,7 +26,7 @@ pub enum SortBy {
 }
 
 /// Sets the sort order
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SortOrder {
     Ascending,
     Descending,
@@ -200,12 +200,6 @@ pub struct FileDialog {
     /// This is used to prevent the dialog from closing when pressing the escape key
     /// inside a text input.
     any_focused_last_frame: bool,
-
-    /// sort by
-    sort_by: SortBy,
-
-    /// sort order
-    sort_order: SortOrder,
 }
 
 /// This tests if file dialog is send and sync.
@@ -280,8 +274,6 @@ impl FileDialog {
             init_search: false,
 
             any_focused_last_frame: false,
-            sort_by: SortBy::Filename,
-            sort_order: SortOrder::Ascending,
         }
     }
 
@@ -2274,42 +2266,78 @@ impl FileDialog {
             let shift_only_modifier = ui.input(|i| i.modifiers.shift_only());
 
             let row_height = Self::get_row_height(ui);
-            let table = TableBuilder::new(ui)
-                .sense(egui::Sense::click())
-                .striped(true)
-                .resizable(true)
-                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-                .column(Column::auto().at_least(120.0)) // "Name"
-                .column(Column::auto().at_least(70.0)) // "File Size"
-                .column(Column::auto().at_least(60.0)) // "Date Created"
-                .column(Column::remainder().at_least(60.0)) // "Date Modified"
-                .header(row_height, |mut header| {
-                    let labels = self.config.labels.clone();
-                    self.add_sortable_column(
-                        &mut header,
-                        &labels.file_name_header,
-                        SortBy::Filename,
-                        &mut data,
-                    );
-                    self.add_sortable_column(
-                        &mut header,
-                        &labels.file_size_header,
-                        SortBy::Size,
-                        &mut data,
-                    );
-                    self.add_sortable_column(
-                        &mut header,
-                        &labels.modified_date_header,
-                        SortBy::DateCreated,
-                        &mut data,
-                    );
-                    self.add_sortable_column(
-                        &mut header,
-                        &labels.modified_date_header,
-                        SortBy::DateLastModified,
-                        &mut data,
-                    );
-                });
+            let table = if self.config.show_only_file_name {
+                TableBuilder::new(ui)
+                    .sense(egui::Sense::click())
+                    .striped(true)
+                    .resizable(true)
+                    .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                    .column(Column::remainder().at_least(120.0)) // "Date Modified"
+                    .header(row_height, |mut header| {
+                        let labels = self.config.labels.clone();
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.file_name_header,
+                            SortBy::Filename,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.file_size_header,
+                            SortBy::Size,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.modified_date_header,
+                            SortBy::DateCreated,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.modified_date_header,
+                            SortBy::DateLastModified,
+                            &mut data,
+                        );
+                    })
+            } else {
+                TableBuilder::new(ui)
+                    .sense(egui::Sense::click())
+                    .striped(true)
+                    .resizable(true)
+                    .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                    .column(Column::auto().at_least(120.0)) // "Name"
+                    .column(Column::auto().at_least(70.0)) // "File Size"
+                    .column(Column::auto().at_least(60.0)) // "Date Created"
+                    .column(Column::remainder().at_least(60.0)) // "Date Modified"
+                    .header(row_height, |mut header| {
+                        let labels = self.config.labels.clone();
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.file_name_header,
+                            SortBy::Filename,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.file_size_header,
+                            SortBy::Size,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.modified_date_header,
+                            SortBy::DateCreated,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.modified_date_header,
+                            SortBy::DateLastModified,
+                            &mut data,
+                        );
+                    })
+            };
 
             if self.should_render_all_items() {
                 table.body(|body| {
@@ -2482,8 +2510,8 @@ impl FileDialog {
         sort_by: SortBy,
         data: &mut DirectoryContent,
     ) {
-        let current_sort_label = if self.sort_by == sort_by {
-            format!("{}{}", label, self.sort_order)
+        let current_sort_label = if self.config.sort_by == sort_by {
+            format!("{}{}", label, self.config.sort_order)
         } else {
             label.to_string()
         };
@@ -2493,16 +2521,16 @@ impl FileDialog {
             if ui
                 .add_sized(
                     [available_width, ui.spacing().interact_size.y],
-                    egui::SelectableLabel::new(self.sort_by == sort_by, current_sort_label),
+                    egui::SelectableLabel::new(self.config.sort_by == sort_by, current_sort_label),
                 )
                 .clicked()
             {
-                if self.sort_by == sort_by {
-                    self.sort_order.invert();
+                if self.config.sort_by == sort_by {
+                    self.config.sort_order.invert();
                 } else {
-                    self.sort_by = sort_by;
+                    self.config.sort_by = sort_by;
                 }
-                data.sort_directory_entries(&self.sort_by, &self.sort_order);
+                data.sort_directory_entries(&self.config.sort_by, &self.config.sort_order);
             }
         });
     }
@@ -2560,43 +2588,44 @@ impl FileDialog {
                 name_response.on_hover_text(file_name);
             }
         });
+        if !self.config.show_only_file_name {
+            row.col(|ui| {
+                if item.is_dir() {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                } else if let Some(size) = metadata.size {
+                    ui.add(egui::Label::new(format_bytes(size)).selectable(false))
+                        .clicked();
+                } else {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                }
+            });
 
-        row.col(|ui| {
-            if item.is_dir() {
-                ui.add(egui::Label::new(String::new()).selectable(false));
-            } else if let Some(size) = metadata.size {
-                ui.add(egui::Label::new(format_bytes(size)).selectable(false))
-                    .clicked();
-            } else {
-                ui.add(egui::Label::new(String::new()).selectable(false));
-            }
-        });
+            row.col(|ui| {
+                if let Some(created) = metadata.created {
+                    // Calc available width for the file name and include a small margin
+                    let available_width = ui.available_width() - 10.0;
 
-        row.col(|ui| {
-            if let Some(created) = metadata.created {
-                // Calc available width for the file name and include a small margin
-                let available_width = ui.available_width() - 10.0;
+                    let text = truncate_date(ui, created, available_width);
 
-                let text = truncate_date(ui, created, available_width);
+                    ui.add(egui::Label::new(text).selectable(false));
+                } else {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                }
+            });
 
-                ui.add(egui::Label::new(text).selectable(false));
-            } else {
-                ui.add(egui::Label::new(String::new()).selectable(false));
-            }
-        });
+            row.col(|ui| {
+                if let Some(last_modified) = metadata.last_modified {
+                    // Calc available width for the file name and include a small margin
+                    let available_width = ui.available_width() - 10.0;
 
-        row.col(|ui| {
-            if let Some(last_modified) = metadata.last_modified {
-                // Calc available width for the file name and include a small margin
-                let available_width = ui.available_width() - 10.0;
+                    let text = truncate_date(ui, last_modified, available_width);
 
-                let text = truncate_date(ui, last_modified, available_width);
-
-                ui.add(egui::Label::new(text).selectable(false));
-            } else {
-                ui.add(egui::Label::new(String::new()).selectable(false));
-            }
-        });
+                    ui.add(egui::Label::new(text).selectable(false));
+                } else {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                }
+            });
+        }
     }
 
     fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) -> Option<DirectoryEntry> {

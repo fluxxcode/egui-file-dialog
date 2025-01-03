@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::data::DirectoryEntry;
+use crate::file_dialog::{SortBy, SortOrder};
 
 /// Contains data of the `FileDialog` that should be stored persistently.
 #[derive(Debug, Clone)]
@@ -203,6 +204,13 @@ pub struct FileDialogConfig {
     pub show_devices: bool,
     /// If the Removable Devices section in the left sidebar should be visible.
     pub show_removable_devices: bool,
+
+    /// sort by
+    pub sort_by: SortBy,
+    /// sort order
+    pub sort_order: SortOrder,
+    /// show only filename and no meta-data in the central window
+    pub show_only_file_name: bool,
 }
 
 impl Default for FileDialogConfig {
@@ -269,6 +277,10 @@ impl Default for FileDialogConfig {
             show_places: true,
             show_devices: true,
             show_removable_devices: true,
+
+            sort_by: SortBy::Filename,
+            sort_order: SortOrder::Ascending,
+            show_only_file_name: false,
         }
     }
 }
