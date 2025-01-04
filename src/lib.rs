@@ -201,7 +201,7 @@ mod file_dialog;
 /// Information panel showing the preview and metadata of the selected item
 pub mod information_panel;
 mod modals;
-mod virtual_fs;
+mod file_system;
 
 pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
@@ -210,4 +210,4 @@ pub use config::{
 pub use data::{DirectoryEntry, Metadata, UserDirectories, Disks, Disk};
 pub use file_dialog::{DialogMode, DialogState, FileDialog};
 
-pub use virtual_fs::{FileSystem, NativeFileSystem};
+pub use file_system::{FileSystem, NativeFileSystem};
