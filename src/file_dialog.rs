@@ -2271,13 +2271,19 @@ impl FileDialog {
             let shift_only_modifier = ui.input(|i| i.modifiers.shift_only());
 
             let row_height = Self::get_row_height(ui);
+
+            let mut table_builder = TableBuilder::new(ui)
+                .sense(egui::Sense::click())
+                .striped(true)
+                .resizable(true)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center));
+            if self.scroll_to_selection {
+                table_builder =
+                    table_builder.scroll_to_row(scroll_offset, Some(egui::Align::Center));
+                self.scroll_to_selection = false;
+            }
             let table = if self.config.show_only_file_name {
-                TableBuilder::new(ui)
-                    .sense(egui::Sense::click())
-                    .striped(true)
-                    .resizable(true)
-                    .scroll_to_row(scroll_offset, Some(egui::Align::Center))
-                    .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                table_builder
                     .column(Column::remainder().at_least(120.0)) // "Date Modified"
                     .header(row_height, |mut header| {
                         let labels = self.config.labels.clone();
@@ -2289,12 +2295,7 @@ impl FileDialog {
                         );
                     })
             } else {
-                TableBuilder::new(ui)
-                    .sense(egui::Sense::click())
-                    .striped(true)
-                    .resizable(true)
-                    .scroll_to_row(scroll_offset, Some(egui::Align::Center))
-                    .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                table_builder
                     .column(Column::auto().at_least(120.0)) // "Name"
                     .column(Column::auto().at_least(70.0)) // "File Size"
                     .column(Column::auto().at_least(60.0)) // "Date Created"
