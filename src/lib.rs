@@ -53,14 +53,14 @@
 //!
 //! impl MyApp {
 //!     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-//!         if ui.button("Select file").clicked() {
-//!             // Open the file dialog to select a file
-//!             self.file_dialog.select_file();
+//!         if ui.button("Pick file").clicked() {
+//!             // Open the file dialog to pick a file
+//!             self.file_dialog.pick_file();
 //!         }
 //!
-//!         // Update the dialog and check if the user selected a file
-//!         if let Some(path) = self.file_dialog.update(ctx).selected() {
-//!             println!("Selected file: {:?}", path);
+//!         // Update the dialog and check if the user picked a file
+//!         if let Some(path) = self.file_dialog.update(ctx).picked() {
+//!             println!("Picked file: {:?}", path);
 //!         }
 //!     }
 //! }
