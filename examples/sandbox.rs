@@ -102,10 +102,10 @@ impl eframe::App for MyApp {
 
             if let Some(path) = self.file_dialog.take_picked() {
                 match self.file_dialog.mode() {
-                    DialogMode::SelectDirectory => self.picked_directory = Some(path),
-                    DialogMode::SelectFile => self.picked_file = Some(path),
+                    DialogMode::PickDirectory => self.picked_directory = Some(path),
+                    DialogMode::PickFile => self.picked_file = Some(path),
                     DialogMode::SaveFile => self.saved_file = Some(path),
-                    DialogMode::SelectMultiple => {}
+                    DialogMode::PickMultiple => {}
                 }
             }
 

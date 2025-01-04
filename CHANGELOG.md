@@ -1,5 +1,14 @@
 # egui-file-dialog changelog
 
+## Unreleased
+### 🚨 Breaking Changes
+
+- Removed deprecated methods `FileDialog::select_directory`, `FileDialog::select_file`, `FileDialog::select_multiple`, `FileDialog::overwrite_config`, `FileDialog::selected`, `FileDialog::take_selected`, `FileDialog::take_selected_multiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
+- Renamed `DialogMode`'s: `SelectFile` -> `PickFile`, `SelectDirectory` -> `PickDirectory`, `SelectMultiple` -> `PickMultiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
+- Renamed `DialogState`'s: `Selected` -> `Picked`, `SelectedMultiple` -> `PickedMultiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
+- Renamed `active_entry` -> `selected_entry` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
+- Renamed `active_selected_entries` -> `selected_entries` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
+
 ## 2024-12-17 - v0.8.0 - egui update, custom right panel and more
 
 ### 🚨 Breaking Changes
