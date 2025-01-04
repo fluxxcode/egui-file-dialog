@@ -66,6 +66,8 @@ impl Default for FileDialogStorage {
 pub struct FileDialogConfig {
     // ------------------------------------------------------------------------
     // Core:
+    /// File system browsed by the file dialog; may be native or virtual.
+    pub file_system: Arc<dyn FileSystem + Send + Sync>,
     /// Persistent data of the file dialog.
     pub storage: FileDialogStorage,
     /// The labels that the dialog uses.
@@ -208,13 +210,13 @@ pub struct FileDialogConfig {
 
 impl Default for FileDialogConfig {
     fn default() -> Self {
-        Self::default_from_filesystem(&NativeFileSystem)
+        Self::default_from_filesystem(Arc::new(NativeFileSystem))
     }
 }
 
 impl FileDialogConfig {
     /// Creates a new configuration with default values
-    pub fn default_from_filesystem(fs: &dyn FileSystem) -> Self {
+    pub fn default_from_filesystem(file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
             storage: FileDialogStorage::default(),
             labels: FileDialogLabels::default(),
@@ -222,7 +224,7 @@ impl FileDialogConfig {
 
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
-            initial_directory: fs.current_dir().unwrap_or_default(),
+            initial_directory: file_system.current_dir().unwrap_or_default(),
             default_file_name: String::new(),
             allow_file_overwrite: true,
             allow_path_edit_to_save_file_without_extension: false,
@@ -281,6 +283,8 @@ impl FileDialogConfig {
             show_places: true,
             show_devices: true,
             show_removable_devices: true,
+
+            file_system,
         }
     }
 }
