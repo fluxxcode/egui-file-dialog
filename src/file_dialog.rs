@@ -2279,9 +2279,7 @@ impl FileDialog {
 
         // The user wants to select every item between the last selected item
         // and the current item
-        if self.mode == DialogMode::PickMultiple
-            && row.response().clicked()
-            && shift_only_modifier
+        if self.mode == DialogMode::PickMultiple && row.response().clicked() && shift_only_modifier
         {
             if let Some(selected_item) = self.selected_item.clone() {
                 // We perform a batch selection from the item that was
