@@ -2316,7 +2316,7 @@ impl FileDialog {
                         );
                         self.add_sortable_column(
                             &mut header,
-                            &labels.modified_date_header,
+                            &labels.created_date_header,
                             SortBy::DateCreated,
                             &mut data,
                         );
