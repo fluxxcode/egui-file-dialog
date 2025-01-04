@@ -65,7 +65,7 @@ impl UserDirectories {
     }
 
     /// Canonicalizes the given paths. Returns None if an error occurred.
-    pub fn canonicalize(path: Option<&Path>, canonicalize: bool) -> Option<PathBuf> {
+    pub(crate) fn canonicalize(path: Option<&Path>, canonicalize: bool) -> Option<PathBuf> {
         if !canonicalize {
             return path.map(PathBuf::from);
         }
