@@ -36,31 +36,31 @@ impl UserDirectories {
         }
     }
 
-    pub fn home_dir(&self) -> Option<&Path> {
+    pub(crate) fn home_dir(&self) -> Option<&Path> {
         self.home_dir.as_deref()
     }
 
-    pub fn audio_dir(&self) -> Option<&Path> {
+    pub(crate) fn audio_dir(&self) -> Option<&Path> {
         self.audio_dir.as_deref()
     }
 
-    pub fn desktop_dir(&self) -> Option<&Path> {
+    pub(crate) fn desktop_dir(&self) -> Option<&Path> {
         self.desktop_dir.as_deref()
     }
 
-    pub fn document_dir(&self) -> Option<&Path> {
+    pub(crate) fn document_dir(&self) -> Option<&Path> {
         self.document_dir.as_deref()
     }
 
-    pub fn download_dir(&self) -> Option<&Path> {
+    pub(crate) fn download_dir(&self) -> Option<&Path> {
         self.download_dir.as_deref()
     }
 
-    pub fn picture_dir(&self) -> Option<&Path> {
+    pub(crate) fn picture_dir(&self) -> Option<&Path> {
         self.picture_dir.as_deref()
     }
 
-    pub fn video_dir(&self) -> Option<&Path> {
+    pub(crate) fn video_dir(&self) -> Option<&Path> {
         self.video_dir.as_deref()
     }
 

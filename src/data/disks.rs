@@ -71,6 +71,7 @@ impl Disk {
         &self.display_name
     }
 
+    /// Returns true if the disk is removable
     pub const fn is_removable(&self) -> bool {
         self.is_removable
     }
