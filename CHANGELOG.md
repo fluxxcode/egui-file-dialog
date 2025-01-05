@@ -9,6 +9,10 @@
 - Renamed `active_entry` -> `selected_entry` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_selected_entries` -> `selected_entries` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 
+### 🔧 Changes
+
+- Set up git-lfs to track PNG files and improve repository performance [#218](https://github.com/fluxxcode/egui-file-dialog/pull/218)
+
 ## 2024-12-17 - v0.8.0 - egui update, custom right panel and more
 
 ### 🚨 Breaking Changes
