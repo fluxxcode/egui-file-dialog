@@ -234,6 +234,14 @@ impl FileDialog {
         }
     }
 
+    /// Uses the given file system instead of the native file system.
+    #[must_use]
+    pub fn with_file_system(mut self, file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
+        self.config.initial_directory = file_system.current_dir().unwrap_or_default();
+        self.config.file_system = file_system;
+        self
+    }
+
     /// Creates a new file dialog object and initializes it with the specified configuration.
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();

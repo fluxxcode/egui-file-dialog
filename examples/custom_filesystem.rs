@@ -39,9 +39,9 @@ impl MyApp {
         ];
 
         Self {
-            file_dialog: FileDialog::with_config(FileDialogConfig::default_from_filesystem(
+            file_dialog: FileDialog::new().with_file_system(
                 Arc::new(MyFileSystem(root)),
-            )),
+            ),
             picked_file: None,
         }
     }
@@ -157,7 +157,7 @@ impl FileSystem for MyFileSystem {
     }
 
     fn current_dir(&self) -> std::io::Result<PathBuf> {
-        Ok("".into())
+        Ok("folder_a".into())
     }
 
     fn is_path_hidden(&self, path: &Path) -> bool {
