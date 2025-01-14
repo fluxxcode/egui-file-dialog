@@ -1348,8 +1348,8 @@ impl FileDialog {
                 1.0,
                 ui.ctx().style().visuals.window_stroke.color,
             ))
-            .inner_margin(egui::Margin::from(4.0))
-            .rounding(egui::Rounding::from(4.0))
+            .inner_margin(egui::Margin::same(4))
+            .rounding(egui::Rounding::same(4))
             .show(ui, |ui| {
                 const EDIT_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(22.0, 20.0);
 
@@ -1469,8 +1469,8 @@ impl FileDialog {
                 1.0,
                 ui.ctx().style().visuals.window_stroke.color,
             ))
-            .inner_margin(egui::Margin::symmetric(4.0, 4.0))
-            .rounding(egui::Rounding::from(4.0))
+            .inner_margin(egui::Margin::symmetric(4, 4))
+            .rounding(egui::Rounding::same(4))
             .show(ui, |ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                     ui.add_space(ui.ctx().style().spacing.item_spacing.y);
