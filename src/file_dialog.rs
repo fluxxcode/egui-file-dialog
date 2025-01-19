@@ -1912,7 +1912,7 @@ impl FileDialog {
             .wrap_mode(egui::TextWrapMode::Truncate)
             .show_ui(ui, |ui| {
                 for filter in &self.config.file_filters {
-                    let selected = selected_filter.map_or(false, |f| f.id == filter.id);
+                    let selected = selected_filter.is_some_and(|f| f.id == filter.id);
 
                     if ui.selectable_label(selected, &filter.name).clicked() {
                         select_filter = Some(Some(filter.id));
@@ -2709,9 +2709,7 @@ impl FileDialog {
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
-        self.selected_item
-            .as_ref()
-            .map_or(false, |x| x.path_eq(item))
+        self.selected_item.as_ref().is_some_and(|x| x.path_eq(item))
     }
 
     /// Resets the dialog to use default values.
@@ -2813,11 +2811,11 @@ impl FileDialog {
             DialogMode::PickDirectory => self
                 .selected_item
                 .as_ref()
-                .map_or(false, crate::DirectoryEntry::is_dir),
+                .is_some_and(crate::DirectoryEntry::is_dir),
             DialogMode::PickFile => self
                 .selected_item
                 .as_ref()
-                .map_or(false, DirectoryEntry::is_file),
+                .is_some_and(DirectoryEntry::is_file),
             DialogMode::PickMultiple => self.get_dir_content_filtered_iter().any(|p| p.selected),
             DialogMode::SaveFile => self.file_name_input_error.is_none(),
         }
