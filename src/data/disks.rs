@@ -40,6 +40,7 @@ impl Disk {
         )
     }
 
+    /// Create a new Disk object based on its path (macos only)
     #[cfg(target_os = "macos")]
     pub fn from_path(path: &Path, canonicalize_paths: bool) -> Self {
         let mount_point = canonicalize(path, canonicalize_paths);
