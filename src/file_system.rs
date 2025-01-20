@@ -62,7 +62,7 @@ impl std::fmt::Debug for dyn FileSystem + Send + Sync {
     }
 }
 
-/// Implementation of FileSystem using the standard library
+/// Implementation of `FileSystem` using the standard library
 pub struct NativeFileSystem;
 
 impl FileSystem for NativeFileSystem {
@@ -88,8 +88,7 @@ impl FileSystem for NativeFileSystem {
 
     fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
         Ok(std::fs::read_dir(path)?
-            .into_iter()
-            .filter_map(|entry| entry.ok())
+            .filter_map(Result::ok)
             .map(|entry| entry.path())
             .collect())
     }
@@ -166,7 +165,7 @@ fn is_path_hidden(path: &Path) -> bool {
         return false;
     };
 
-    if s.chars().next() == Some('.') {
+    if s.starts_with('.') {
         return true;
     }
 

@@ -18,7 +18,7 @@ pub struct Metadata {
 
 impl Metadata {
     /// Create a new custom metadata
-    pub fn new(
+    pub const fn new(
         size: Option<u64>,
         last_modified: Option<SystemTime>,
         created: Option<SystemTime>,
@@ -144,7 +144,7 @@ impl DirectoryEntry {
     }
 
     /// Returns whether the path this `DirectoryEntry` points to is considered hidden.
-    pub fn is_hidden(&self) -> bool {
+    pub const fn is_hidden(&self) -> bool {
         self.is_hidden
     }
 }

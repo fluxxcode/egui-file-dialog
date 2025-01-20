@@ -86,21 +86,29 @@ pub struct Disks {
 
 impl Disks {
     /// Create a new set of disks
-    pub fn new(disks: Vec<Disk>) -> Self {
+    pub const fn new(disks: Vec<Disk>) -> Self {
         Self { disks }
     }
 
     /// Queries the operating system for disks
-    pub fn new_native_disks(canonicalize_paths: bool) -> Disks {
-        Disks {
+    pub fn new_native_disks(canonicalize_paths: bool) -> Self {
+        Self {
             disks: load_disks(canonicalize_paths),
         }
     }
 
     /// Very simple wrapper method of the disks `.iter()` method.
     /// No trait is implemented since this is currently only used internal.
-    pub fn iter(&self) -> std::slice::Iter<'_, Disk> {
+    pub(crate) fn iter(&self) -> std::slice::Iter<'_, Disk> {
         self.disks.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Disks {
+    type IntoIter = std::slice::Iter<'a, Disk>;
+    type Item = &'a Disk;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 

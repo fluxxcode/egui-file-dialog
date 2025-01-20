@@ -15,8 +15,8 @@ pub struct UserDirectories {
 }
 
 impl UserDirectories {
-    /// Creates a new custom UserDirectories object
-    pub fn new(
+    /// Creates a new custom `UserDirectories` object
+    pub const fn new(
         home_dir: Option<PathBuf>,
         audio_dir: Option<PathBuf>,
         desktop_dir: Option<PathBuf>,
