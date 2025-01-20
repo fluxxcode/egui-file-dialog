@@ -5,7 +5,7 @@ use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::{Direction, Layout, Ui, Vec2};
 use indexmap::{IndexMap, IndexSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 type SupportedPreviewFilesMap = HashMap<String, Box<dyn FnMut(&mut Ui, &InfoPanelEntry)>>;
@@ -226,10 +226,10 @@ impl InformationPanel {
         self
     }
 
-    fn load_content(&self, path: PathBuf) -> Option<String> {
+    fn load_content(&self, path: &Path) -> Option<String> {
         if self.load_text_content {
             self.file_system
-                .load_text_file_preview(&path, self.text_content_max_chars)
+                .load_text_file_preview(path, self.text_content_max_chars)
                 .ok()
         } else {
             None
@@ -352,7 +352,7 @@ impl InformationPanel {
                     }
                 }
             }
-            let content = self.load_content(path_buf);
+            let content = self.load_content(&path_buf);
             self.panel_entry = Some(InfoPanelEntry::new(item.clone()));
             if let Some(panel_entry) = &mut self.panel_entry {
                 // load content

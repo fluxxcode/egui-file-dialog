@@ -1,4 +1,4 @@
-use egui_file_dialog::{Disk, Disks, FileDialog, FileSystem};
+use egui_file_dialog::{Disk, Disks, FileDialog, FileSystem, Metadata};
 use std::{
     path::{Component, Path, PathBuf},
     sync::Arc,
@@ -86,13 +86,18 @@ impl MyFileSystem {
             let Component::Normal(part) = component else {
                 continue;
             };
-            let part = part.to_str().unwrap();
+            let part = part.to_str().ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Directory not found".to_string(),
+                )
+            })?;
 
             let subdir = dir
                 .iter()
                 .find_map(|(name, node)| match node {
                     Node::File => None,
-                    Node::Directory(subdir) => (name == part).then(|| subdir),
+                    Node::Directory(subdir) => (name == part).then_some(subdir),
                 })
                 .ok_or_else(|| {
                     std::io::Error::new(
@@ -131,7 +136,7 @@ impl FileSystem for MyFileSystem {
     }
 
     fn metadata(&self, _path: &Path) -> std::io::Result<egui_file_dialog::Metadata> {
-        Ok(Default::default())
+        Ok(Metadata::default())
     }
 
     fn get_disks(&self, _canonicalize_paths: bool) -> egui_file_dialog::Disks {
