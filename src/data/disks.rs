@@ -86,14 +86,14 @@ pub struct Disks {
 impl Disks {
     /// Create a new set of disks
     pub fn new(disks: Vec<Disk>) -> Self {
-        Self {
-            disks,
-        }
+        Self { disks }
     }
 
     /// Queries the operating system for disks
     pub fn new_native_disks(canonicalize_paths: bool) -> Disks {
-        Disks { disks: load_disks(canonicalize_paths) }
+        Disks {
+            disks: load_disks(canonicalize_paths),
+        }
     }
 
     /// Very simple wrapper method of the disks `.iter()` method.

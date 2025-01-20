@@ -1122,7 +1122,11 @@ impl FileDialog {
                     } else if let Some(parent) = path.parent() {
                         // Else, go to the parent directory
                         self.load_directory(parent);
-                        self.select_item(&mut DirectoryEntry::from_path(&self.config, path, &*self.config.file_system));
+                        self.select_item(&mut DirectoryEntry::from_path(
+                            &self.config,
+                            path,
+                            &*self.config.file_system,
+                        ));
                         self.scroll_to_selection = true;
                         repaint = true;
                     }
@@ -2022,7 +2026,8 @@ impl FileDialog {
             DirectoryContentState::Finished => {
                 if self.mode == DialogMode::PickDirectory {
                     if let Some(dir) = self.current_directory() {
-                        let mut dir_entry = DirectoryEntry::from_path(&self.config, dir, &*self.config.file_system);
+                        let mut dir_entry =
+                            DirectoryEntry::from_path(&self.config, dir, &*self.config.file_system);
                         self.select_item(&mut dir_entry);
                     }
                 }
@@ -2665,7 +2670,8 @@ impl FileDialog {
 
     /// Function that processes a newly created folder.
     fn process_new_folder(&mut self, created_dir: &Path) -> DirectoryEntry {
-        let mut entry = DirectoryEntry::from_path(&self.config, created_dir, &*self.config.file_system);
+        let mut entry =
+            DirectoryEntry::from_path(&self.config, created_dir, &*self.config.file_system);
 
         self.directory_content.push(entry.clone());
 
@@ -2733,8 +2739,14 @@ impl FileDialog {
     /// Refreshes the dialog.
     /// Including the user directories, system disks and currently open directory.
     fn refresh(&mut self) {
-        self.user_directories = self.config.file_system.user_dirs(self.config.canonicalize_paths);
-        self.system_disks = self.config.file_system.get_disks(self.config.canonicalize_paths);
+        self.user_directories = self
+            .config
+            .file_system
+            .user_dirs(self.config.canonicalize_paths);
+        self.system_disks = self
+            .config
+            .file_system
+            .get_disks(self.config.canonicalize_paths);
 
         self.reload_directory();
     }

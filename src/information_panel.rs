@@ -228,7 +228,9 @@ impl InformationPanel {
 
     fn load_content(&self, path: PathBuf) -> Option<String> {
         if self.load_text_content {
-            self.file_system.load_text_file_preview(&path, self.text_content_max_chars).ok()
+            self.file_system
+                .load_text_file_preview(&path, self.text_content_max_chars)
+                .ok()
         } else {
             None
         }

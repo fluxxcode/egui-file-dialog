@@ -1,4 +1,4 @@
-use egui_file_dialog::{Disk, Disks, FileDialog, FileDialogConfig, FileSystem};
+use egui_file_dialog::{Disk, Disks, FileDialog, FileSystem};
 use std::{
     path::{Component, Path, PathBuf},
     sync::Arc,
@@ -39,9 +39,7 @@ impl MyApp {
         ];
 
         Self {
-            file_dialog: FileDialog::new().with_file_system(
-                Arc::new(MyFileSystem(root)),
-            ),
+            file_dialog: FileDialog::new().with_file_system(Arc::new(MyFileSystem(root))),
             picked_file: None,
         }
     }
@@ -132,11 +130,11 @@ impl FileSystem for MyFileSystem {
         })
     }
 
-    fn metadata(&self, path: &Path) -> std::io::Result<egui_file_dialog::Metadata> {
+    fn metadata(&self, _path: &Path) -> std::io::Result<egui_file_dialog::Metadata> {
         Ok(Default::default())
     }
 
-    fn get_disks(&self, canonicalize_paths: bool) -> egui_file_dialog::Disks {
+    fn get_disks(&self, _canonicalize_paths: bool) -> egui_file_dialog::Disks {
         Disks::new(vec![Disk::new(
             Some("I'm a fake disk"),
             &PathBuf::from("/disk"),
@@ -145,11 +143,11 @@ impl FileSystem for MyFileSystem {
         )])
     }
 
-    fn user_dirs(&self, canonicalize_paths: bool) -> Option<egui_file_dialog::UserDirectories> {
+    fn user_dirs(&self, _canonicalize_paths: bool) -> Option<egui_file_dialog::UserDirectories> {
         None
     }
 
-    fn create_dir(&self, path: &Path) -> std::io::Result<()> {
+    fn create_dir(&self, _path: &Path) -> std::io::Result<()> {
         Err(std::io::Error::new(
             std::io::ErrorKind::Unsupported,
             "Unsupported".to_string(),
@@ -160,11 +158,11 @@ impl FileSystem for MyFileSystem {
         Ok("folder_a".into())
     }
 
-    fn is_path_hidden(&self, path: &Path) -> bool {
+    fn is_path_hidden(&self, _path: &Path) -> bool {
         false
     }
 
-    fn load_text_file_preview(&self, path: &Path, max_chars: usize) -> std::io::Result<String> {
+    fn load_text_file_preview(&self, _path: &Path, _max_chars: usize) -> std::io::Result<String> {
         Err(std::io::Error::new(
             std::io::ErrorKind::Unsupported,
             "Unsupported".to_string(),

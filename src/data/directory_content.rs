@@ -235,7 +235,13 @@ impl DirectoryContent {
         let p = path.to_path_buf();
         let f = file_filter.cloned();
         thread::spawn(move || {
-            let _ = tx.send(load_directory(&c, &p, include_files, f.as_ref(), &*file_system));
+            let _ = tx.send(load_directory(
+                &c,
+                &p,
+                include_files,
+                f.as_ref(),
+                &*file_system,
+            ));
         });
 
         Self {

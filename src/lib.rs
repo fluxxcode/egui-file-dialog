@@ -198,16 +198,16 @@ mod config;
 mod create_directory_dialog;
 mod data;
 mod file_dialog;
+mod file_system;
 /// Information panel showing the preview and metadata of the selected item
 pub mod information_panel;
 mod modals;
-mod file_system;
 
 pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
     KeyBinding, QuickAccess, QuickAccessPath,
 };
-pub use data::{DirectoryEntry, Metadata, UserDirectories, Disks, Disk};
+pub use data::{DirectoryEntry, Disk, Disks, Metadata, UserDirectories};
 pub use file_dialog::{DialogMode, DialogState, FileDialog};
 
 pub use file_system::{FileSystem, NativeFileSystem};
