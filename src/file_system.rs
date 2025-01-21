@@ -14,7 +14,7 @@ use crate::data::{Disks, Metadata, UserDirectories};
 ///
 /// struct MyFileSystem;
 ///
-/// impl FileSystem for MyFileSystem { 
+/// impl FileSystem for MyFileSystem {
 ///     fn metadata(&self, path: &Path) -> io::Result<Metadata> { todo!() }
 ///     fn is_dir(&self, path: &Path) -> bool { todo!() }
 ///     fn is_file(&self, path: &Path) -> bool { todo!() }
