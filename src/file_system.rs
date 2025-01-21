@@ -164,7 +164,7 @@ impl FileSystem for NativeFileSystem {
 fn is_path_hidden(path: &Path) -> bool {
     use std::os::windows::fs::MetadataExt;
 
-    std::fs::metadata(path).map_or(false, |metadata| metadata.file_attributes() & 0x2 > 0)
+    std::fs::metadata(path).is_ok_and(|metadata| metadata.file_attributes() & 0x2 > 0)
 }
 
 #[cfg(not(windows))]
