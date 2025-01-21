@@ -9,13 +9,24 @@ use crate::data::{Disks, Metadata, UserDirectories};
 /// # Examples
 ///
 /// ```
-/// use egui_file_dialog::{FileDialog, FileSystem};
+/// use egui_file_dialog::{FileDialog, FileSystem, UserDirectories, Metadata, Disks};
+/// use std::{io, path::{Path, PathBuf}};
 ///
 /// struct MyFileSystem;
 ///
-/// impl FileSystem for MyFileSystem { /* ... */ }
+/// impl FileSystem for MyFileSystem { 
+///     fn metadata(&self, path: &Path) -> io::Result<Metadata> { todo!() }
+///     fn is_dir(&self, path: &Path) -> bool { todo!() }
+///     fn is_file(&self, path: &Path) -> bool { todo!() }
+///     fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>> { todo!() }
+///     fn get_disks(&self, canonicalize_paths: bool) -> Disks { todo!() }
+///     fn is_path_hidden(&self, path: &Path) -> bool { todo!() }
+///     fn create_dir(&self, path: &Path) -> io::Result<()> { todo!() }
+///     fn user_dirs(&self, canonicalize_paths: bool) -> Option<UserDirectories> { todo!() }
+///     fn current_dir(&self) -> io::Result<PathBuf> { Ok("/".into()) }
+/// }
 ///
-/// let dialog = FileDialog::from_filesystem(Arc::new(MyFileSystem));
+/// let dialog = FileDialog::new().with_file_system(std::sync::Arc::new(MyFileSystem));
 ///
 /// /* Use the file dialog as usual */
 /// ```
