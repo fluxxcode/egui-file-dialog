@@ -9,6 +9,10 @@
 - Renamed `active_entry` -> `selected_entry` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_selected_entries` -> `selected_entries` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 
+### ✨ Features
+
+- Implement file system abstraction so that the file dialog can be used with virtual file systems [#277](https://github.com/fluxxcode/egui-file-dialog/pull/227) (thanks [@Masterchef365](https://github.com/Masterchef365)!)
+
 ### 🔧 Changes
 
 - Set up git-lfs to track PNG files and improve repository performance [#218](https://github.com/fluxxcode/egui-file-dialog/pull/218)
