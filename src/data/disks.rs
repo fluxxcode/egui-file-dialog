@@ -13,6 +13,7 @@ pub struct Disk {
 }
 
 impl Disk {
+    /// Creates a new disk with the given name and mount point
     pub fn new(
         name: Option<&str>,
         mount_point: &Path,
@@ -39,6 +40,7 @@ impl Disk {
         )
     }
 
+    /// Create a new Disk object based on its path (macos only)
     #[cfg(target_os = "macos")]
     pub fn from_path(path: &Path, canonicalize_paths: bool) -> Self {
         let mount_point = canonicalize(path, canonicalize_paths);
@@ -70,6 +72,7 @@ impl Disk {
         &self.display_name
     }
 
+    /// Returns true if the disk is removable
     pub const fn is_removable(&self) -> bool {
         self.is_removable
     }
@@ -82,16 +85,30 @@ pub struct Disks {
 }
 
 impl Disks {
-    /// Creates a new Disks object with a refreshed list of the system disks.
-    pub fn new_with_refreshed_list(canonicalize_paths: bool) -> Self {
+    /// Create a new set of disks
+    pub const fn new(disks: Vec<Disk>) -> Self {
+        Self { disks }
+    }
+
+    /// Queries the operating system for disks
+    pub fn new_native_disks(canonicalize_paths: bool) -> Self {
         Self {
             disks: load_disks(canonicalize_paths),
         }
     }
+
     /// Very simple wrapper method of the disks `.iter()` method.
     /// No trait is implemented since this is currently only used internal.
-    pub fn iter(&self) -> std::slice::Iter<'_, Disk> {
+    pub(crate) fn iter(&self) -> std::slice::Iter<'_, Disk> {
         self.disks.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Disks {
+    type IntoIter = std::slice::Iter<'a, Disk>;
+    type Item = &'a Disk;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
