@@ -8,6 +8,12 @@
 - Renamed `DialogState`'s: `Selected` -> `Picked`, `SelectedMultiple` -> `PickedMultiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_entry` -> `selected_entry` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_selected_entries` -> `selected_entries` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
+- Added `file_system` attribute to `FileDialogConfig` [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227)
+- Added `file_system` parameter to `DirectoryEntry::from_path` [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227)
+
+### ✨ Features
+
+- Implement file system abstraction so that the file dialog can be used with virtual file systems [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227) (thanks [@Masterchef365](https://github.com/Masterchef365)!)
 
 ### 🔧 Changes
 
