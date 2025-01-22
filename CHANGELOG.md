@@ -19,6 +19,7 @@
 
 - Set up git-lfs to track PNG files and improve repository performance [#218](https://github.com/fluxxcode/egui-file-dialog/pull/218)
 - Fixed new Clippy errors added in the latest rust version [#234](https://github.com/fluxxcode/egui-file-dialog/pull/234)
+- Updated `directories` dependency from `v0.5.0` to `v0.6.0` [#233](https://github.com/fluxxcode/egui-file-dialog/pull/233/files)
 
 ## 2024-12-17 - v0.8.0 - egui update, custom right panel and more
 
