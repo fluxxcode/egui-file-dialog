@@ -92,8 +92,16 @@ impl Disks {
 
     /// Queries the operating system for disks
     pub fn new_native_disks(canonicalize_paths: bool) -> Self {
+        println!("LOADING_DISKS: {canonicalize_paths}");
         Self {
             disks: load_disks(canonicalize_paths),
+        }
+    }
+
+    /// Creates an empty list of Disks
+    pub fn new_empty() -> Self {
+        Self {
+            disks: Vec::new(),
         }
     }
 
