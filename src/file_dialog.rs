@@ -204,8 +204,8 @@ impl FileDialog {
 
             window_id: egui::Id::new("file_dialog"),
 
-            user_directories: file_system.user_dirs(true),
-            system_disks: file_system.get_disks(true),
+            user_directories: None,
+            system_disks: Disks::new_empty(),
 
             directory_stack: Vec::new(),
             directory_offset: 0,
@@ -246,9 +246,6 @@ impl FileDialog {
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
-
-        obj.refresh();
-
         obj
     }
 
@@ -320,6 +317,7 @@ impl FileDialog {
         operation_id: Option<&str>,
     ) -> io::Result<()> {
         self.reset();
+        self.refresh();
 
         if mode == DialogMode::PickFile {
             show_files = true;
@@ -566,12 +564,8 @@ impl FileDialog {
     /// you know what you are doing and have a reason for it.
     /// Disabling canonicalization can lead to unexpected behavior, for example if an
     /// already canonicalized path is then set as the initial directory.
-    pub fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
+    pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
-
-        // Reload data like system disks and user directories with the updated canonicalization.
-        self.refresh();
-
         self
     }
 

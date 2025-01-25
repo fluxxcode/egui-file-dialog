@@ -97,6 +97,11 @@ impl Disks {
         }
     }
 
+    /// Creates an empty list of Disks
+    pub const fn new_empty() -> Self {
+        Self { disks: Vec::new() }
+    }
+
     /// Very simple wrapper method of the disks `.iter()` method.
     /// No trait is implemented since this is currently only used internal.
     pub(crate) fn iter(&self) -> std::slice::Iter<'_, Disk> {
