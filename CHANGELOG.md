@@ -15,6 +15,10 @@
 
 - Implement file system abstraction so that the file dialog can be used with virtual file systems [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227) (thanks [@Masterchef365](https://github.com/Masterchef365)!)
 
+### 🐛 Bug Fixes
+
+- Fixed canonicalization flag not used during object creation [#237](https://github.com/fluxxcode/egui-file-dialog/pull/237)
+
 ### 🔧 Changes
 
 - Set up git-lfs to track PNG files and improve repository performance [#218](https://github.com/fluxxcode/egui-file-dialog/pull/218)
