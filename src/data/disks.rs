@@ -98,7 +98,7 @@ impl Disks {
     }
 
     /// Creates an empty list of Disks
-    pub fn new_empty() -> Self {
+    pub const fn new_empty() -> Self {
         Self { disks: Vec::new() }
     }
 

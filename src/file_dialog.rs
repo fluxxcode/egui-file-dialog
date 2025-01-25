@@ -564,7 +564,7 @@ impl FileDialog {
     /// you know what you are doing and have a reason for it.
     /// Disabling canonicalization can lead to unexpected behavior, for example if an
     /// already canonicalized path is then set as the initial directory.
-    pub fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
+    pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
         self
     }
