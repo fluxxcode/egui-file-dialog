@@ -99,9 +99,7 @@ impl Disks {
 
     /// Creates an empty list of Disks
     pub fn new_empty() -> Self {
-        Self {
-            disks: Vec::new(),
-        }
+        Self { disks: Vec::new() }
     }
 
     /// Very simple wrapper method of the disks `.iter()` method.
