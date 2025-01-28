@@ -1,7 +1,7 @@
 #![cfg(feature = "information_view")]
 
-use crate::{DirectoryEntry, FileDialog, FileSystem, NativeFileSystem};
 use crate::utils::format_bytes;
+use crate::{DirectoryEntry, FileDialog, FileSystem, NativeFileSystem};
 use chrono::{DateTime, Local};
 use egui::ahash::{HashMap, HashMapExt};
 use egui::{Direction, Layout, Ui, Vec2};

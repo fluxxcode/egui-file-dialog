@@ -1,6 +1,6 @@
 use crate::config::{FileDialogConfig, FileFilter};
-use crate::FileSystem;
 use crate::file_dialog::{SortBy, SortOrder};
+use crate::FileSystem;
 use egui::mutex::Mutex;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc};
