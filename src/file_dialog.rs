@@ -8,6 +8,7 @@ use crate::data::{
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 use crate::utils::{calc_text_width, format_bytes, truncate_date, truncate_filename};
+use crate::{FileSystem, NativeFileSystem};
 use egui::text::{CCursor, CCursorRange};
 use egui::TextStyle;
 use egui_extras::{Column, TableBuilder, TableRow};
@@ -15,6 +16,7 @@ use std::cmp::PartialEq;
 use std::fmt::{Debug, Display, Formatter};
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 /// Enum to set what we sort the directory entry by
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -237,9 +239,8 @@ impl FileDialog {
     /// Creates a new file dialog instance with default values.
     #[must_use]
     pub fn new() -> Self {
+        let file_system = Arc::new(NativeFileSystem);
         Self {
-            config: FileDialogConfig::default(),
-
             modals: Vec::new(),
 
             mode: DialogMode::PickDirectory,
@@ -249,14 +250,14 @@ impl FileDialog {
 
             window_id: egui::Id::new("file_dialog"),
 
-            user_directories: UserDirectories::new(true),
-            system_disks: Disks::new_with_refreshed_list(true),
+            user_directories: None,
+            system_disks: Disks::new_empty(),
 
             directory_stack: Vec::new(),
             directory_offset: 0,
             directory_content: DirectoryContent::default(),
 
-            create_directory_dialog: CreateDirectoryDialog::new(),
+            create_directory_dialog: CreateDirectoryDialog::from_filesystem(file_system.clone()),
 
             path_edit_visible: false,
             path_edit_value: String::new(),
@@ -274,16 +275,23 @@ impl FileDialog {
             init_search: false,
 
             any_focused_last_frame: false,
+
+            config: FileDialogConfig::default_from_filesystem(file_system),
         }
+    }
+
+    /// Uses the given file system instead of the native file system.
+    #[must_use]
+    pub fn with_file_system(mut self, file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
+        self.config.initial_directory = file_system.current_dir().unwrap_or_default();
+        self.config.file_system = file_system;
+        self
     }
 
     /// Creates a new file dialog object and initializes it with the specified configuration.
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
-
-        obj.refresh();
-
         obj
     }
 
@@ -355,6 +363,7 @@ impl FileDialog {
         operation_id: Option<&str>,
     ) -> io::Result<()> {
         self.reset();
+        self.refresh();
 
         if mode == DialogMode::PickFile {
             show_files = true;
@@ -606,12 +615,8 @@ impl FileDialog {
     /// you know what you are doing and have a reason for it.
     /// Disabling canonicalization can lead to unexpected behavior, for example if an
     /// already canonicalized path is then set as the initial directory.
-    pub fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
+    pub const fn canonicalize_paths(mut self, canonicalize: bool) -> Self {
         self.config.canonicalize_paths = canonicalize;
-
-        // Reload data like system disks and user directories with the updated canonicalization.
-        self.refresh();
-
         self
     }
 
@@ -1155,14 +1160,18 @@ impl FileDialog {
             // Check if files were dropped
             if let Some(dropped_file) = i.raw.dropped_files.last() {
                 if let Some(path) = &dropped_file.path {
-                    if path.is_dir() {
+                    if self.config.file_system.is_dir(path) {
                         // If we dropped a directory, go there
                         self.load_directory(path.as_path());
                         repaint = true;
                     } else if let Some(parent) = path.parent() {
                         // Else, go to the parent directory
                         self.load_directory(parent);
-                        self.select_item(&mut DirectoryEntry::from_path(&self.config, path));
+                        self.select_item(&mut DirectoryEntry::from_path(
+                            &self.config,
+                            path,
+                            &*self.config.file_system,
+                        ));
                         self.scroll_to_selection = true;
                         repaint = true;
                     }
@@ -1963,7 +1972,7 @@ impl FileDialog {
             .wrap_mode(egui::TextWrapMode::Truncate)
             .show_ui(ui, |ui| {
                 for filter in &self.config.file_filters {
-                    let selected = selected_filter.map_or(false, |f| f.id == filter.id);
+                    let selected = selected_filter.is_some_and(|f| f.id == filter.id);
 
                     if ui.selectable_label(selected, &filter.name).clicked() {
                         select_filter = Some(Some(filter.id));
@@ -2062,7 +2071,8 @@ impl FileDialog {
             DirectoryContentState::Finished => {
                 if self.mode == DialogMode::PickDirectory {
                     if let Some(dir) = self.current_directory() {
-                        let mut dir_entry = DirectoryEntry::from_path(&self.config, dir);
+                        let mut dir_entry =
+                            DirectoryEntry::from_path(&self.config, dir, &*self.config.file_system);
                         self.select_item(&mut dir_entry);
                     }
                 }
@@ -2576,6 +2586,87 @@ impl FileDialog {
             state.store(&re.ctx, re.id);
         }
     }
+
+    /// Calculates the width of a single char.
+    fn calc_char_width(ui: &egui::Ui, char: char) -> f32 {
+        ui.fonts(|f| f.glyph_width(&egui::TextStyle::Body.resolve(ui.style()), char))
+    }
+
+    /// Calculates the width of the specified text using the current font configuration.
+    /// Does not take new lines or text breaks into account!
+    fn calc_text_width(ui: &egui::Ui, text: &str) -> f32 {
+        let mut width = 0.0;
+
+        for char in text.chars() {
+            width += Self::calc_char_width(ui, char);
+        }
+
+        width
+    }
+
+    fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
+        const TRUNCATE_STR: &str = "...";
+
+        let path = item.as_path();
+
+        let file_stem = if item.is_file() {
+            path.file_stem().and_then(|f| f.to_str()).unwrap_or("")
+        } else {
+            item.file_name()
+        };
+
+        let extension = if item.is_file() {
+            path.extension().map_or(String::new(), |ext| {
+                format!(".{}", ext.to_str().unwrap_or(""))
+            })
+        } else {
+            String::new()
+        };
+
+        let extension_width = Self::calc_text_width(ui, &extension);
+        let reserved = extension_width + Self::calc_text_width(ui, TRUNCATE_STR);
+
+        if max_length <= reserved {
+            return format!("{TRUNCATE_STR}{extension}");
+        }
+
+        let mut width = reserved;
+        let mut front = String::new();
+        let mut back = String::new();
+
+        for (i, char) in file_stem.chars().enumerate() {
+            let w = Self::calc_char_width(ui, char);
+
+            if width + w > max_length {
+                break;
+            }
+
+            front.push(char);
+            width += w;
+
+            let back_index = file_stem.len() - i - 1;
+
+            if back_index <= i {
+                break;
+            }
+
+            if let Some(char) = file_stem.chars().nth(back_index) {
+                let w = Self::calc_char_width(ui, char);
+
+                if width + w > max_length {
+                    break;
+                }
+
+                back.push(char);
+                width += w;
+            }
+        }
+
+        format!(
+            "{front}{TRUNCATE_STR}{}{extension}",
+            back.chars().rev().collect::<String>()
+        )
+    }
 }
 
 /// Keybindings
@@ -2781,7 +2872,8 @@ impl FileDialog {
 
     /// Function that processes a newly created folder.
     fn process_new_folder(&mut self, created_dir: &Path) -> DirectoryEntry {
-        let mut entry = DirectoryEntry::from_path(&self.config, created_dir);
+        let mut entry =
+            DirectoryEntry::from_path(&self.config, created_dir, &*self.config.file_system);
 
         self.directory_content.push(entry.clone());
 
@@ -2836,9 +2928,7 @@ impl FileDialog {
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
-        self.selected_item
-            .as_ref()
-            .map_or(false, |x| x.path_eq(item))
+        self.selected_item.as_ref().is_some_and(|x| x.path_eq(item))
     }
 
     /// Resets the dialog to use default values.
@@ -2851,8 +2941,14 @@ impl FileDialog {
     /// Refreshes the dialog.
     /// Including the user directories, system disks and currently open directory.
     fn refresh(&mut self) {
-        self.user_directories = UserDirectories::new(self.config.canonicalize_paths);
-        self.system_disks = Disks::new_with_refreshed_list(self.config.canonicalize_paths);
+        self.user_directories = self
+            .config
+            .file_system
+            .user_dirs(self.config.canonicalize_paths);
+        self.system_disks = self
+            .config
+            .file_system
+            .get_disks(self.config.canonicalize_paths);
 
         self.reload_directory();
     }
@@ -2915,7 +3011,7 @@ impl FileDialog {
     fn gen_initial_directory(&self, path: &Path) -> PathBuf {
         let mut path = self.canonicalize_path(path);
 
-        if path.is_file() {
+        if self.config.file_system.is_file(&path) {
             if let Some(parent) = path.parent() {
                 path = parent.to_path_buf();
             }
@@ -2940,11 +3036,11 @@ impl FileDialog {
             DialogMode::PickDirectory => self
                 .selected_item
                 .as_ref()
-                .map_or(false, crate::DirectoryEntry::is_dir),
+                .is_some_and(crate::DirectoryEntry::is_dir),
             DialogMode::PickFile => self
                 .selected_item
                 .as_ref()
-                .map_or(false, DirectoryEntry::is_file),
+                .is_some_and(DirectoryEntry::is_file),
             DialogMode::PickMultiple => self.get_dir_content_filtered_iter().any(|p| p.selected),
             DialogMode::SaveFile => self.file_name_input_error.is_none(),
         }
@@ -2962,11 +3058,11 @@ impl FileDialog {
             let mut full_path = x.to_path_buf();
             full_path.push(self.file_name_input.as_str());
 
-            if full_path.is_dir() {
+            if self.config.file_system.is_dir(&full_path) {
                 return Some(self.config.labels.err_directory_exists.clone());
             }
 
-            if !self.config.allow_file_overwrite && full_path.is_file() {
+            if !self.config.allow_file_overwrite && self.config.file_system.is_file(&full_path) {
                 return Some(self.config.labels.err_file_exists.clone());
             }
         } else {
@@ -3110,7 +3206,7 @@ impl FileDialog {
 
         let path = self.canonicalize_path(&PathBuf::from(&self.path_edit_value));
 
-        if self.mode == DialogMode::PickFile && path.is_file() {
+        if self.mode == DialogMode::PickFile && self.config.file_system.is_file(&path) {
             self.state = DialogState::Picked(path);
             return;
         }
@@ -3124,7 +3220,7 @@ impl FileDialog {
         if self.mode == DialogMode::SaveFile
             && (path.extension().is_some()
                 || self.config.allow_path_edit_to_save_file_without_extension)
-            && !path.is_dir()
+            && !self.config.file_system.is_dir(&path)
             && path.parent().is_some_and(std::path::Path::exists)
         {
             self.submit_save_file(path);
@@ -3234,6 +3330,7 @@ impl FileDialog {
             path,
             self.show_files,
             self.get_selected_file_filter(),
+            self.config.file_system.clone(),
         );
 
         self.create_directory_dialog.close();

@@ -10,6 +10,7 @@
 <details>
 <summary>Table of contents</summary>
 
+1. [Git LFS](#git-lfs)
 1. [Features](#features)
 1. [Example](#example)
 1. [Keybindings](#keybindings)
@@ -27,7 +28,17 @@ The file dialog is intended for use by desktop applications, allowing the use of
 
 The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
+## Git LFS
+
+This repository uses Git LFS (Large File Storage) to efficiently manage PNG files. Git LFS replaces large files
+with lightweight pointers in the repository, ensuring the repository remains fast and responsive.
+
+1. Install Git LFS: <https://git-lfs.com>
+2. Run `git lfs install` to initialize Git LFS
+3. Run `git lfs pull` to download all files tracked by Git LFS
+
 ## Features
+
 - Pick a file or a directory
 - Save a file (Prompt user for a destination path)
   - Dialog to ask the user if the existing file should be overwritten

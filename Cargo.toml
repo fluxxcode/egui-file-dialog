@@ -15,7 +15,7 @@ license = "MIT"
 egui = { version = "0.30.0", default-features = false }
 egui_extras = "0.30.0"
 # fetch user folders
-directories = "5.0"
+directories = "6.0"
 # canonicalize paths
 dunce = "1.0.5"
 # fetch disks
