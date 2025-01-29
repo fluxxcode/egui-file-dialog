@@ -54,13 +54,14 @@ with lightweight pointers in the repository, ensuring the repository remains fas
 - Shortcut for user directories (Home, Documents, ...) and system disks
 - Pin folders to the left sidebar
 - Manually edit the path via text
+- Virtual file system support
 - Customization highlights:
   - Customize which areas and functions of the dialog are visible
   - Customize the text labels used by the dialog to enable multilingual support
   - Customize file and folder icons
   - Add custom quick access sections to the left sidebar
   - Customize keybindings used by the file dialog
-  - Add a right panel with custom UI using
+  - Add a right panel with custom UI (An optional information panel to display file previews is included)
 
 ## Example
 
