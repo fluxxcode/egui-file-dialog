@@ -2811,7 +2811,7 @@ impl FileDialog {
     ///   - Attempts to use the parent directory if the path is a file
     fn get_initial_directory(&self) -> PathBuf {
         let path = match self.config.opening_mode {
-            OpeningMode::InitialDir => &self.config.initial_directory,
+            OpeningMode::AlwaysInitialDir => &self.config.initial_directory,
             OpeningMode::LastVisitedDir => self
                 .config
                 .storage

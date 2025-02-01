@@ -43,7 +43,7 @@ impl Default for FileDialogStorage {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum OpeningMode {
     /// The configured initial directory (`FileDialog::initial_directory`) should always be opened.
-    InitialDir,
+    AlwaysInitialDir,
     /// The directory most recently visited by the user should be opened regardless of
     /// whether anything was picked.
     LastVisitedDir,
@@ -242,7 +242,7 @@ impl FileDialogConfig {
             labels: FileDialogLabels::default(),
             keybindings: FileDialogKeyBindings::default(),
 
-            opening_mode: OpeningMode::InitialDir,
+            opening_mode: OpeningMode::LastPickedDir,
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
             initial_directory: file_system.current_dir().unwrap_or_default(),
