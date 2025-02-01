@@ -1,6 +1,6 @@
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
-    Filter, QuickAccess,
+    Filter, OpeningMode, QuickAccess,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
@@ -347,7 +347,7 @@ impl FileDialog {
             .id
             .map_or_else(|| egui::Id::new(self.get_window_title()), |id| id);
 
-        self.load_directory(&self.gen_initial_directory(&self.config.initial_directory));
+        self.load_directory(&self.get_initial_directory());
 
         // TODO: Dont return a result from this method
         Ok(())
@@ -482,6 +482,12 @@ impl FileDialog {
     /// Mutably borrow internal `config.labels`.
     pub fn labels_mut(&mut self) -> &mut FileDialogLabels {
         &mut self.config.labels
+    }
+
+    /// Sets which directory is loaded when opening the file dialog.
+    pub const fn opening_mode(mut self, opening_mode: OpeningMode) -> Self {
+        self.config.opening_mode = opening_mode;
+        self
     }
 
     /// If the file dialog window should be displayed as a modal.
@@ -2752,6 +2758,8 @@ impl FileDialog {
             return;
         }
 
+        self.config.storage.last_picked_dir = self.current_directory().map(PathBuf::from);
+
         match &self.mode {
             DialogMode::PickDirectory | DialogMode::PickFile => {
                 // Should always contain a value since `is_selection_valid` is used to
@@ -2798,9 +2806,26 @@ impl FileDialog {
 
     /// This function generates the initial directory based on the configuration.
     /// The function does the following things:
+    ///   - Get the path to open based on the opening mode
     ///   - Canonicalize the path if enabled
     ///   - Attempts to use the parent directory if the path is a file
-    fn gen_initial_directory(&self, path: &Path) -> PathBuf {
+    fn get_initial_directory(&self) -> PathBuf {
+        let path = match self.config.opening_mode {
+            OpeningMode::InitialDir => &self.config.initial_directory,
+            OpeningMode::LastVisitedDir => self
+                .config
+                .storage
+                .last_visited_dir
+                .as_deref()
+                .unwrap_or(&self.config.initial_directory),
+            OpeningMode::LastPickedDir => self
+                .config
+                .storage
+                .last_picked_dir
+                .as_deref()
+                .unwrap_or(&self.config.initial_directory),
+        };
+
         let mut path = self.canonicalize_path(path);
 
         if self.config.file_system.is_file(&path) {
@@ -3117,6 +3142,8 @@ impl FileDialog {
 
     /// Loads the directory content of the given path.
     fn load_directory_content(&mut self, path: &Path) {
+        self.config.storage.last_visited_dir = Some(path.to_path_buf());
+
         self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,

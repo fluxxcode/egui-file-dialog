@@ -20,6 +20,10 @@ pub struct FileDialogStorage {
     pub show_hidden: bool,
     /// If system files should be listed inside the directory view.
     pub show_system_files: bool,
+    /// The last directory the user visited.
+    pub last_visited_dir: Option<PathBuf>,
+    /// The last directory from which the user picked an item.
+    pub last_picked_dir: Option<PathBuf>,
 }
 
 impl Default for FileDialogStorage {
@@ -29,8 +33,22 @@ impl Default for FileDialogStorage {
             pinned_folders: Vec::new(),
             show_hidden: false,
             show_system_files: false,
+            last_visited_dir: None,
+            last_picked_dir: None,
         }
     }
+}
+
+/// Sets which directory is loaded when opening the file dialog.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum OpeningMode {
+    /// The configured initial directory (`FileDialog::initial_directory`) should always be opened.
+    InitialDir,
+    /// The directory most recently visited by the user should be opened regardless of
+    /// whether anything was picked.
+    LastVisitedDir,
+    /// The last directory from which the user picked an item should be opened.
+    LastPickedDir,
 }
 
 /// Contains configuration values of a file dialog.
@@ -77,6 +95,8 @@ pub struct FileDialogConfig {
 
     // ------------------------------------------------------------------------
     // General options:
+    /// Sets which directory is loaded when opening the file dialog.
+    pub opening_mode: OpeningMode,
     /// If the file dialog should be visible as a modal window.
     /// This means that the input outside the window is not registered.
     pub as_modal: bool,
@@ -222,6 +242,7 @@ impl FileDialogConfig {
             labels: FileDialogLabels::default(),
             keybindings: FileDialogKeyBindings::default(),
 
+            opening_mode: OpeningMode::InitialDir,
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
             initial_directory: file_system.current_dir().unwrap_or_default(),
