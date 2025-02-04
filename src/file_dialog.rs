@@ -315,7 +315,7 @@ impl FileDialog {
         mode: DialogMode,
         mut show_files: bool,
         operation_id: Option<&str>,
-    ) -> io::Result<()> {
+    ) {
         self.reset();
         self.refresh();
 
@@ -348,9 +348,6 @@ impl FileDialog {
             .map_or_else(|| egui::Id::new(self.get_window_title()), |id| id);
 
         self.load_directory(&self.get_initial_directory());
-
-        // TODO: Dont return a result from this method
-        Ok(())
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick a directory.
