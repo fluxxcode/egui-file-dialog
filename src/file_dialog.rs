@@ -10,7 +10,6 @@ use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal
 use crate::{FileSystem, NativeFileSystem};
 use egui::text::{CCursor, CCursorRange};
 use std::fmt::Debug;
-use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -310,12 +309,7 @@ impl FileDialog {
     ///     }
     /// }
     /// ```
-    pub fn open(
-        &mut self,
-        mode: DialogMode,
-        mut show_files: bool,
-        operation_id: Option<&str>,
-    ) -> io::Result<()> {
+    pub fn open(&mut self, mode: DialogMode, mut show_files: bool, operation_id: Option<&str>) {
         self.reset();
         self.refresh();
 
@@ -348,9 +342,6 @@ impl FileDialog {
             .map_or_else(|| egui::Id::new(self.get_window_title()), |id| id);
 
         self.load_directory(&self.get_initial_directory());
-
-        // TODO: Dont return a result from this method
-        Ok(())
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick a directory.
@@ -361,7 +352,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_directory(&mut self) {
-        let _ = self.open(DialogMode::PickDirectory, false, None);
+        self.open(DialogMode::PickDirectory, false, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick a file.
@@ -370,7 +361,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_file(&mut self) {
-        let _ = self.open(DialogMode::PickFile, true, None);
+        self.open(DialogMode::PickFile, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick multiple
@@ -380,7 +371,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_multiple(&mut self) {
-        let _ = self.open(DialogMode::PickMultiple, true, None);
+        self.open(DialogMode::PickMultiple, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -389,7 +380,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn save_file(&mut self) {
-        let _ = self.open(DialogMode::SaveFile, true, None);
+        self.open(DialogMode::SaveFile, true, None);
     }
 
     /// The main update method that should be called every frame if the dialog is to be visible.

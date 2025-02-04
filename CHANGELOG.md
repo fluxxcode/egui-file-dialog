@@ -9,6 +9,7 @@
 - Renamed `DialogState`'s: `Selected` -> `Picked`, `SelectedMultiple` -> `PickedMultiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_entry` -> `selected_entry` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_selected_entries` -> `selected_entries` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
+- Removed result from `FileDialog::open` [#242](https://github.com/fluxxcode/egui-file-dialog/pull/242)
 
 #### Breaking changes due to new features and updated configuration
 - Added `file_system` to `FileDialogConfig` [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227)
