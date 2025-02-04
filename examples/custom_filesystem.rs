@@ -39,7 +39,7 @@ impl MyApp {
         ];
 
         Self {
-            file_dialog: FileDialog::new().with_file_system(Arc::new(MyFileSystem(root))),
+            file_dialog: FileDialog::with_file_system(Arc::new(MyFileSystem(root))),
             picked_file: None,
         }
     }

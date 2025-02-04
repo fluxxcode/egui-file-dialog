@@ -26,7 +26,7 @@ use crate::data::{Disks, Metadata, UserDirectories};
 ///     fn current_dir(&self) -> io::Result<PathBuf> { Ok("/".into()) }
 /// }
 ///
-/// let dialog = FileDialog::new().with_file_system(std::sync::Arc::new(MyFileSystem));
+/// let dialog = FileDialog::with_file_system(std::sync::Arc::new(MyFileSystem));
 ///
 /// /* Use the file dialog as usual */
 /// ```
