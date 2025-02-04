@@ -25,14 +25,12 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Pick file a").clicked() {
-                let _ = self
-                    .file_dialog
+                self.file_dialog
                     .open(DialogMode::PickFile, true, Some("pick_a"));
             }
 
             if ui.button("Pick file b").clicked() {
-                let _ = self
-                    .file_dialog
+                self.file_dialog
                     .open(DialogMode::PickFile, true, Some("pick_b"));
             }
 
