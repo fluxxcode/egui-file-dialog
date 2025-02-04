@@ -310,12 +310,7 @@ impl FileDialog {
     ///     }
     /// }
     /// ```
-    pub fn open(
-        &mut self,
-        mode: DialogMode,
-        mut show_files: bool,
-        operation_id: Option<&str>,
-    ) {
+    pub fn open(&mut self, mode: DialogMode, mut show_files: bool, operation_id: Option<&str>) {
         self.reset();
         self.refresh();
 
