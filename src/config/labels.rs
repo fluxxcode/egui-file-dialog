@@ -78,6 +78,14 @@ pub struct FileDialogLabels {
     pub pin_folder: String,
     /// Text used for the option to unpin a folder.
     pub unpin_folder: String,
+    /// Text used for the file name column.
+    pub file_name_header: String,
+    /// Text used for the file size column.
+    pub file_size_header: String,
+    /// Text used for the created date column.
+    pub created_date_header: String,
+    /// Text used for the modified date column.
+    pub modified_date_header: String,
 
     // ------------------------------------------------------------------------
     // Bottom panel:
@@ -148,6 +156,10 @@ impl Default for FileDialogLabels {
             pin_folder: "📌 Pin folder".to_string(),
             unpin_folder: "✖ Unpin folder".to_string(),
 
+            file_name_header: "Name".to_string(),
+            file_size_header: "File Size".to_string(),
+            created_date_header: "Created".to_string(),
+            modified_date_header: "Modified".to_string(),
             selected_directory: "Selected directory:".to_string(),
             selected_file: "Selected file:".to_string(),
             selected_items: "Selected items:".to_string(),
