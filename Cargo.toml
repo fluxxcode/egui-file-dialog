@@ -13,7 +13,7 @@ license = "MIT"
 
 [dependencies]
 egui = { version = "0.31.0", default-features = false }
-egui_extras = "0.30.0"
+egui_extras = "0.31.0"
 # fetch user folders
 directories = "6.0"
 # canonicalize paths

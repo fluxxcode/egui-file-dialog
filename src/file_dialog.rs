@@ -14,7 +14,6 @@ use egui::TextStyle;
 use egui_extras::{Column, TableBuilder, TableRow};
 use std::cmp::PartialEq;
 use std::fmt::{Debug, Display, Formatter};
-use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
