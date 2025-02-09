@@ -1,19 +1,26 @@
 # egui-file-dialog changelog
 
-## Unreleased
+## 2025-02-04 - v0.9.0 - egui update, virtual file system and more
 ### 🚨 Breaking Changes
 
+- Updated `egui` to version `0.31` [#240](https://github.com/fluxxcode/egui-file-dialog/pull/240)
 - Removed deprecated methods `FileDialog::select_directory`, `FileDialog::select_file`, `FileDialog::select_multiple`, `FileDialog::overwrite_config`, `FileDialog::selected`, `FileDialog::take_selected`, `FileDialog::take_selected_multiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `DialogMode`'s: `SelectFile` -> `PickFile`, `SelectDirectory` -> `PickDirectory`, `SelectMultiple` -> `PickMultiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `DialogState`'s: `Selected` -> `Picked`, `SelectedMultiple` -> `PickedMultiple` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_entry` -> `selected_entry` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
 - Renamed `active_selected_entries` -> `selected_entries` [#229](https://github.com/fluxxcode/egui-file-dialog/pull/229)
-- Added `file_system` attribute to `FileDialogConfig` [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227)
+- Removed result from `FileDialog::open` [#242](https://github.com/fluxxcode/egui-file-dialog/pull/242)
+
+#### Breaking changes due to new features and updated configuration
+- Added `file_system` to `FileDialogConfig` [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227)
 - Added `file_system` parameter to `DirectoryEntry::from_path` [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227)
+- Added `opening_mode` to `FileDialogConfig` [#239](https://github.com/fluxxcode/egui-file-dialog/pull/239)
+- Added `last_visited_dir` and `last_picked_dir` to `FileDialogStorage` [#239](https://github.com/fluxxcode/egui-file-dialog/pull/239)
 
 ### ✨ Features
 
 - Implement file system abstraction so that the file dialog can be used with virtual file systems [#227](https://github.com/fluxxcode/egui-file-dialog/pull/227) (thanks [@Masterchef365](https://github.com/Masterchef365)!)
+- Added new configuration option `FileDialog::opening_mode` which allows to further specify which directory is loaded when the file dialog is opened [#239](https://github.com/fluxxcode/egui-file-dialog/pull/239)
 
 ### 🐛 Bug Fixes
 

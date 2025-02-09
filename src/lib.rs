@@ -206,7 +206,7 @@ mod utils;
 
 pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
-    KeyBinding, QuickAccess, QuickAccessPath,
+    KeyBinding, OpeningMode, QuickAccess, QuickAccessPath,
 };
 pub use data::{DirectoryEntry, Disk, Disks, Metadata, UserDirectories};
 pub use file_dialog::{DialogMode, DialogState, FileDialog};

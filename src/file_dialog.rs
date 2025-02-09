@@ -1,6 +1,6 @@
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
-    Filter, QuickAccess,
+    Filter, OpeningMode, QuickAccess,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
@@ -280,18 +280,19 @@ impl FileDialog {
         }
     }
 
-    /// Uses the given file system instead of the native file system.
-    #[must_use]
-    pub fn with_file_system(mut self, file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
-        self.config.initial_directory = file_system.current_dir().unwrap_or_default();
-        self.config.file_system = file_system;
-        self
-    }
-
     /// Creates a new file dialog object and initializes it with the specified configuration.
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
+        obj
+    }
+
+    /// Uses the given file system instead of the native file system.
+    #[must_use]
+    pub fn with_file_system(file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
+        let mut obj = Self::new();
+        obj.config.initial_directory = file_system.current_dir().unwrap_or_default();
+        obj.config.file_system = file_system;
         obj
     }
 
@@ -356,12 +357,7 @@ impl FileDialog {
     ///     }
     /// }
     /// ```
-    pub fn open(
-        &mut self,
-        mode: DialogMode,
-        mut show_files: bool,
-        operation_id: Option<&str>,
-    ) -> io::Result<()> {
+    pub fn open(&mut self, mode: DialogMode, mut show_files: bool, operation_id: Option<&str>) {
         self.reset();
         self.refresh();
 
@@ -393,10 +389,7 @@ impl FileDialog {
             .id
             .map_or_else(|| egui::Id::new(self.get_window_title()), |id| id);
 
-        self.load_directory(&self.gen_initial_directory(&self.config.initial_directory));
-
-        // TODO: Dont return a result from this method
-        Ok(())
+        self.load_directory(&self.get_initial_directory());
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick a directory.
@@ -407,7 +400,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_directory(&mut self) {
-        let _ = self.open(DialogMode::PickDirectory, false, None);
+        self.open(DialogMode::PickDirectory, false, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick a file.
@@ -416,7 +409,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_file(&mut self) {
-        let _ = self.open(DialogMode::PickFile, true, None);
+        self.open(DialogMode::PickFile, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick multiple
@@ -426,7 +419,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_multiple(&mut self) {
-        let _ = self.open(DialogMode::PickMultiple, true, None);
+        self.open(DialogMode::PickMultiple, true, None);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -435,7 +428,7 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn save_file(&mut self) {
-        let _ = self.open(DialogMode::SaveFile, true, None);
+        self.open(DialogMode::SaveFile, true, None);
     }
 
     /// The main update method that should be called every frame if the dialog is to be visible.
@@ -533,6 +526,12 @@ impl FileDialog {
     /// Mutably borrow internal `config.labels`.
     pub fn labels_mut(&mut self) -> &mut FileDialogLabels {
         &mut self.config.labels
+    }
+
+    /// Sets which directory is loaded when opening the file dialog.
+    pub const fn opening_mode(mut self, opening_mode: OpeningMode) -> Self {
+        self.config.opening_mode = opening_mode;
+        self
     }
 
     /// If the file dialog window should be displayed as a modal.
@@ -1197,7 +1196,7 @@ impl FileDialog {
 
                 ui.painter().rect_filled(
                     screen_rect,
-                    egui::Rounding::ZERO,
+                    egui::CornerRadius::ZERO,
                     self.config.modal_overlay_color,
                 );
             })
@@ -1408,8 +1407,8 @@ impl FileDialog {
                 1.0,
                 ui.ctx().style().visuals.window_stroke.color,
             ))
-            .inner_margin(egui::Margin::from(4.0))
-            .rounding(egui::Rounding::from(4.0))
+            .inner_margin(egui::Margin::from(4))
+            .corner_radius(egui::CornerRadius::from(4))
             .show(ui, |ui| {
                 const EDIT_BUTTON_SIZE: egui::Vec2 = egui::Vec2::new(22.0, 20.0);
 
@@ -1529,8 +1528,8 @@ impl FileDialog {
                 1.0,
                 ui.ctx().style().visuals.window_stroke.color,
             ))
-            .inner_margin(egui::Margin::symmetric(4.0, 4.0))
-            .rounding(egui::Rounding::from(4.0))
+            .inner_margin(egui::Margin::symmetric(4, 4))
+            .corner_radius(egui::CornerRadius::from(4))
             .show(ui, |ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                     ui.add_space(ui.ctx().style().spacing.item_spacing.y);
@@ -2880,6 +2879,8 @@ impl FileDialog {
             return;
         }
 
+        self.config.storage.last_picked_dir = self.current_directory().map(PathBuf::from);
+
         match &self.mode {
             DialogMode::PickDirectory | DialogMode::PickFile => {
                 // Should always contain a value since `is_selection_valid` is used to
@@ -2926,9 +2927,26 @@ impl FileDialog {
 
     /// This function generates the initial directory based on the configuration.
     /// The function does the following things:
+    ///   - Get the path to open based on the opening mode
     ///   - Canonicalize the path if enabled
     ///   - Attempts to use the parent directory if the path is a file
-    fn gen_initial_directory(&self, path: &Path) -> PathBuf {
+    fn get_initial_directory(&self) -> PathBuf {
+        let path = match self.config.opening_mode {
+            OpeningMode::AlwaysInitialDir => &self.config.initial_directory,
+            OpeningMode::LastVisitedDir => self
+                .config
+                .storage
+                .last_visited_dir
+                .as_deref()
+                .unwrap_or(&self.config.initial_directory),
+            OpeningMode::LastPickedDir => self
+                .config
+                .storage
+                .last_picked_dir
+                .as_deref()
+                .unwrap_or(&self.config.initial_directory),
+        };
+
         let mut path = self.canonicalize_path(path);
 
         if self.config.file_system.is_file(&path) {
@@ -3245,6 +3263,8 @@ impl FileDialog {
 
     /// Loads the directory content of the given path.
     fn load_directory_content(&mut self, path: &Path) {
+        self.config.storage.last_visited_dir = Some(path.to_path_buf());
+
         self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,
