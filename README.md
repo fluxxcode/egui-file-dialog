@@ -24,7 +24,7 @@ This repository provides an easy-to-use and customizable file dialog (a.k.a. fil
 
 The file dialog is intended for use by desktop applications, allowing the use of a file dialog directly within the egui application without relying on the operating system's file explorer. This also ensures that the file dialog looks the same and provides the same functionality on all platforms.
 
-<img src="media/demo.png">
+<img src="media/readme/demo.png">
 
 The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
 
@@ -208,7 +208,7 @@ FileDialog::new()
 ```
 
 With the options the dialog then looks like this:
-<img src="media/customization_demo.png">
+<img src="media/readme/customization_demo.png">
 
 If you want to display your own information in the file dialog, you can update the file dialog with
 `update_with_right_panel_ui` instead of `update`. This allows e.g. to display custom image previews or further
@@ -225,7 +225,7 @@ fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 }
 ```
 
-<img src="media/right_panel_demo.png">
+<img src="media/readme/right_panel_demo.png">
 
 ## Multilingual support
 
