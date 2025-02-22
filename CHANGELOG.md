@@ -1,6 +1,13 @@
 # egui-file-dialog changelog
 
+## Unreleased
+
+### 🔧 Changes
+
+- Excluded media files from package to reduce size [#244](https://github.com/fluxxcode/egui-file-dialog/pull/244)
+
 ## 2025-02-04 - v0.9.0 - egui update, virtual file system and more
+
 ### 🚨 Breaking Changes
 
 - Updated `egui` to version `0.31` [#240](https://github.com/fluxxcode/egui-file-dialog/pull/240)
