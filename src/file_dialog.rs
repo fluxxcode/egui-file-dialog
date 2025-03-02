@@ -1457,6 +1457,8 @@ impl FileDialog {
 
     /// Updates the hamburger menu containing different options.
     fn ui_update_hamburger_menu(&mut self, ui: &mut egui::Ui) {
+        const SEPARATOR_SPACING: f32 = 2.0;
+
         if self.config.show_reload_button && ui.button(&self.config.labels.reload).clicked() {
             self.refresh();
             ui.close_menu();
@@ -1475,7 +1477,9 @@ impl FileDialog {
         if (self.config.show_reload_button || self.config.show_working_directory_button)
             && (self.config.show_hidden_option || self.config.show_system_files_option)
         {
+            ui.add_space(SEPARATOR_SPACING);
             ui.separator();
+            ui.add_space(SEPARATOR_SPACING);
         }
 
         if self.config.show_hidden_option
