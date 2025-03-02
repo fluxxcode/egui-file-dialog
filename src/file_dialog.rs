@@ -1253,43 +1253,15 @@ impl FileDialog {
             if self.config.show_menu_button
                 && (self.config.show_reload_button
                     || self.config.show_hidden_option
-                    || self.config.show_system_files_option)
+                    || self.config.show_system_files_option
+                    || self.config.show_working_directory)
             {
                 ui.allocate_ui_with_layout(
                     BUTTON_SIZE,
                     egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
                     |ui| {
                         ui.menu_button("☰", |ui| {
-                            if self.config.show_reload_button
-                                && ui.button(&self.config.labels.reload).clicked()
-                            {
-                                self.refresh();
-                                ui.close_menu();
-                            }
-
-                            if self.config.show_hidden_option
-                                && ui
-                                    .checkbox(
-                                        &mut self.config.storage.show_hidden,
-                                        &self.config.labels.show_hidden,
-                                    )
-                                    .clicked()
-                            {
-                                self.refresh();
-                                ui.close_menu();
-                            }
-
-                            if self.config.show_system_files_option
-                                && ui
-                                    .checkbox(
-                                        &mut self.config.storage.show_system_files,
-                                        &self.config.labels.show_system_files,
-                                    )
-                                    .clicked()
-                            {
-                                self.refresh();
-                                ui.close_menu();
-                            }
+                            self.ui_update_hamburger_menu(ui);
                         });
                     },
                 );
@@ -1466,6 +1438,40 @@ impl FileDialog {
 
         if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
+        }
+    }
+
+    /// Updates the hamburger menu containing different options.
+    fn ui_update_hamburger_menu(&mut self, ui: &mut egui::Ui) {
+        if self.config.show_reload_button
+            && ui.button(&self.config.labels.reload).clicked()
+        {
+            self.refresh();
+            ui.close_menu();
+        }
+
+        if self.config.show_hidden_option
+            && ui
+                .checkbox(
+                    &mut self.config.storage.show_hidden,
+                    &self.config.labels.show_hidden,
+                )
+                .clicked()
+        {
+            self.refresh();
+            ui.close_menu();
+        }
+
+        if self.config.show_system_files_option
+            && ui
+                .checkbox(
+                    &mut self.config.storage.show_system_files,
+                    &self.config.labels.show_system_files,
+                )
+                .clicked()
+        {
+            self.refresh();
+            ui.close_menu();
         }
     }
 
@@ -1669,7 +1675,6 @@ impl FileDialog {
             if let Some(path) = dirs.home_dir() {
                 self.ui_update_left_panel_entry(ui, &labels.home_dir, path);
             }
-
             if let Some(path) = dirs.desktop_dir() {
                 self.ui_update_left_panel_entry(ui, &labels.desktop_dir, path);
             }
