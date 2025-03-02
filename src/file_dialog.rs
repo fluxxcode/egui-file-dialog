@@ -848,6 +848,20 @@ impl FileDialog {
         self
     }
 
+    /// Sets if the "Open working directory" button should be visible in the hamburger menu.
+    /// The working directory button opens to the currently returned working directory
+    /// from `std::env::current_dir()`.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` or
+    /// `FileDialog::show_menu_button` is disabled.
+    pub const fn show_working_directory_button(
+        mut self,
+        show_working_directory_button: bool,
+    ) -> Self {
+        self.config.show_working_directory_button = show_working_directory_button;
+        self
+    }
+
     /// Sets whether the show hidden files and folders option inside the top panel
     /// menu should be visible.
     ///
@@ -1249,12 +1263,12 @@ impl FileDialog {
                 self.ui_update_current_path(ui, path_display_width);
             }
 
-            // Menu button containing reload button and different options
+            // Hamburger menu containing different options
             if self.config.show_menu_button
                 && (self.config.show_reload_button
+                    || self.config.show_working_directory_button
                     || self.config.show_hidden_option
-                    || self.config.show_system_files_option
-                    || self.config.show_working_directory)
+                    || self.config.show_system_files_option)
             {
                 ui.allocate_ui_with_layout(
                     BUTTON_SIZE,
@@ -1443,11 +1457,25 @@ impl FileDialog {
 
     /// Updates the hamburger menu containing different options.
     fn ui_update_hamburger_menu(&mut self, ui: &mut egui::Ui) {
-        if self.config.show_reload_button
-            && ui.button(&self.config.labels.reload).clicked()
-        {
+        if self.config.show_reload_button && ui.button(&self.config.labels.reload).clicked() {
             self.refresh();
             ui.close_menu();
+        }
+
+        let working_dir = std::env::current_dir();
+
+        if self.config.show_working_directory_button
+            && working_dir.is_ok()
+            && ui.button(&self.config.labels.working_directory).clicked()
+        {
+            self.load_directory(&working_dir.unwrap_or_default());
+            ui.close_menu();
+        }
+
+        if (self.config.show_reload_button || self.config.show_working_directory_button)
+            && (self.config.show_hidden_option || self.config.show_system_files_option)
+        {
+            ui.separator();
         }
 
         if self.config.show_hidden_option
