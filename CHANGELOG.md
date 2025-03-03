@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### ✨ Features
+
+- Added shortcut to open current working directory to hamburger menu [#246](https://github.com/fluxxcode/egui-file-dialog/pull/246)
+
 ### 🔧 Changes
 
 - Excluded media files from package to reduce size [#244](https://github.com/fluxxcode/egui-file-dialog/pull/244)
