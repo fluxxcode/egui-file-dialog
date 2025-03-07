@@ -20,6 +20,7 @@ fn get_labels_german() -> FileDialogLabels {
         overwrite: "Überschreiben".to_string(),
 
         reload: "⟲  Neu laden".to_string(),
+        working_directory: "Arbeitsverzeichnis öffnen".to_string(),
         show_hidden: " Versteckte Dateien anzeigen".to_string(),
         show_system_files: " Systemdateien anzeigen".to_string(),
 

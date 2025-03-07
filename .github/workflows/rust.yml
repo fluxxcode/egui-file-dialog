@@ -1,13 +1,11 @@
 on:
   push:
     branches:
-      - master
-      - develop
+      - main
       - rel/*
   pull_request:
     branches:
-      - master
-      - develop
+      - main
       - rel/*
 
 name: Rust
