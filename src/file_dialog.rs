@@ -2809,14 +2809,25 @@ impl FileDialog {
             for extension in &self.config.save_extensions {
                 if extension.name == name.as_str() {
                     self.selected_save_extension = Some(extension.id);
+                    self.file_name_input = format!(".{}", extension.file_extension);
                 }
             }
         }
     }
 
-    /// Selects the given save extension and applies the appropriate filters.
+    /// Selects the given save extension.
     fn select_save_extension(&mut self, extension: Option<SaveExtension>) {
-        self.selected_save_extension = extension.and_then(|e| Some(e.id));
+        if let Some(ex) = extension {
+            self.selected_save_extension =  Some(ex.id);
+
+            let mut p = PathBuf::from(&self.file_name_input);
+            if p.set_extension(&ex.file_extension) {
+                self.file_name_input = p.to_string_lossy().into_owned();
+            } else {
+                self.file_name_input = format!(".{}", ex.file_extension);
+            }
+        }
+
         self.selected_item = None;
         self.refresh();
     }

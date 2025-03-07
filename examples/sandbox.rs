@@ -35,6 +35,7 @@ impl MyApp {
             .add_save_extension("PNG file", "png", true)
             .add_save_extension("RS file", "rs", true)
             .add_save_extension("TOML file", "toml", false)
+            .default_save_extension("TOML file")
             .id("egui_file_dialog");
 
         if let Some(storage) = cc.storage {
