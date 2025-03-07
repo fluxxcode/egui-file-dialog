@@ -645,6 +645,32 @@ impl FileDialog {
         self
     }
 
+    /// Adds a new file extension that the user can select in a dropdown widget when
+    /// saving a file.
+    ///
+    /// NOTE: The name must be unique. If an extension with the same name already exists,
+    ///       it will be overwritten.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the save extension.
+    /// * `file_extension` - The file extension to use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialogConfig;
+    ///
+    /// let config = FileDialog::default()
+    ///     .add_save_extension("PNG files", "png"))
+    ///     .add_save_extension("JPG files", "jpg"))
+    /// ```
+    pub fn add_save_extension(mut self, name: &str, file_extension: String) -> Self {
+        self.config = self.config.add_save_extension(name, file_extension);
+        self
+    }
+
     /// Name of the file filter to be selected by default.
     ///
     /// No file filter is selected if there is no file filter with that name.
