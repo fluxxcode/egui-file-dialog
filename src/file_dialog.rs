@@ -141,8 +141,10 @@ pub struct FileDialog {
     file_name_input_error: Option<String>,
     /// If the file name input text field should request focus in the next frame.
     file_name_input_request_focus: bool,
-    /// The file filter the user selected
+    /// The file filter the user selected.
     selected_file_filter: Option<egui::Id>,
+    /// The save extension that the user selected.
+    selected_save_extension: Option<egui::Id>,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
@@ -222,6 +224,7 @@ impl FileDialog {
             file_name_input_error: None,
             file_name_input_request_focus: true,
             selected_file_filter: None,
+            selected_save_extension: None,
 
             scroll_to_selection: false,
             search_value: String::new(),
@@ -323,14 +326,8 @@ impl FileDialog {
                 .clone_from(&self.config.default_file_name);
         }
 
-        // Select the default file filter
-        if let Some(name) = &self.config.default_file_filter {
-            for filter in &self.config.file_filters {
-                if filter.name == name.as_str() {
-                    self.selected_file_filter = Some(filter.id);
-                }
-            }
-        }
+        self.set_default_file_filter();
+        self.set_default_save_extension();
 
         self.mode = mode;
         self.state = DialogState::Open;
@@ -645,6 +642,14 @@ impl FileDialog {
         self
     }
 
+    /// Name of the file filter to be selected by default.
+    ///
+    /// No file filter is selected if there is no file filter with that name.
+    pub fn default_file_filter(mut self, name: &str) -> Self {
+        self.config.default_file_filter = Some(name.to_string());
+        self
+    }
+
     /// Adds a new file extension that the user can select in a dropdown widget when
     /// saving a file.
     ///
@@ -671,11 +676,11 @@ impl FileDialog {
         self
     }
 
-    /// Name of the file filter to be selected by default.
+    /// Name of the file extension to be selected by default when saving a file.
     ///
-    /// No file filter is selected if there is no file filter with that name.
-    pub fn default_file_filter(mut self, name: &str) -> Self {
-        self.config.default_file_filter = Some(name.to_string());
+    /// No file extension is selected if there is no extension with that name.
+    pub fn default_save_extension(mut self, name: &str) -> Self {
+        self.config.default_save_extension = Some(name.to_string());
         self
     }
 
@@ -2709,6 +2714,28 @@ impl FileDialog {
     fn get_selected_file_filter(&self) -> Option<&FileFilter> {
         self.selected_file_filter
             .and_then(|id| self.config.file_filters.iter().find(|p| p.id == id))
+    }
+
+    /// Sets the default file filter to use.
+    fn set_default_file_filter(&mut self) {
+        if let Some(name) = &self.config.default_file_filter {
+            for filter in &self.config.file_filters {
+                if filter.name == name.as_str() {
+                    self.selected_file_filter = Some(filter.id);
+                }
+            }
+        }
+    }
+
+    /// Sets the save extension to use.
+    fn set_default_save_extension(&mut self) {
+        if let Some(name) = &self.config.default_save_extension {
+            for extension in &self.config.save_extensions {
+                if extension.name == name.as_str() {
+                    self.selected_save_extension = Some(extension.id);
+                }
+            }
+        }
     }
 
     /// Gets a filtered iterator of the directory content of this object.
