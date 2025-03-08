@@ -213,12 +213,27 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
+        filter_extension: Option<&str>,
         file_system: Arc<dyn FileSystem + Sync + Send + 'static>,
     ) -> Self {
         if config.load_via_thread {
-            Self::with_thread(config, path, include_files, file_filter, file_system)
+            Self::with_thread(
+                config,
+                path,
+                include_files,
+                file_filter,
+                filter_extension,
+                file_system,
+            )
         } else {
-            Self::without_thread(config, path, include_files, file_filter, &*file_system)
+            Self::without_thread(
+                config,
+                path,
+                include_files,
+                file_filter,
+                filter_extension,
+                &*file_system,
+            )
         }
     }
 
@@ -227,6 +242,7 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
+        filter_extension: Option<&str>,
         file_system: Arc<dyn FileSystem + Send + Sync + 'static>,
     ) -> Self {
         let (tx, rx) = mpsc::channel();
@@ -234,12 +250,14 @@ impl DirectoryContent {
         let c = config.clone();
         let p = path.to_path_buf();
         let f = file_filter.cloned();
+        let fe = filter_extension.map(str::to_string);
         thread::spawn(move || {
             let _ = tx.send(load_directory(
                 &c,
                 &p,
                 include_files,
                 f.as_ref(),
+                fe.as_deref(),
                 &*file_system,
             ));
         });
@@ -256,9 +274,17 @@ impl DirectoryContent {
         path: &Path,
         include_files: bool,
         file_filter: Option<&FileFilter>,
+        filter_extension: Option<&str>,
         file_system: &dyn FileSystem,
     ) -> Self {
-        match load_directory(config, path, include_files, file_filter, file_system) {
+        match load_directory(
+            config,
+            path,
+            include_files,
+            file_filter,
+            filter_extension,
+            file_system,
+        ) {
             Ok(c) => Self {
                 state: DirectoryContentState::Success,
                 content: c,
@@ -378,6 +404,7 @@ fn load_directory(
     path: &Path,
     include_files: bool,
     file_filter: Option<&FileFilter>,
+    filter_extension: Option<&str>,
     file_system: &dyn FileSystem,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let mut result: Vec<DirectoryEntry> = Vec::new();
@@ -398,6 +425,19 @@ fn load_directory(
 
         if let Some(file_filter) = file_filter {
             if entry.is_file() && !(file_filter.filter)(entry.as_path()) {
+                continue;
+            }
+        }
+
+        if let Some(ex) = filter_extension {
+            if entry.is_file()
+                && path
+                    .extension()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default()
+                    != ex
+            {
                 continue;
             }
         }
