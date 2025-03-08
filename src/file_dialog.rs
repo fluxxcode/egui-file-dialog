@@ -1464,7 +1464,7 @@ impl FileDialog {
             ui.close_menu();
         }
 
-        let working_dir = std::env::current_dir();
+        let working_dir = self.config.file_system.current_dir();
 
         if self.config.show_working_directory_button
             && working_dir.is_ok()
