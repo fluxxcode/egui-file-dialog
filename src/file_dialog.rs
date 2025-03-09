@@ -677,14 +677,8 @@ impl FileDialog {
     ///     .add_save_extension("PNG files", "png")
     ///     .add_save_extension("JPG files", "jpg")
     /// ```
-    pub fn add_save_extension(
-        mut self,
-        name: &str,
-        file_extension: &str,
-    ) -> Self {
-        self.config = self
-            .config
-            .add_save_extension(name, file_extension);
+    pub fn add_save_extension(mut self, name: &str, file_extension: &str) -> Self {
+        self.config = self.config.add_save_extension(name, file_extension);
         self
     }
 
@@ -2810,7 +2804,7 @@ impl FileDialog {
     /// Selects the given save extension.
     fn select_save_extension(&mut self, extension: Option<SaveExtension>) {
         if let Some(ex) = extension {
-            self.selected_save_extension =  Some(ex.id);
+            self.selected_save_extension = Some(ex.id);
 
             // Prevent `PathBuf::set_extension` to append the file extension when there is
             // already one without a file name. For example `.png` would be changed to `.png.txt`

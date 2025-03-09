@@ -392,11 +392,7 @@ impl FileDialogConfig {
     ///     .add_save_extension("PNG files", "png")
     ///     .add_save_extension("JPG files", "jpg")
     /// ```
-    pub fn add_save_extension(
-        mut self,
-        name: &str,
-        file_extension: &str,
-    ) -> Self {
+    pub fn add_save_extension(mut self, name: &str, file_extension: &str) -> Self {
         let id = egui::Id::new(name);
 
         // Replace extension when an extension with the same name already exists.
