@@ -328,6 +328,8 @@ impl FileDialog {
         self.set_default_save_extension();
 
         if mode == DialogMode::SaveFile {
+            self.file_name_input_request_focus = true;
+
             if let Some(name) = &self.config.default_file_name {
                 self.file_name_input.clone_from(name);
             }
@@ -1920,6 +1922,7 @@ impl FileDialog {
                 DialogMode::SaveFile => {
                     let response = ui.add(
                         egui::TextEdit::singleline(&mut self.file_name_input)
+                            .cursor_at_end(false)
                             .desired_width(scroll_bar_width - item_spacing.x),
                     );
 
@@ -2059,6 +2062,7 @@ impl FileDialog {
             });
 
         if let Some(i) = select_extension {
+            self.file_name_input_request_focus = true;
             self.select_save_extension(i);
         }
     }
