@@ -4,9 +4,9 @@ pub use labels::FileDialogLabels;
 mod keybindings;
 pub use keybindings::{FileDialogKeyBindings, KeyBinding};
 
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::fmt::Display;
 
 use crate::data::DirectoryEntry;
 use crate::{FileSystem, NativeFileSystem};

@@ -3312,12 +3312,24 @@ impl FileDialog {
     fn load_directory_content(&mut self, path: &Path) {
         self.config.storage.last_visited_dir = Some(path.to_path_buf());
 
+        let selected_file_filter = match self.mode {
+            DialogMode::PickFile | DialogMode::PickMultiple => self.get_selected_file_filter(),
+            _ => None,
+        };
+
+        let selected_save_extension = if self.mode == DialogMode::SaveFile {
+            self.get_selected_save_extension()
+                .map(|e| e.file_extension.as_str())
+        } else {
+            None
+        };
+
         self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,
             self.show_files,
-            self.get_selected_file_filter(),
-            self.get_selected_save_extension().map(|e| e.file_extension.as_str()),
+            selected_file_filter,
+            selected_save_extension,
             self.config.file_system.clone(),
         );
 
