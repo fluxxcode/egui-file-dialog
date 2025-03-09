@@ -1959,9 +1959,7 @@ impl FileDialog {
 
     /// Highlights the characters inside the file name input until the file extension.
     /// Do not forget to store these changes after calling this function:
-    /// ```
-    /// output.state.store(ui.ctx(), output.response.id);
-    /// ```
+    /// `output.state.store(ui.ctx(), output.response.id);`
     fn highlight_file_name_input(&self, output: &mut egui::text_edit::TextEditOutput) {
         if let Some(pos) = self.file_name_input.rfind('.') {
             let range = if pos == 0 {
