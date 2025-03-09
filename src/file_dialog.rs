@@ -2055,16 +2055,6 @@ impl FileDialog {
                         select_extension = Some(Some(extension.clone()));
                     }
                 }
-
-                if ui
-                    .selectable_label(
-                        selected_extension.is_none(),
-                        &self.config.labels.save_extension_any,
-                    )
-                    .clicked()
-                {
-                    select_extension = Some(None);
-                }
             });
 
         if let Some(i) = select_extension {
