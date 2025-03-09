@@ -4,6 +4,7 @@ pub use labels::FileDialogLabels;
 mod keybindings;
 pub use keybindings::{FileDialogKeyBindings, KeyBinding};
 
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -149,6 +150,10 @@ pub struct FileDialogConfig {
     pub file_filters: Vec<FileFilter>,
     /// Name of the file filter to be selected by default.
     pub default_file_filter: Option<String>,
+    /// File extensions presented to the user in a dropdown when saving a file.
+    pub save_extensions: Vec<SaveExtension>,
+    /// Name of the file extension selected by default.
+    pub default_save_extension: Option<String>,
     /// Sets custom icons for different files or folders.
     /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
     pub file_icon_filters: Vec<IconFilter>,
@@ -248,7 +253,7 @@ impl FileDialogConfig {
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
             initial_directory: file_system.current_dir().unwrap_or_default(),
-            default_file_name: String::new(),
+            default_file_name: String::from("Untitled"),
             allow_file_overwrite: true,
             allow_path_edit_to_save_file_without_extension: false,
             directory_separator: String::from(">"),
@@ -271,6 +276,8 @@ impl FileDialogConfig {
 
             file_filters: Vec::new(),
             default_file_filter: None,
+            save_extensions: Vec::new(),
+            default_save_extension: None,
             file_icon_filters: Vec::new(),
 
             quick_accesses: Vec::new(),
@@ -350,6 +357,7 @@ impl FileDialogConfig {
     pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
         let id = egui::Id::new(name);
 
+        // Replace filter if a filter with the same name already exists.
         if let Some(item) = self.file_filters.iter_mut().find(|p| p.id == id) {
             item.filter = filter.clone();
             return self;
@@ -357,8 +365,47 @@ impl FileDialogConfig {
 
         self.file_filters.push(FileFilter {
             id,
-            name: name.to_string(),
+            name: name.to_owned(),
             filter,
+        });
+
+        self
+    }
+
+    /// Adds a new file extension that the user can select in a dropdown widget when
+    /// saving a file.
+    ///
+    /// NOTE: The name must be unique. If an extension with the same name already exists,
+    ///       it will be overwritten.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the save extension.
+    /// * `file_extension` - The file extension to use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialogConfig;
+    ///
+    /// let config = FileDialogConfig::default()
+    ///     .add_save_extension("PNG files", "png")
+    ///     .add_save_extension("JPG files", "jpg");
+    /// ```
+    pub fn add_save_extension(mut self, name: &str, file_extension: &str) -> Self {
+        let id = egui::Id::new(name);
+
+        // Replace extension when an extension with the same name already exists.
+        if let Some(item) = self.save_extensions.iter_mut().find(|p| p.id == id) {
+            file_extension.clone_into(&mut item.file_extension);
+            return self;
+        }
+
+        self.save_extensions.push(SaveExtension {
+            id,
+            name: name.to_owned(),
+            file_extension: file_extension.to_owned(),
         });
 
         self
@@ -442,6 +489,23 @@ impl std::fmt::Debug for FileFilter {
         f.debug_struct("FileFilter")
             .field("name", &self.name)
             .finish()
+    }
+}
+
+/// Defines a specific file extension that the user can select when saving a file.
+#[derive(Clone, Debug)]
+pub struct SaveExtension {
+    /// The ID of the file filter, used internally for identification.
+    pub id: egui::Id,
+    /// The display name of the file filter.
+    pub name: String,
+    /// The file extension to use.
+    pub file_extension: String,
+}
+
+impl Display for SaveExtension {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{} (.{})", &self.name, &self.file_extension))
     }
 }
 

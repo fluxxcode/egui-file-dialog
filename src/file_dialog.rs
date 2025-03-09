@@ -1,6 +1,6 @@
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
-    Filter, OpeningMode, QuickAccess,
+    Filter, OpeningMode, QuickAccess, SaveExtension,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
@@ -141,8 +141,10 @@ pub struct FileDialog {
     file_name_input_error: Option<String>,
     /// If the file name input text field should request focus in the next frame.
     file_name_input_request_focus: bool,
-    /// The file filter the user selected
+    /// The file filter the user selected.
     selected_file_filter: Option<egui::Id>,
+    /// The save extension that the user selected.
+    selected_save_extension: Option<egui::Id>,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
@@ -222,6 +224,7 @@ impl FileDialog {
             file_name_input_error: None,
             file_name_input_request_focus: true,
             selected_file_filter: None,
+            selected_save_extension: None,
 
             scroll_to_selection: false,
             search_value: String::new(),
@@ -319,18 +322,16 @@ impl FileDialog {
         }
 
         if mode == DialogMode::SaveFile {
+            self.file_name_input_request_focus = true;
             self.file_name_input
                 .clone_from(&self.config.default_file_name);
         }
 
-        // Select the default file filter
-        if let Some(name) = &self.config.default_file_filter {
-            for filter in &self.config.file_filters {
-                if filter.name == name.as_str() {
-                    self.selected_file_filter = Some(filter.id);
-                }
-            }
-        }
+        self.selected_file_filter = None;
+        self.selected_save_extension = None;
+
+        self.set_default_file_filter();
+        self.set_default_save_extension();
 
         self.mode = mode;
         self.state = DialogState::Open;
@@ -512,7 +513,7 @@ impl FileDialog {
 
     /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
-        self.config.default_file_name = name.to_string();
+        name.clone_into(&mut self.config.default_file_name);
         self
     }
 
@@ -650,6 +651,40 @@ impl FileDialog {
     /// No file filter is selected if there is no file filter with that name.
     pub fn default_file_filter(mut self, name: &str) -> Self {
         self.config.default_file_filter = Some(name.to_string());
+        self
+    }
+
+    /// Adds a new file extension that the user can select in a dropdown widget when
+    /// saving a file.
+    ///
+    /// NOTE: The name must be unique. If an extension with the same name already exists,
+    ///       it will be overwritten.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the save extension.
+    /// * `file_extension` - The file extension to use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// let config = FileDialog::default()
+    ///     .add_save_extension("PNG files", "png")
+    ///     .add_save_extension("JPG files", "jpg");
+    /// ```
+    pub fn add_save_extension(mut self, name: &str, file_extension: &str) -> Self {
+        self.config = self.config.add_save_extension(name, file_extension);
+        self
+    }
+
+    /// Name of the file extension to be selected by default when saving a file.
+    ///
+    /// No file extension is selected if there is no extension with that name.
+    pub fn default_save_extension(mut self, name: &str) -> Self {
+        self.config.default_save_extension = Some(name.to_string());
         self
     }
 
@@ -1822,8 +1857,8 @@ impl FileDialog {
 
         self.ui_update_selection_preview(ui, button_size);
 
-        if self.mode == DialogMode::SaveFile {
-            ui.add_space(ui.style().spacing.item_spacing.y * 2.0);
+        if self.mode == DialogMode::SaveFile && self.config.save_extensions.is_empty() {
+            ui.add_space(ui.style().spacing.item_spacing.y);
         }
 
         self.ui_update_action_buttons(ui, button_size);
@@ -1834,8 +1869,9 @@ impl FileDialog {
         const SELECTION_PREVIEW_MIN_WIDTH: f32 = 50.0;
         let item_spacing = ui.style().spacing.item_spacing;
 
-        let render_filter_selection = !self.config.file_filters.is_empty()
-            && (self.mode == DialogMode::PickFile || self.mode == DialogMode::PickMultiple);
+        let render_filter_selection = (!self.config.file_filters.is_empty()
+            && (self.mode == DialogMode::PickFile || self.mode == DialogMode::PickMultiple))
+            || (!self.config.save_extensions.is_empty() && self.mode == DialogMode::SaveFile);
 
         let filter_selection_width = button_size.x.mul_add(2.0, item_spacing.x);
         let mut filter_selection_separate_line = false;
@@ -1849,8 +1885,9 @@ impl FileDialog {
             };
 
             // Make sure there is enough width for the selection preview. If the available
-            // width is not enough, render the drop-down menu to select a file filter on
-            // a separate line and give the selection preview the entire available width.
+            // width is not enough, render the drop-down menu to select a file filter or
+            // save extension on a separate line and give the selection preview
+            // the entire available width.
             let mut scroll_bar_width: f32 =
                 ui.available_width() - filter_selection_width - item_spacing.x;
 
@@ -1875,35 +1912,63 @@ impl FileDialog {
                         });
                 }
                 DialogMode::SaveFile => {
-                    let response = ui.add(
-                        egui::TextEdit::singleline(&mut self.file_name_input)
-                            .desired_width(f32::INFINITY),
-                    );
+                    let mut output = egui::TextEdit::singleline(&mut self.file_name_input)
+                        .cursor_at_end(false)
+                        .margin(egui::Margin::symmetric(4, 3))
+                        .desired_width(scroll_bar_width - item_spacing.x)
+                        .show(ui);
 
                     if self.file_name_input_request_focus {
-                        response.request_focus();
+                        self.highlight_file_name_input(&mut output);
+                        output.state.store(ui.ctx(), output.response.id);
+
+                        output.response.request_focus();
                         self.file_name_input_request_focus = false;
                     }
 
-                    if response.changed() {
+                    if output.response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
                     }
 
-                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    if output.response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))
+                    {
                         self.submit();
                     }
                 }
             };
 
             if !filter_selection_separate_line && render_filter_selection {
-                self.ui_update_file_filter_selection(ui, filter_selection_width);
+                if self.mode == DialogMode::SaveFile {
+                    self.ui_update_save_extension_selection(ui, filter_selection_width);
+                } else {
+                    self.ui_update_file_filter_selection(ui, filter_selection_width);
+                }
             }
         });
 
         if filter_selection_separate_line && render_filter_selection {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                self.ui_update_file_filter_selection(ui, filter_selection_width);
+                if self.mode == DialogMode::SaveFile {
+                    self.ui_update_save_extension_selection(ui, filter_selection_width);
+                } else {
+                    self.ui_update_file_filter_selection(ui, filter_selection_width);
+                }
             });
+        }
+    }
+
+    /// Highlights the characters inside the file name input until the file extension.
+    /// Do not forget to store these changes after calling this function:
+    /// `output.state.store(ui.ctx(), output.response.id);`
+    fn highlight_file_name_input(&self, output: &mut egui::text_edit::TextEditOutput) {
+        if let Some(pos) = self.file_name_input.rfind('.') {
+            let range = if pos == 0 {
+                CCursorRange::two(CCursor::new(0), CCursor::new(0))
+            } else {
+                CCursorRange::two(CCursor::new(0), CCursor::new(pos))
+            };
+
+            output.state.cursor.set_char_range(Some(range));
         }
     }
 
@@ -1947,8 +2012,8 @@ impl FileDialog {
         };
 
         // The item that the user selected inside the drop down.
-        // If none, no item was selected by the user.
-        let mut select_filter: Option<Option<egui::Id>> = None;
+        // If none, the user did not change the selected item this frame.
+        let mut select_filter: Option<Option<FileFilter>> = None;
 
         egui::containers::ComboBox::from_id_salt(self.window_id.with("file_filter_selection"))
             .width(width)
@@ -1959,7 +2024,7 @@ impl FileDialog {
                     let selected = selected_filter.is_some_and(|f| f.id == filter.id);
 
                     if ui.selectable_label(selected, &filter.name).clicked() {
-                        select_filter = Some(Some(filter.id));
+                        select_filter = Some(Some(filter.clone()));
                     }
                 }
 
@@ -1975,9 +2040,41 @@ impl FileDialog {
             });
 
         if let Some(i) = select_filter {
-            self.selected_file_filter = i;
-            self.selected_item = None;
-            self.refresh();
+            self.select_file_filter(i);
+        }
+    }
+
+    fn ui_update_save_extension_selection(&mut self, ui: &mut egui::Ui, width: f32) {
+        let selected_extension = self.get_selected_save_extension();
+        let selected_text = match selected_extension {
+            Some(e) => &e.to_string(),
+            None => &self.config.labels.save_extension_any,
+        };
+
+        // The item that the user selected inside the drop down.
+        // If none, the user did not change the selected item this frame.
+        let mut select_extension: Option<Option<SaveExtension>> = None;
+
+        egui::containers::ComboBox::from_id_salt(self.window_id.with("save_extension_selection"))
+            .width(width)
+            .selected_text(selected_text)
+            .wrap_mode(egui::TextWrapMode::Truncate)
+            .show_ui(ui, |ui| {
+                for extension in &self.config.save_extensions {
+                    let selected = selected_extension.is_some_and(|s| s.id == extension.id);
+
+                    if ui
+                        .selectable_label(selected, extension.to_string())
+                        .clicked()
+                    {
+                        select_extension = Some(Some(extension.clone()));
+                    }
+                }
+            });
+
+        if let Some(i) = select_extension {
+            self.file_name_input_request_focus = true;
+            self.select_save_extension(i);
         }
     }
 
@@ -2685,6 +2782,73 @@ impl FileDialog {
             .and_then(|id| self.config.file_filters.iter().find(|p| p.id == id))
     }
 
+    /// Sets the default file filter to use.
+    fn set_default_file_filter(&mut self) {
+        if let Some(name) = &self.config.default_file_filter {
+            for filter in &self.config.file_filters {
+                if filter.name == name.as_str() {
+                    self.selected_file_filter = Some(filter.id);
+                }
+            }
+        }
+    }
+
+    /// Selects the given file filter and applies the appropriate filters.
+    fn select_file_filter(&mut self, filter: Option<FileFilter>) {
+        self.selected_file_filter = filter.map(|f| f.id);
+        self.selected_item = None;
+        self.refresh();
+    }
+
+    /// Get the save extension the user currently selected.
+    fn get_selected_save_extension(&self) -> Option<&SaveExtension> {
+        self.selected_save_extension
+            .and_then(|id| self.config.save_extensions.iter().find(|p| p.id == id))
+    }
+
+    /// Sets the save extension to use.
+    fn set_default_save_extension(&mut self) {
+        let config = std::mem::take(&mut self.config);
+
+        if let Some(name) = &config.default_save_extension {
+            for extension in &config.save_extensions {
+                if extension.name == name.as_str() {
+                    self.selected_save_extension = Some(extension.id);
+                    self.set_file_name_extension(&extension.file_extension);
+                }
+            }
+        }
+
+        self.config = config;
+    }
+
+    /// Selects the given save extension.
+    fn select_save_extension(&mut self, extension: Option<SaveExtension>) {
+        if let Some(ex) = extension {
+            self.selected_save_extension = Some(ex.id);
+            self.set_file_name_extension(&ex.file_extension);
+        }
+
+        self.selected_item = None;
+        self.refresh();
+    }
+
+    /// Updates the extension of `Self::file_name_input`.
+    fn set_file_name_extension(&mut self, extension: &str) {
+        // Prevent `PathBuf::set_extension` to append the file extension when there is
+        // already one without a file name. For example `.png` would be changed to `.png.txt`
+        // when using `PathBuf::set_extension`.
+        let dot_count = self.file_name_input.chars().filter(|c| *c == '.').count();
+        let use_simple = dot_count == 1 && self.file_name_input.chars().nth(0) == Some('.');
+
+        let mut p = PathBuf::from(&self.file_name_input);
+        if !use_simple && p.set_extension(extension) {
+            self.file_name_input = p.to_string_lossy().into_owned();
+        } else {
+            self.file_name_input = format!(".{extension}");
+        }
+    }
+
     /// Gets a filtered iterator of the directory content of this object.
     fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item = &DirectoryEntry> {
         self.directory_content.filtered_iter(&self.search_value)
@@ -3173,11 +3337,24 @@ impl FileDialog {
     fn load_directory_content(&mut self, path: &Path) {
         self.config.storage.last_visited_dir = Some(path.to_path_buf());
 
+        let selected_file_filter = match self.mode {
+            DialogMode::PickFile | DialogMode::PickMultiple => self.get_selected_file_filter(),
+            _ => None,
+        };
+
+        let selected_save_extension = if self.mode == DialogMode::SaveFile {
+            self.get_selected_save_extension()
+                .map(|e| e.file_extension.as_str())
+        } else {
+            None
+        };
+
         self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,
             self.show_files,
-            self.get_selected_file_filter(),
+            selected_file_filter,
+            selected_save_extension,
             self.config.file_system.clone(),
         );
 

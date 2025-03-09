@@ -32,6 +32,10 @@ impl MyApp {
                 "TOML files",
                 Arc::new(|p| p.extension().unwrap_or_default() == "toml"),
             )
+            .add_save_extension("Picture", "png")
+            .add_save_extension("Rust Source File", "rs")
+            .add_save_extension("Configuration File", "toml")
+            .default_save_extension("Picture")
             .id("egui_file_dialog");
 
         if let Some(storage) = cc.storage {

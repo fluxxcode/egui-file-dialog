@@ -45,6 +45,7 @@ fn get_labels_german() -> FileDialogLabels {
         selected_items: "Ausgewählte Elemente:".to_string(),
         file_name: "Dateiname:".to_string(),
         file_filter_all_files: "Alle Dateien".to_string(),
+        save_extension_any: "Alle".to_string(),
 
         open_button: "🗀  Öffnen".to_string(),
         save_button: "📥  Speichern".to_string(),
