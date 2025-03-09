@@ -2,9 +2,16 @@
 
 ## Unreleased
 
+### 🚨 Breaking Changes
+
+#### Breaking changes due to new features and updated configuration
+- Added `save_extensions` and `default_save_extension` to `FileDialogConfig` [#248](https://github.com/fluxxcode/egui-file-dialog/pull/248)
+- Added `save_extension_any` to `FileDialogLabels` [#248](https://github.com/fluxxcode/egui-file-dialog/pull/248)
+
 ### ✨ Features
 
 - Added shortcut to open current working directory to hamburger menu [#246](https://github.com/fluxxcode/egui-file-dialog/pull/246)
+- Added file extensions and filters when saving a file using `FileDialog::add_save_extension` or `FileDialogConfig::add_save_extension` [#248](https://github.com/fluxxcode/egui-file-dialog/pull/248)
 
 ### 🔧 Changes
 
