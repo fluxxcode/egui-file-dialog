@@ -2047,7 +2047,7 @@ impl FileDialog {
                     let selected = selected_extension.is_some_and(|s| s.id == extension.id);
 
                     if ui
-                        .selectable_label(selected, &extension.to_string())
+                        .selectable_label(selected, extension.to_string())
                         .clicked()
                     {
                         select_extension = Some(Some(extension.clone()));
@@ -2778,7 +2778,7 @@ impl FileDialog {
 
     /// Selects the given file filter and applies the appropriate filters.
     fn select_file_filter(&mut self, filter: Option<FileFilter>) {
-        self.selected_file_filter = filter.and_then(|f| Some(f.id));
+        self.selected_file_filter = filter.map(|f| f.id);
         self.selected_item = None;
         self.refresh();
     }
@@ -3317,8 +3317,7 @@ impl FileDialog {
             path,
             self.show_files,
             self.get_selected_file_filter(),
-            self.get_selected_save_extension()
-                .and_then(|e| Some(e.file_extension.as_str())),
+            self.get_selected_save_extension().map(|e| e.file_extension.as_str()),
             self.config.file_system.clone(),
         );
 

@@ -6,6 +6,7 @@ pub use keybindings::{FileDialogKeyBindings, KeyBinding};
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::fmt::Display;
 
 use crate::data::DirectoryEntry;
 use crate::{FileSystem, NativeFileSystem};
@@ -397,7 +398,7 @@ impl FileDialogConfig {
 
         // Replace extension when an extension with the same name already exists.
         if let Some(item) = self.save_extensions.iter_mut().find(|p| p.id == id) {
-            item.file_extension = file_extension.to_owned();
+            file_extension.clone_into(&mut item.file_extension);
             return self;
         }
 
@@ -502,9 +503,9 @@ pub struct SaveExtension {
     pub file_extension: String,
 }
 
-impl SaveExtension {
-    pub fn to_string(&self) -> String {
-        format!("{} (.{})", &self.name, &self.file_extension)
+impl Display for SaveExtension {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{} (.{})", &self.name, &self.file_extension))
     }
 }
 
