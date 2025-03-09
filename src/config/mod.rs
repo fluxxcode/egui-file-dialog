@@ -381,8 +381,6 @@ impl FileDialogConfig {
     ///
     /// * `name` - Display name of the save extension.
     /// * `file_extension` - The file extension to use.
-    /// * `display_extension` - If the extension should be displayed next to its name.
-    ///    For example: "PNG Files (png)" when enabled or "PNG Files" when disabled.
     ///
     /// # Examples
     ///
@@ -391,14 +389,13 @@ impl FileDialogConfig {
     /// use egui_file_dialog::FileDialogConfig;
     ///
     /// let config = FileDialogConfig::default()
-    ///     .add_save_extension("PNG files", "png", true)
-    ///     .add_save_extension("JPG files", "jpg", true)
+    ///     .add_save_extension("PNG files", "png")
+    ///     .add_save_extension("JPG files", "jpg")
     /// ```
     pub fn add_save_extension(
         mut self,
         name: &str,
         file_extension: &str,
-        display_extension: bool,
     ) -> Self {
         let id = egui::Id::new(name);
 
@@ -412,7 +409,6 @@ impl FileDialogConfig {
             id,
             name: name.to_owned(),
             file_extension: file_extension.to_owned(),
-            display_extension,
         });
 
         self
@@ -508,17 +504,11 @@ pub struct SaveExtension {
     pub name: String,
     /// The file extension to use.
     pub file_extension: String,
-    /// If the file extension should be displayed to the user next to the extension name.
-    pub display_extension: bool,
 }
 
 impl SaveExtension {
     pub fn to_string(&self) -> String {
-        if self.display_extension {
-            format!("{} (.{})", &self.name, &self.file_extension)
-        } else {
-            self.name.clone()
-        }
+        format!("{} (.{})", &self.name, &self.file_extension)
     }
 }
 

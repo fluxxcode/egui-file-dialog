@@ -663,8 +663,6 @@ impl FileDialog {
     ///
     /// * `name` - Display name of the save extension.
     /// * `file_extension` - The file extension to use.
-    /// * `display_extension` - If the extension should be displayed next to its name.
-    ///    For example: "PNG Files (png)" when enabled or "PNG Files" when disabled.
     ///
     /// # Examples
     ///
@@ -673,18 +671,17 @@ impl FileDialog {
     /// use egui_file_dialog::FileDialog;
     ///
     /// let config = FileDialog::default()
-    ///     .add_save_extension("PNG files", "png", true)
-    ///     .add_save_extension("JPG files", "jpg", true)
+    ///     .add_save_extension("PNG files", "png")
+    ///     .add_save_extension("JPG files", "jpg")
     /// ```
     pub fn add_save_extension(
         mut self,
         name: &str,
         file_extension: &str,
-        display_extension: bool,
     ) -> Self {
         self.config = self
             .config
-            .add_save_extension(name, file_extension, display_extension);
+            .add_save_extension(name, file_extension);
         self
     }
 
