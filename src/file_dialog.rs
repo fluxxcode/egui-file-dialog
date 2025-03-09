@@ -675,7 +675,7 @@ impl FileDialog {
     ///
     /// let config = FileDialog::default()
     ///     .add_save_extension("PNG files", "png")
-    ///     .add_save_extension("JPG files", "jpg")
+    ///     .add_save_extension("JPG files", "jpg");
     /// ```
     pub fn add_save_extension(mut self, name: &str, file_extension: &str) -> Self {
         self.config = self.config.add_save_extension(name, file_extension);
