@@ -513,7 +513,7 @@ impl FileDialog {
 
     /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
-        self.config.default_file_name = name.to_owned();
+        name.clone_into(&mut self.config.default_file_name);
         self
     }
 
@@ -2827,7 +2827,7 @@ impl FileDialog {
         if !use_simple && p.set_extension(extension) {
             self.file_name_input = p.to_string_lossy().into_owned();
         } else {
-            self.file_name_input = format!(".{}", extension);
+            self.file_name_input = format!(".{extension}");
         }
     }
 
