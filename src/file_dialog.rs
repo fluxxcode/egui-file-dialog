@@ -321,16 +321,16 @@ impl FileDialog {
             show_files = true;
         }
 
-        if mode == DialogMode::SaveFile {
-            self.file_name_input
-                .clone_from(&self.config.default_file_name);
-        }
-
         self.selected_file_filter = None;
         self.selected_save_extension = None;
 
         self.set_default_file_filter();
         self.set_default_save_extension();
+
+        if mode == DialogMode::SaveFile {
+            self.file_name_input
+                .clone_from(&self.config.default_file_name);
+        }
 
         self.mode = mode;
         self.state = DialogState::Open;
