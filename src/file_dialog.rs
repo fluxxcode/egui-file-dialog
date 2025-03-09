@@ -328,8 +328,9 @@ impl FileDialog {
         self.set_default_save_extension();
 
         if mode == DialogMode::SaveFile {
-            self.file_name_input
-                .clone_from(&self.config.default_file_name);
+            if let Some(name) = &self.config.default_file_name {
+                self.file_name_input.clone_from(name);
+            }
         }
 
         self.mode = mode;
@@ -512,7 +513,7 @@ impl FileDialog {
 
     /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
-        self.config.default_file_name = name.to_string();
+        self.config.default_file_name = Some(name.to_owned());
         self
     }
 
@@ -2807,8 +2808,11 @@ impl FileDialog {
         if let Some(ex) = extension {
             self.selected_save_extension =  Some(ex.id);
 
+            let dot_count = self.file_name_input.chars().filter(|c| *c == '.').count();
+            let use_simple = dot_count == 1 && self.file_name_input.chars().nth(0) == Some('.');
+
             let mut p = PathBuf::from(&self.file_name_input);
-            if p.set_extension(&ex.file_extension) {
+            if !use_simple && p.set_extension(&ex.file_extension) {
                 self.file_name_input = p.to_string_lossy().into_owned();
             } else {
                 self.file_name_input = format!(".{}", ex.file_extension);
