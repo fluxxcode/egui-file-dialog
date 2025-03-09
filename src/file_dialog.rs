@@ -321,19 +321,16 @@ impl FileDialog {
             show_files = true;
         }
 
+        if mode == DialogMode::SaveFile {
+            self.file_name_input_request_focus = true;
+            self.file_name_input.clone_from(&self.config.default_file_name);
+        }
+
         self.selected_file_filter = None;
         self.selected_save_extension = None;
 
         self.set_default_file_filter();
         self.set_default_save_extension();
-
-        if mode == DialogMode::SaveFile {
-            self.file_name_input_request_focus = true;
-
-            if let Some(name) = &self.config.default_file_name {
-                self.file_name_input.clone_from(name);
-            }
-        }
 
         self.mode = mode;
         self.state = DialogState::Open;
@@ -515,7 +512,7 @@ impl FileDialog {
 
     /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
-        self.config.default_file_name = Some(name.to_owned());
+        self.config.default_file_name = name.to_owned();
         self
     }
 
@@ -2792,37 +2789,45 @@ impl FileDialog {
 
     /// Sets the save extension to use.
     fn set_default_save_extension(&mut self) {
-        if let Some(name) = &self.config.default_save_extension {
-            for extension in &self.config.save_extensions {
+        let config = std::mem::take(&mut self.config);
+
+        if let Some(name) = &config.default_save_extension {
+            for extension in &config.save_extensions {
                 if extension.name == name.as_str() {
                     self.selected_save_extension = Some(extension.id);
-                    self.file_name_input = format!(".{}", extension.file_extension);
+                    self.set_file_name_extension(&extension.file_extension);
                 }
             }
         }
+
+        self.config = config;
     }
 
     /// Selects the given save extension.
     fn select_save_extension(&mut self, extension: Option<SaveExtension>) {
         if let Some(ex) = extension {
             self.selected_save_extension = Some(ex.id);
-
-            // Prevent `PathBuf::set_extension` to append the file extension when there is
-            // already one without a file name. For example `.png` would be changed to `.png.txt`
-            // when using `PathBuf::set_extension`.
-            let dot_count = self.file_name_input.chars().filter(|c| *c == '.').count();
-            let use_simple = dot_count == 1 && self.file_name_input.chars().nth(0) == Some('.');
-
-            let mut p = PathBuf::from(&self.file_name_input);
-            if !use_simple && p.set_extension(&ex.file_extension) {
-                self.file_name_input = p.to_string_lossy().into_owned();
-            } else {
-                self.file_name_input = format!(".{}", ex.file_extension);
-            }
+            self.set_file_name_extension(&ex.file_extension);
         }
 
         self.selected_item = None;
         self.refresh();
+    }
+
+    /// Updates the extension of `Self::file_name_input`.
+    fn set_file_name_extension(&mut self, extension: &str) {
+        // Prevent `PathBuf::set_extension` to append the file extension when there is
+        // already one without a file name. For example `.png` would be changed to `.png.txt`
+        // when using `PathBuf::set_extension`.
+        let dot_count = self.file_name_input.chars().filter(|c| *c == '.').count();
+        let use_simple = dot_count == 1 && self.file_name_input.chars().nth(0) == Some('.');
+
+        let mut p = PathBuf::from(&self.file_name_input);
+        if !use_simple && p.set_extension(extension) {
+            self.file_name_input = p.to_string_lossy().into_owned();
+        } else {
+            self.file_name_input = format!(".{}", extension);
+        }
     }
 
     /// Gets a filtered iterator of the directory content of this object.

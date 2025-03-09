@@ -106,7 +106,7 @@ pub struct FileDialogConfig {
     /// The first directory that will be opened when the dialog opens.
     pub initial_directory: PathBuf,
     /// The default filename when opening the dialog in `DialogMode::SaveFile` mode.
-    pub default_file_name: Option<String>,
+    pub default_file_name: String,
     /// If the user is allowed to select an already existing file when the dialog is
     /// in `DialogMode::SaveFile` mode.
     pub allow_file_overwrite: bool,
@@ -253,7 +253,7 @@ impl FileDialogConfig {
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
             initial_directory: file_system.current_dir().unwrap_or_default(),
-            default_file_name: None,
+            default_file_name: String::from("Untitled"),
             allow_file_overwrite: true,
             allow_path_edit_to_save_file_without_extension: false,
             directory_separator: String::from(">"),
