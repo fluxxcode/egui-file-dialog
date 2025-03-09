@@ -1912,7 +1912,7 @@ impl FileDialog {
                         });
                 }
                 DialogMode::SaveFile => {
-                    let mut output =  egui::TextEdit::singleline(&mut self.file_name_input)
+                    let mut output = egui::TextEdit::singleline(&mut self.file_name_input)
                         .cursor_at_end(false)
                         .margin(egui::Margin::symmetric(4, 3))
                         .desired_width(scroll_bar_width - item_spacing.x)
@@ -1926,12 +1926,12 @@ impl FileDialog {
                         self.file_name_input_request_focus = false;
                     }
 
-
                     if output.response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
                     }
 
-                    if output.response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    if output.response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))
+                    {
                         self.submit();
                     }
                 }
@@ -1965,15 +1965,9 @@ impl FileDialog {
     fn highlight_file_name_input(&self, output: &mut egui::text_edit::TextEditOutput) {
         if let Some(pos) = self.file_name_input.rfind('.') {
             let range = if pos == 0 {
-                CCursorRange::two(
-                    CCursor::new(0),
-                    CCursor::new(0),
-                )
+                CCursorRange::two(CCursor::new(0), CCursor::new(0))
             } else {
-                CCursorRange::two(
-                    CCursor::new(0),
-                    CCursor::new(pos),
-                )
+                CCursorRange::two(CCursor::new(0), CCursor::new(pos))
             };
 
             output.state.cursor.set_char_range(Some(range));
