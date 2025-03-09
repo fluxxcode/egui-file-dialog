@@ -2808,6 +2808,9 @@ impl FileDialog {
         if let Some(ex) = extension {
             self.selected_save_extension =  Some(ex.id);
 
+            // Prevent `PathBuf::set_extension` to append the file extension when there is
+            // already one without a file name. For example `.png` would be changed to `.png.txt`
+            // when using `PathBuf::set_extension`.
             let dot_count = self.file_name_input.chars().filter(|c| *c == '.').count();
             let use_simple = dot_count == 1 && self.file_name_input.chars().nth(0) == Some('.');
 
