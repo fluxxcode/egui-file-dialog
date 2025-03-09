@@ -1859,8 +1859,8 @@ impl FileDialog {
 
         self.ui_update_selection_preview(ui, button_size);
 
-        if self.mode == DialogMode::SaveFile {
-            ui.add_space(ui.style().spacing.item_spacing.y * 2.0);
+        if self.mode == DialogMode::SaveFile && self.config.save_extensions.is_empty() {
+            ui.add_space(ui.style().spacing.item_spacing.y);
         }
 
         self.ui_update_action_buttons(ui, button_size);
@@ -1917,6 +1917,7 @@ impl FileDialog {
                     let response = ui.add(
                         egui::TextEdit::singleline(&mut self.file_name_input)
                             .cursor_at_end(false)
+                            .margin(egui::Margin::symmetric(4, 3))
                             .desired_width(scroll_bar_width - item_spacing.x),
                     );
 
