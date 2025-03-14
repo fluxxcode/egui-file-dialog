@@ -9,7 +9,10 @@ use crate::data::{
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 use crate::{FileSystem, NativeFileSystem};
+use egui::emath::GuiRounding;
 use egui::text::{CCursor, CCursorRange};
+use egui::{Align2, CornerRadius, Margin, Rect, Sense, Vec2, WidgetInfo, WidgetType};
+use egui::{Frame, Modal};
 use std::any::Any;
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
@@ -1178,63 +1181,13 @@ impl FileDialog {
         let mut is_open = true;
 
         if self.config.as_modal {
-            let re = self.ui_update_modal_background(ctx);
-            ctx.move_to_top(re.response.layer_id);
-        }
-
-        let re = self.create_window(&mut is_open).show(ctx, |ui| {
-            if !self.modals.is_empty() {
-                self.ui_update_modals(ui);
-                return;
-            }
-
-            if self.config.show_top_panel {
-                egui::TopBottomPanel::top(self.window_id.with("top_panel"))
-                    .resizable(false)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_top_panel(ui);
-                    });
-            }
-
-            if self.config.show_left_panel {
-                egui::SidePanel::left(self.window_id.with("left_panel"))
-                    .resizable(true)
-                    .default_width(150.0)
-                    .width_range(90.0..=250.0)
-                    .show_inside(ui, |ui| {
-                        self.ui_update_left_panel(ui);
-                    });
-            }
-
-            // Optionally, show a custom right panel (see `update_with_custom_right_panel`)
-            if let Some(f) = right_panel_fn {
-                let mut right_panel = egui::SidePanel::right(self.window_id.with("right_panel"))
-                    // Unlike the left panel, we have no control over the contents, so
-                    // we don't restrict the width. It's up to the user to make the UI presentable.
-                    .resizable(true);
-                if let Some(width) = self.config.right_panel_width {
-                    right_panel = right_panel.default_width(width);
-                }
-                right_panel.show_inside(ui, |ui| {
-                    f(ui, self);
-                });
-            }
-
-            egui::TopBottomPanel::bottom(self.window_id.with("bottom_panel"))
-                .resizable(false)
-                .show_inside(ui, |ui| {
-                    self.ui_update_bottom_panel(ui);
-                });
-
-            egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.ui_update_central_panel(ui);
+            self.create_modal().show(ctx, |ui| {
+                self.fake_title_bar(ui, &mut is_open);
+                self.ui_inner(ui, right_panel_fn);
             });
-        });
-
-        if self.config.as_modal {
-            if let Some(inner_response) = re {
-                ctx.move_to_top(inner_response.response.layer_id);
-            }
+        } else {
+            self.create_window(&mut is_open)
+                .show(ctx, |ui| self.ui_inner(ui, right_panel_fn));
         }
 
         self.any_focused_last_frame = ctx.memory(egui::Memory::focused).is_some();
@@ -1276,48 +1229,102 @@ impl FileDialog {
         }
     }
 
-    /// Updates the main modal background of the file dialog window.
-    fn ui_update_modal_background(&self, ctx: &egui::Context) -> egui::InnerResponse<()> {
-        egui::Area::new(self.window_id.with("modal_overlay"))
-            .interactable(true)
-            .fixed_pos(egui::Pos2::ZERO)
-            .show(ctx, |ui| {
-                let screen_rect = ctx.input(|i| i.screen_rect);
+    /// Draws part of the ui that is in either a modal, or a window.
+    fn ui_inner(&mut self, ui: &mut egui::Ui, right_panel_fn: Option<&mut FileDialogUiCallback>) {
+        if !self.modals.is_empty() {
+            self.ui_update_modals(ui);
+            // In case we are a modal, this is not needed, as the child modals properly block us.
+            // However, in the window case we draw *in* our window, so we must return.
+            if !self.config.as_modal {
+                return;
+            }
+        }
 
-                ui.allocate_response(screen_rect.size(), egui::Sense::click());
+        if self.config.show_top_panel {
+            egui::TopBottomPanel::top(self.window_id.with("top_panel"))
+                .resizable(false)
+                .show_inside(ui, |ui| {
+                    self.ui_update_top_panel(ui);
+                });
+        }
 
-                ui.painter().rect_filled(
-                    screen_rect,
-                    egui::CornerRadius::ZERO,
-                    self.config.modal_overlay_color,
-                );
-            })
+        if self.config.show_left_panel {
+            egui::SidePanel::left(self.window_id.with("left_panel"))
+                .resizable(true)
+                .default_width(150.0)
+                .width_range(90.0..=250.0)
+                .show_inside(ui, |ui| {
+                    self.ui_update_left_panel(ui);
+                });
+        }
+
+        // Optionally, show a custom right panel (see `update_with_custom_right_panel`)
+        if let Some(f) = right_panel_fn {
+            let mut right_panel = egui::SidePanel::right(self.window_id.with("right_panel"))
+                // Unlike the left panel, we have no control over the contents, so
+                // we don't restrict the width. It's up to the user to make the UI presentable.
+                .resizable(true);
+            if let Some(width) = self.config.right_panel_width {
+                right_panel = right_panel.default_width(width);
+            }
+            right_panel.show_inside(ui, |ui| {
+                f(ui, self);
+            });
+        }
+
+        egui::TopBottomPanel::bottom(self.window_id.with("bottom_panel"))
+            .resizable(false)
+            .show_inside(ui, |ui| {
+                self.ui_update_bottom_panel(ui);
+            });
+
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            self.ui_update_central_panel(ui);
+        });
     }
 
     fn ui_update_modals(&mut self, ui: &mut egui::Ui) {
-        // Currently, a rendering error occurs when only a single central panel is rendered
-        // inside a window. Therefore, when rendering a modal, we render an invisible bottom panel,
-        // which prevents the error.
-        // This is currently a bit hacky and should be adjusted again in the future.
-        egui::TopBottomPanel::bottom(self.window_id.with("modal_bottom_panel"))
-            .resizable(false)
-            .show_separator_line(false)
-            .show_inside(ui, |_| {});
-
-        // We need to use a central panel for the modals so that the
-        // window doesn't resize to the size of the modal.
-        egui::CentralPanel::default().show_inside(ui, |ui| {
-            if let Some(modal) = self.modals.last_mut() {
-                #[allow(clippy::single_match)]
-                match modal.update(&self.config, ui) {
-                    ModalState::Close(action) => {
-                        self.exec_modal_action(action);
-                        self.modals.pop();
+        // E-Guis internal modal function is more or less sensible for this.
+        // So if the save window is shown as a modal, it makes more sense to use modals.
+        // If displaying happens in an egui window, the old handling applies.
+        if self.config.as_modal {
+            Modal::new("modal_dialog_overlay".into()).show(&ui.ctx().clone(), |ui| {
+                if let Some(modal) = self.modals.last_mut() {
+                    #[allow(clippy::single_match)]
+                    match modal.update(&self.config, ui) {
+                        ModalState::Close(action) => {
+                            self.exec_modal_action(action);
+                            self.modals.pop();
+                        }
+                        ModalState::Pending => {}
                     }
-                    ModalState::Pending => {}
                 }
-            }
-        });
+            });
+        } else {
+            // Currently, a rendering error occurs when only a single central panel is rendered
+            // inside a window. Therefore, when rendering a modal, we render an invisible bottom panel,
+            // which prevents the error.
+            // This is currently a bit hacky and should be adjusted again in the future.
+            egui::TopBottomPanel::bottom(self.window_id.with("modal_bottom_panel"))
+                .resizable(false)
+                .show_separator_line(false)
+                .show_inside(ui, |_| {});
+
+            // We need to use a central panel for the modals so that the
+            // window doesn't resize to the size of the modal.
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                if let Some(modal) = self.modals.last_mut() {
+                    #[allow(clippy::single_match)]
+                    match modal.update(&self.config, ui) {
+                        ModalState::Close(action) => {
+                            self.exec_modal_action(action);
+                            self.modals.pop();
+                        }
+                        ModalState::Pending => {}
+                    }
+                }
+            });
+        }
     }
 
     /// Creates a new egui window with the configured options.
@@ -1349,6 +1356,96 @@ impl FileDialog {
         }
 
         window
+    }
+
+    /// Create a modal
+    fn create_modal(&self) -> Modal {
+        let mut area = Modal::default_area(self.window_id)
+            .default_size(self.config.default_size)
+            .constrain(true);
+
+        if let Some((anchor, offset)) = self.config.anchor {
+            area = area.anchor(anchor, offset);
+        }
+
+        if let Some(pos) = self.config.fixed_pos {
+            area = area.fixed_pos(pos);
+        } else {
+            area = area.movable(true);
+        }
+
+        if let Some(pos) = self.config.default_pos {
+            area = area.default_pos(pos);
+        }
+
+        Modal::new(self.window_id)
+            .backdrop_color(self.config.modal_overlay_color)
+            .area(area)
+    }
+
+    /// If we want a title bar, but are a egui modal, fake the title bar
+    fn fake_title_bar(&self, ui: &mut egui::Ui, is_open: &mut bool) {
+        // Early exit if we do need this.
+        if !self.config.as_modal || !self.config.title_bar {
+            return;
+        }
+
+        // We wanna pretend to be a window title, so we need to ignore the window margins top, left and right.
+        let window_margins = ui.style().spacing.window_margin;
+        let margins = Margin {
+            left: -window_margins.left,
+            right: -window_margins.right,
+            top: -window_margins.top,
+            bottom: 0,
+        };
+        let window_corners = ui.style().visuals.window_corner_radius;
+        let corner_radius = CornerRadius {
+            nw: window_corners.nw,
+            ne: window_corners.ne,
+            sw: 0,
+            se: 0,
+        };
+        let frame_response = Frame::default()
+            .outer_margin(margins)
+            .corner_radius(corner_radius)
+            .inner_margin(ui.style().spacing.window_margin)
+            .fill(ui.style().visuals.widgets.open.weak_bg_fill)
+            .show(ui, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading(self.get_window_title());
+                });
+            })
+            .response;
+
+        // The close button is taken from egui/src/containers/window.rs and modified to work here.
+        let actual_frame_rect = Rect {
+            min: frame_response.rect.min
+                - Vec2::new(f32::from(window_margins.left), f32::from(window_margins.top)),
+            max: frame_response.rect.max + Vec2::new(f32::from(window_margins.right), 0.0),
+        };
+        let button_center = Align2::RIGHT_CENTER
+            .align_size_within_rect(Vec2::splat(frame_response.rect.height()), actual_frame_rect)
+            .center();
+        let button_size = Vec2::splat(ui.spacing().icon_width);
+        let button_rect = Rect::from_center_size(button_center, button_size);
+        let button_rect = button_rect.round_to_pixels(ui.pixels_per_point());
+
+        let close_button_id = ui.auto_id_with("fake_window_close_button");
+        let button_response = ui.interact(button_rect, close_button_id, Sense::click());
+        button_response.widget_info(|| {
+            WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), "Close file dialog")
+        });
+
+        ui.expand_to_include_rect(button_response.rect);
+        let visuals = ui.style().interact(&button_response);
+        let final_rect = button_rect.shrink(2.0).expand(visuals.expansion);
+        let stroke = visuals.fg_stroke;
+        ui.painter() // paints \
+            .line_segment([final_rect.left_top(), final_rect.right_bottom()], stroke);
+        ui.painter() // paints /
+            .line_segment([final_rect.right_top(), final_rect.left_bottom()], stroke);
+
+        *is_open &= !button_response.clicked();
     }
 
     /// Gets the window title to use.
