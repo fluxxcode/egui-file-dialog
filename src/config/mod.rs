@@ -8,7 +8,6 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::data::DirectoryEntry;
 use crate::{FileSystem, NativeFileSystem};
 
 /// Contains data of the `FileDialog` that should be stored persistently.
@@ -16,7 +15,7 @@ use crate::{FileSystem, NativeFileSystem};
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
-    pub pinned_folders: Vec<DirectoryEntry>,
+    pub pinned_folders: Vec<PathBuf>,
     /// If hidden files and folders should be listed inside the directory view.
     pub show_hidden: bool,
     /// If system files should be listed inside the directory view.
