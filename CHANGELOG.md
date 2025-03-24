@@ -12,6 +12,7 @@
 
 - Added shortcut to open current working directory to hamburger menu [#246](https://github.com/fluxxcode/egui-file-dialog/pull/246)
 - Added file extensions and filters when saving a file using `FileDialog::add_save_extension`, `FileDialogConfig::add_save_extension` and `FileDialog::default_save_extension` [#248](https://github.com/fluxxcode/egui-file-dialog/pull/248)
+- Added ability to open path context menu from a segment inside the navigation bar [!253](https://github.com/fluxxcode/egui-file-dialog/pull/253)
 
 ### 🔧 Changes
 

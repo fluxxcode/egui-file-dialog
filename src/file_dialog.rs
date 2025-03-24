@@ -1420,20 +1420,29 @@ impl FileDialog {
 
                     let mut path = PathBuf::new();
 
-                    if let Some(data) = self.current_directory() {
+                    if let Some(data) = self.current_directory().map(Path::to_path_buf) {
                         for (i, segment) in data.iter().enumerate() {
                             path.push(segment);
 
-                            let segment_str = segment.to_str().unwrap_or("<ERR>");
+                            let mut segment_str = segment.to_str().unwrap_or_default().to_string();
+
+                            if self.is_pinned(&path) {
+                                segment_str =
+                                    format!("{} {}", &self.config.pinned_icon, segment_str);
+                            };
 
                             if i != 0 {
                                 ui.label(self.config.directory_separator.as_str());
                             }
 
-                            if ui.button(segment_str).clicked() {
+                            let re = ui.button(segment_str);
+
+                            if re.clicked() {
                                 self.load_directory(path.as_path());
                                 return;
                             }
+
+                            self.ui_update_path_context_menu(&re, &path.clone());
                         }
                     }
                 });
@@ -1710,9 +1719,11 @@ impl FileDialog {
                 visible = true;
             }
 
+            let file_name = path.file_name().unwrap_or_default().to_string_lossy();
+
             let response = self.ui_update_left_panel_entry(
                 ui,
-                &format!("{}  {}", self.config.pinned_icon, path.file_name()),
+                &format!("{}  {}", self.config.pinned_icon, file_name),
                 path.as_path(),
             );
 
@@ -2267,7 +2278,7 @@ impl FileDialog {
     ) -> bool {
         let file_name = item.file_name();
         let primary_selected = self.is_primary_selected(item);
-        let pinned = self.is_pinned(item);
+        let pinned = self.is_pinned(item.as_path());
 
         let icons = if pinned {
             format!("{} {} ", item.icon(), self.config.pinned_icon)
@@ -2297,7 +2308,7 @@ impl FileDialog {
         }
 
         if item.is_dir() {
-            self.ui_update_path_context_menu(&re, item);
+            self.ui_update_path_context_menu(&re, item.as_path());
 
             if re.context_menu_opened() {
                 self.select_item(item);
@@ -2470,11 +2481,7 @@ impl FileDialog {
     /// * `item_response` - The response of the egui item for which the context menu should
     ///                     be opened.
     /// * `path` - The path for which the context menu should be opened.
-    fn ui_update_path_context_menu(
-        &mut self,
-        item_response: &egui::Response,
-        path: &DirectoryEntry,
-    ) {
+    fn ui_update_path_context_menu(&mut self, item_response: &egui::Response, path: &Path) {
         // Path context menus are currently only used for pinned folders.
         if !self.config.show_pinned_folders {
             return;
@@ -2489,7 +2496,7 @@ impl FileDialog {
                     ui.close_menu();
                 }
             } else if ui.button(&self.config.labels.pin_folder).clicked() {
-                self.pin_path(path.clone());
+                self.pin_path(path.to_path_buf());
                 ui.close_menu();
             }
         });
@@ -2897,25 +2904,25 @@ impl FileDialog {
     }
 
     /// Pins a path to the left sidebar.
-    fn pin_path(&mut self, path: DirectoryEntry) {
+    fn pin_path(&mut self, path: PathBuf) {
         self.config.storage.pinned_folders.push(path);
     }
 
     /// Unpins a path from the left sidebar.
-    fn unpin_path(&mut self, path: &DirectoryEntry) {
+    fn unpin_path(&mut self, path: &Path) {
         self.config
             .storage
             .pinned_folders
-            .retain(|p| !p.path_eq(path));
+            .retain(|p| p.as_path() != path);
     }
 
     /// Checks if the path is pinned to the left sidebar.
-    fn is_pinned(&self, path: &DirectoryEntry) -> bool {
+    fn is_pinned(&self, path: &Path) -> bool {
         self.config
             .storage
             .pinned_folders
             .iter()
-            .any(|p| path.path_eq(p))
+            .any(|p| p.as_path() == path)
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
