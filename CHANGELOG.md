@@ -20,6 +20,10 @@
 - Fixed triggering branches in CI [#247](https://github.com/fluxxcode/egui-file-dialog/pull/247)
 - Changed default file name from an empty string to `Untitled` [#248](https://github.com/fluxxcode/egui-file-dialog/pull/248)
 
+### 📚 Documentation
+
+- Fixed preview of readme images on crates.io [#254](https://github.com/fluxxcode/egui-file-dialog/pull/254)
+
 ## 2025-02-04 - v0.9.0 - egui update, virtual file system and more
 
 ### 🚨 Breaking Changes
