@@ -1,5 +1,21 @@
 # Examples
 
+## Custom Filesystem
+
+Example showing how to use the file dialog with a custom aka. virutal file system.
+
+```shell
+cargo run --example custom_filesystem
+```
+
+## Custom Right Panel
+
+Example showing how to render custom UI inside the file dialog using the right panel.
+
+```shell
+cargo run --example custom_right_panel
+```
+
 ## Multi Selection
 
 Example showing how to select multiple files and folders at once.
