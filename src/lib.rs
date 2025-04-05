@@ -41,7 +41,7 @@
 //! The following example shows the basic use of the file dialog with
 //! [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.
 //!
-//! ```
+//! ```no_run
 //! use std::path::PathBuf;
 //!
 //! use eframe::egui;
@@ -87,7 +87,7 @@
 //!     eframe::run_native(
 //!         "File dialog demo",
 //!         eframe::NativeOptions::default(),
-//!         Box::new(|ctx| Box::new(MyApp::new(ctx))),
+//!         Box::new(|ctx| Ok(Box::new(MyApp::new(ctx)))),
 //!     )
 //! }
 //! ```
