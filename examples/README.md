@@ -2,7 +2,7 @@
 
 ## Custom Filesystem
 
-Example showing how to use the file dialog with a custom aka. virutal file system.
+Example showing how to use the file dialog with a custom aka. virtual file system.
 
 ```shell
 cargo run --example custom_filesystem
