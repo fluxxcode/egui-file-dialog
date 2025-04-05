@@ -20,18 +20,25 @@
 
 </details>
 
-This repository provides an easy-to-use and customizable file dialog (a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui).
+This repository provides an easy-to-use and customizable file dialog
+(a.k.a. file explorer, file picker) for [egui](https://github.com/emilk/egui).
 
-The file dialog is intended for use by desktop applications, allowing the use of a file dialog directly within the egui application without relying on the operating system's file explorer. This also ensures that the file dialog looks the same and provides the same functionality on all platforms.
+The file dialog is intended for use by desktop applications, allowing the use of a file dialog
+directly within the egui application without relying on the operating system's file explorer.
+This also ensures that the file dialog looks the same and provides the same functionality
+on all platforms.
 
 <img src="media/readme/demo.png">
 
-The latest changes included in the next release can be found in the [CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md) file on the develop branch.
+The latest changes included in the next release can be found in the
+[CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md)
+file on the develop branch.
 
 ## Git LFS
 
-This repository uses Git LFS (Large File Storage) to efficiently manage PNG files. Git LFS replaces large files
-with lightweight pointers in the repository, ensuring the repository remains fast and responsive.
+This repository uses Git LFS (Large File Storage) to efficiently manage PNG files.
+Git LFS replaces large files with lightweight pointers in the repository, ensuring the
+repository remains fast and responsive.
 
 1. Install Git LFS: <https://git-lfs.com>
 2. Run `git lfs install` to initialize Git LFS
@@ -42,7 +49,8 @@ with lightweight pointers in the repository, ensuring the repository remains fas
 - Pick a file or a directory
 - Save a file (Prompt user for a destination path)
   - Dialog to ask the user if the existing file should be overwritten
-- Pick multiple files and folders at once (ctrl/shift + click on linux/windows and cmd/shift + click on macOS)
+- Pick multiple files and folders at once
+  (ctrl/shift + click on linux/windows and cmd/shift + click on macOS)
 - Open the dialog in a normal or modal window
 - Create a new folder
 - Keyboard navigation
@@ -61,13 +69,16 @@ with lightweight pointers in the repository, ensuring the repository remains fas
   - Customize file and folder icons
   - Add custom quick access sections to the left sidebar
   - Customize keybindings used by the file dialog
-  - Add a right panel with custom UI (An optional information panel to display file previews is included)
+  - Add a right panel with custom UI
+    (An optional information panel to display file previews is included)
 
 ## Example
 
-Detailed examples that can be run can be found in the [examples](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples) folder.
+Detailed examples that can be run can be found in the
+[examples](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples) folder.
 
-The following example shows the basic use of the file dialog with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.
+The following example shows the basic use of the file dialog with
+[eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.
 
 Cargo.toml:
 
@@ -132,7 +143,9 @@ fn main() -> eframe::Result<()> {
 
 ## Keybindings
 
-Keybindings can be used in the file dialog for easier navigation. All keybindings can be configured from the backend with `FileDialogKeyBindings` and `FileDialog::keybindings`. \
+Keybindings can be used in the file dialog for easier navigation.
+All keybindings can be configured from the backend with `FileDialogKeyBindings` and
+`FileDialog::keybindings`. \
 The following table lists all available keybindings and their default values.
 
 | Name           | Description                                                                                        | Default                                               |
@@ -153,18 +166,26 @@ The following table lists all available keybindings and their default values.
 ## Customization
 
 Many things can be customized so that the dialog can be used in different situations. \
-A few highlights of the customization are listed below. For all possible customization options, see the documentation on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html).
+A few highlights of the customization are listed below. For all possible customization
+options, see the documentation on
+[docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialog.html).
 
 - Set which areas and functions of the dialog are visible using `FileDialog::show_*` methods
 - Update the text labels that the dialog uses. See [Multilingual support](#multilingual-support)
-- Customize file and folder icons using `FileDialog::set_file_icon` (Currently only unicode is supported)
-- Customize keybindings used by the file dialog using `FileDialog::keybindings`. See [Keybindings](#keybindings)
+- Customize file and folder icons using `FileDialog::set_file_icon`
+  (Currently only unicode is supported)
+- Customize keybindings used by the file dialog using `FileDialog::keybindings`.
+  See [Keybindings](#keybindings)
 - Add a right panel with custom UI using `FileDialog::update_with_right_panel_ui`
 
-Since the dialog uses the egui style to look like the rest of the application, the appearance can be customized with `egui::Style` and `egui::Context::set_style`.
+Since the dialog uses the egui style to look like the rest of the application,
+the appearance can be customized with `egui::Style` and `egui::Context::set_style`.
 
 The following example shows how a single file dialog can be customized. \
-If you need to configure multiple file dialog objects with the same or almost the same options, it is a good idea to use `FileDialogConfig` and `FileDialog::with_config` (See `FileDialogConfig` on [docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialogConfig.html)).
+If you need to configure multiple file dialog objects with the same or almost the same
+options, it is a good idea to use `FileDialogConfig` and `FileDialog::with_config`
+(See `FileDialogConfig` on
+[docs.rs](https://docs.rs/egui-file-dialog/latest/egui_file_dialog/struct.FileDialogConfig.html)).
 
 ```rust
 use std::path::PathBuf;
@@ -210,9 +231,14 @@ FileDialog::new()
 With the options the dialog then looks like this:
 <img src="media/readme/customization_demo.png">
 
-If you want to display your own information in the file dialog, you can update the file dialog with
-`update_with_right_panel_ui` instead of `update`. This allows e.g. to display custom image previews or further
-information about the selected item. See [custom-right-panel](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples/custom-right-panel) for the full example.
+If you want to display your own information in the file dialog, you can
+update the file dialog with `update_with_right_panel_ui` instead of `update`.
+This allows e.g. to display custom image previews or further
+information about the selected item. See
+[custom-right-panel](
+https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples/custom-right-panel
+)
+for the full example.
 
 ```rust
 fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -229,9 +255,12 @@ fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 
 ## Multilingual support
 
-For desktop applications it is often necessary to offer different languages. While the dialog currently only offers English labels by default, the labels are fully customizable. This makes it possible to adapt the labels to different languages.
+For desktop applications it is often necessary to offer different languages.
+While the dialog currently only offers English labels by default, the labels are fully
+customizable. This makes it possible to adapt the labels to different languages.
 
-The following example shows how the labels can be changed to display the file dialog in English or German. \
+The following example shows how the labels can be changed to display the file dialog
+in English or German. \
 Checkout `examples/multilingual` for the full example.
 
 ```rust
@@ -268,18 +297,27 @@ fn update_labels(language: &Language, file_dialog: &mut FileDialog) {
 
 ## Persistent data
 
-The file dialog currently requires the following persistent data to be stored across multiple file dialog objects:
+The file dialog currently requires the following persistent data to be stored across
+multiple file dialog objects:
 
 - Folders the user pinned to the left sidebar (`FileDialog::show_pinned_folders`)
 - If hidden files and folders should be visible (`FileDialog::show_hidden_option`)
 - If system files should be visible (`FileDialog::show_system_files_option`)
 
-If one of the above feature is activated, the data should be saved by the application. Otherwise, frustrating situations could arise for the user and the features would not offer much added value.
+If one of the above feature is activated, the data should be saved by the application.
+Otherwise, frustrating situations could arise for the user and the features would not
+offer much added value.
 
-All data that needs to be stored permanently is contained in the `FileDialogStorage` struct. This struct can be accessed using `FileDialog::storage` or `FileDialog::storage_mut` to save or load the persistent data. \
-By default the feature `serde` is enabled, which implements `serde::Serialize` and `serde::Deserialize` for the objects to be saved. However, the objects can also be accessed without the feature enabled.
+All data that needs to be stored permanently is contained in the `FileDialogStorage` struct.
+This struct can be accessed using `FileDialog::storage` or `FileDialog::storage_mut` to save or
+load the persistent data. \
+By default the feature `serde` is enabled, which implements `serde::Serialize` and
+`serde::Deserialize` for the objects to be saved. However, the objects can also be
+accessed without the feature enabled.
 
-The following example shows how the data can be saved with [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) and the `serde` feature enabled. \
+The following example shows how the data can be saved with
+[eframe](https://github.com/emilk/egui/tree/master/crates/eframe) and the `serde`
+feature enabled. \
 Checkout `examples/persistence` for the full example.
 
 ```rust
@@ -320,4 +358,5 @@ impl eframe::App for MyApp {
 
 ## Development
 
-Feel free to contribute to the project. If you have any questions or need help, please open an issue.
+Feel free to contribute to the project. If you have any questions or need help,
+please open an issue.
