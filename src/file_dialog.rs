@@ -1054,6 +1054,13 @@ impl FileDialog {
         self.operation_id.as_deref()
     }
 
+    /// Sets the ID of the operation for which the dialog is currently being used.
+    ///
+    /// See `FileDialog::open` for more information.
+    pub fn set_operation_id(&mut self, operation_id: &str) {
+        self.operation_id = Some(operation_id.to_owned());
+    }
+
     /// Returns the mode the dialog is currently in.
     pub const fn mode(&self) -> DialogMode {
         self.mode
