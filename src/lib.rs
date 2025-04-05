@@ -36,7 +36,7 @@
 //! ## Example
 //!
 //! Detailed examples that can be run can be found in the
-//! [examples](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples) folder.
+//! [examples](https://github.com/jannistpl/egui-file-dialog/tree/develop/examples) folder.
 //!
 //! The following example shows the basic use of the file dialog with
 //! [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.

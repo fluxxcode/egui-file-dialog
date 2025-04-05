@@ -2,10 +2,10 @@
 
 [![Latest version](https://img.shields.io/crates/v/egui-file-dialog.svg)](https://crates.io/crates/egui-file-dialog)
 [![Documentation](https://img.shields.io/docsrs/egui-file-dialog)](https://docs.rs/egui-file-dialog)
-[![Dependency status](https://deps.rs/repo/github/fluxxcode/egui-file-dialog/status.svg)](https://deps.rs/repo/github/fluxxcode/egui-file-dialog)
+[![Dependency status](https://deps.rs/repo/github/jannistpl/egui-file-dialog/status.svg)](https://deps.rs/repo/github/jannistpl/egui-file-dialog)
 ![Crates.io Total Downloads](https://img.shields.io/crates/d/egui-file-dialog)
-[![Total lines of code ](https://sloc.xyz/github/fluxxcode/egui-file-dialog/)](https://github.com/fluxxcode/egui-file-dialog/)
-[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fluxxcode/egui-file-dialog/blob/master/LICENSE)
+[![Total lines of code ](https://sloc.xyz/github/jannistpl/egui-file-dialog/)](https://github.com/jannistpl/egui-file-dialog/)
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jannistpl/egui-file-dialog/blob/master/LICENSE)
 
 <details>
 <summary>Table of contents</summary>
@@ -31,7 +31,7 @@ on all platforms.
 <img src="media/readme/demo.png">
 
 The latest changes included in the next release can be found in the
-[CHANGELOG.md](https://github.com/fluxxcode/egui-file-dialog/blob/develop/CHANGELOG.md)
+[CHANGELOG.md](https://github.com/jannistpl/egui-file-dialog/blob/develop/CHANGELOG.md)
 file on the develop branch.
 
 ## Git LFS
@@ -75,7 +75,7 @@ repository remains fast and responsive.
 ## Example
 
 Detailed examples that can be run can be found in the
-[examples](https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples) folder.
+[examples](https://github.com/jannistpl/egui-file-dialog/tree/develop/examples) folder.
 
 The following example shows the basic use of the file dialog with
 [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) to select a file.
@@ -236,7 +236,7 @@ update the file dialog with `update_with_right_panel_ui` instead of `update`.
 This allows e.g. to display custom image previews or further
 information about the selected item. See
 [custom-right-panel](
-https://github.com/fluxxcode/egui-file-dialog/tree/develop/examples/custom-right-panel
+https://github.com/jannistpl/egui-file-dialog/tree/develop/examples/custom-right-panel
 )
 for the full example.
 
