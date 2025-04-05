@@ -23,6 +23,7 @@
 ### 📚 Documentation
 
 - Fixed preview of readme images on crates.io [#254](https://github.com/fluxxcode/egui-file-dialog/pull/254)
+- Updated license copyright year and copyright holder [#255](https://github.com/jannistpl/egui-file-dialog/pull/255)
 
 ## 2025-02-04 - v0.9.0 - egui update, virtual file system and more
 
