@@ -15,6 +15,10 @@
 - Added ability to open path context menu from a segment inside the navigation bar [#253](https://github.com/fluxxcode/egui-file-dialog/pull/253)
 - Added `FileDialog::set_operation_id` to set the ID of the operation for which the dialog is currently being used after opening it [#257](https://github.com/jannistpl/egui-file-dialog/pull/257)
 
+### ☢️ Deprecated
+
+- Deprecate `FileDialog::open`. Use `FileDialog::pick_file` / `FileDialog::pick_directory` / `FileDialog::pick_multiple` in combination with `FileDialog::set_operation_id` instead [#257](https://github.com/jannistpl/egui-file-dialog/pull/257)
+
 ### 🔧 Changes
 
 - Excluded media files from package to reduce size [#244](https://github.com/fluxxcode/egui-file-dialog/pull/244)

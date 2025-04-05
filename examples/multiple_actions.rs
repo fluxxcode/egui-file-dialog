@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use eframe::egui;
-use egui_file_dialog::{DialogMode, FileDialog};
+use egui_file_dialog::FileDialog;
 
 struct MyApp {
     file_dialog: FileDialog,
@@ -25,13 +25,13 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Pick file a").clicked() {
-                self.file_dialog
-                    .open(DialogMode::PickFile, true, Some("pick_a"));
+                self.file_dialog.pick_file();
+                self.file_dialog.set_operation_id("pick_a");
             }
 
             if ui.button("Pick file b").clicked() {
-                self.file_dialog
-                    .open(DialogMode::PickFile, true, Some("pick_b"));
+                self.file_dialog.pick_file();
+                self.file_dialog.set_operation_id("pick_b");
             }
 
             ui.label(format!("Pick file a: {:?}", self.picked_file_a));
