@@ -313,6 +313,11 @@ impl FileDialog {
     ///     }
     /// }
     /// ```
+    #[deprecated(
+        since = "0.10.0",
+        note = "Use `pick_file` / `pick_directory` / `pick_multiple` in combination with \
+                `set_operation_id` instead"
+    )]
     pub fn open(&mut self, mode: DialogMode, mut show_files: bool, operation_id: Option<&str>) {
         self.reset();
         self.refresh();
@@ -354,6 +359,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_directory(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::PickDirectory, false, None);
     }
 
@@ -363,6 +370,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_file(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::PickFile, true, None);
     }
 
@@ -373,6 +382,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_multiple(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::PickMultiple, true, None);
     }
 
@@ -382,6 +393,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn save_file(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::SaveFile, true, None);
     }
 
@@ -1052,6 +1065,13 @@ impl FileDialog {
     /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
+    }
+
+    /// Sets the ID of the operation for which the dialog is currently being used.
+    ///
+    /// See `FileDialog::open` for more information.
+    pub fn set_operation_id(&mut self, operation_id: &str) {
+        self.operation_id = Some(operation_id.to_owned());
     }
 
     /// Returns the mode the dialog is currently in.
