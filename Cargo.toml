@@ -1,11 +1,11 @@
 [package]
 name = "egui-file-dialog"
-description = "An easy-to-use file dialog for egui"
+description = "easy-to-use and customizable file dialog for egui"
 version = "0.9.0"
 edition = "2021"
-authors = ["fluxxcode"]
-repository = "https://github.com/fluxxcode/egui-file-dialog"
-homepage = "https://github.com/fluxxcode/egui-file-dialog"
+authors = ["Jannis Teipel <jannistpl@gmail.com>"]
+repository = "https://github.com/jannistpl/egui-file-dialog"
+homepage = "https://github.com/jannistpl/egui-file-dialog"
 readme = "README.md"
 license = "MIT"
 exclude = ["media/", ".github/"]
