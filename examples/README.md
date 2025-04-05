@@ -8,7 +8,7 @@ Example showing how to select multiple files and folders at once.
 cargo run --example multi_selection
 ```
 
-![Screenshot](../media/examples/multi-selection.png)
+![Screenshot](../media/examples/multi_selection.png)
 
 ## Multilingual
 
@@ -59,25 +59,6 @@ cargo run --example pick_file
 
 ![Screenshot](../media/examples/pick_file.png)
 
-## Sandbox
-
-Sandbox app used during development of the file dialog.
-
-```shell
-cargo run --example sandbox
-```
-
-## Save File
-
-Example showing how to save a file using the file dialog.
-
-```shell
-cargo run --example save_file
-```
-
-![Screenshot](../media/examples/save_file.png)
-
-
 ## Pick File with Information View
 
 Example showing how to pick a file and display file information using the `InformationView`.
@@ -97,3 +78,21 @@ cargo run --example pick_file_with_information_view
 ```
 
 ![Screenshot](../media/examples/information_view.png)
+
+## Sandbox
+
+Sandbox app used during development of the file dialog.
+
+```shell
+cargo run --example sandbox
+```
+
+## Save File
+
+Example showing how to save a file using the file dialog.
+
+```shell
+cargo run --example save_file
+```
+
+![Screenshot](../media/examples/save_file.png)
