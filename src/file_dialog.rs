@@ -1,6 +1,6 @@
 use crate::config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
-    Filter, OpeningMode, QuickAccess, SaveExtension,
+    Filter, OpeningMode, PinnedFolder, QuickAccess, SaveExtension,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
@@ -1724,7 +1724,7 @@ impl FileDialog {
     fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
-        for (i, path) in self
+        for (i, pinned) in self
             .config
             .storage
             .pinned_folders
@@ -1739,15 +1739,13 @@ impl FileDialog {
                 visible = true;
             }
 
-            let file_name = path.file_name().unwrap_or_default().to_string_lossy();
-
             let response = self.ui_update_left_panel_entry(
                 ui,
-                &format!("{}  {}", self.config.pinned_icon, file_name),
-                path.as_path(),
+                &format!("{}  {}", self.config.pinned_icon, &pinned.label),
+                pinned.path.as_path(),
             );
 
-            self.ui_update_path_context_menu(&response, path);
+            self.ui_update_path_context_menu(&response, &pinned.path);
         }
 
         visible
@@ -2925,7 +2923,8 @@ impl FileDialog {
 
     /// Pins a path to the left sidebar.
     fn pin_path(&mut self, path: PathBuf) {
-        self.config.storage.pinned_folders.push(path);
+        let pinned = PinnedFolder::from_path(path);
+        self.config.storage.pinned_folders.push(pinned);
     }
 
     /// Unpins a path from the left sidebar.
@@ -2933,7 +2932,7 @@ impl FileDialog {
         self.config
             .storage
             .pinned_folders
-            .retain(|p| p.as_path() != path);
+            .retain(|p| p.path.as_path() != path);
     }
 
     /// Checks if the path is pinned to the left sidebar.
@@ -2942,7 +2941,7 @@ impl FileDialog {
             .storage
             .pinned_folders
             .iter()
-            .any(|p| p.as_path() == path)
+            .any(|p| p.path.as_path() == path)
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {

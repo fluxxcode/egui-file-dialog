@@ -10,12 +10,31 @@ use std::sync::Arc;
 
 use crate::{FileSystem, NativeFileSystem};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub struct PinnedFolder {
+    pub path: PathBuf,
+    pub label: String,
+}
+
+impl PinnedFolder {
+    pub fn from_path(path: PathBuf) -> Self {
+        let label = path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .into_owned();
+
+        Self { path, label }
+    }
+}
+
 /// Contains data of the `FileDialog` that should be stored persistently.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileDialogStorage {
     /// The folders the user pinned to the left sidebar.
-    pub pinned_folders: Vec<PathBuf>,
+    pub pinned_folders: Vec<PinnedFolder>,
     /// If hidden files and folders should be listed inside the directory view.
     pub show_hidden: bool,
     /// If system files should be listed inside the directory view.
