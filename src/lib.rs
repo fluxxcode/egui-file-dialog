@@ -230,10 +230,10 @@ pub mod information_panel;
 mod modals;
 
 pub use config::{
-    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, IconFilter,
-    KeyBinding, OpeningMode, QuickAccess, QuickAccessPath,
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, IconFilter, KeyBinding, OpeningMode,
+    QuickAccess, QuickAccessPath,
 };
 pub use data::{DirectoryEntry, Disk, Disks, Metadata, UserDirectories};
-pub use file_dialog::{DialogMode, DialogState, FileDialog};
+pub use file_dialog::{DialogMode, DialogState, FileDialog, FileDialogStorage};
 
 pub use file_system::{FileSystem, NativeFileSystem};

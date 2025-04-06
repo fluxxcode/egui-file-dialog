@@ -1,10 +1,11 @@
 use crate::config::{
-    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
-    Filter, OpeningMode, PinnedFolder, QuickAccess, SaveExtension,
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileFilter, Filter, OpeningMode,
+    PinnedFolder, QuickAccess, SaveExtension,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
-    DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
+    DirectoryContent, DirectoryContentState, DirectoryEntry, DirectoryFilter, Disk, Disks,
+    UserDirectories,
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 use crate::{FileSystem, NativeFileSystem};
@@ -48,6 +49,35 @@ pub enum DialogState {
     Cancelled,
 }
 
+/// Contains data of the `FileDialog` that should be stored persistently.
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub struct FileDialogStorage {
+    /// The folders the user pinned to the left sidebar.
+    pub pinned_folders: Vec<PinnedFolder>,
+    /// If hidden files and folders should be listed inside the directory view.
+    pub show_hidden: bool,
+    /// If system files should be listed inside the directory view.
+    pub show_system_files: bool,
+    /// The last directory the user visited.
+    pub last_visited_dir: Option<PathBuf>,
+    /// The last directory from which the user picked an item.
+    pub last_picked_dir: Option<PathBuf>,
+}
+
+impl Default for FileDialogStorage {
+    /// Creates a new object with default values
+    fn default() -> Self {
+        Self {
+            pinned_folders: Vec::new(),
+            show_hidden: false,
+            show_system_files: false,
+            last_visited_dir: None,
+            last_picked_dir: None,
+        }
+    }
+}
+
 /// Represents a file dialog instance.
 ///
 /// The `FileDialog` instance can be used multiple times and for different actions.
@@ -75,8 +105,10 @@ pub enum DialogState {
 /// ```
 #[derive(Debug)]
 pub struct FileDialog {
-    /// The configuration of the file dialog
+    /// The configuration of the file dialog.
     config: FileDialogConfig,
+    /// Persistent data of the file dialog.
+    storage: FileDialogStorage,
 
     /// Stack of modal windows to be displayed.
     /// The top element is what is currently being rendered.
@@ -205,6 +237,7 @@ impl FileDialog {
 
         Self {
             config: FileDialogConfig::default_from_filesystem(file_system.clone()),
+            storage: FileDialogStorage::default(),
 
             modals: Vec::new(),
 
@@ -471,13 +504,13 @@ impl FileDialog {
     /// Storage includes all data that is persistently stored between multiple
     /// file dialog instances.
     pub fn storage(mut self, storage: FileDialogStorage) -> Self {
-        self.config.storage = storage;
+        self.storage = storage;
         self
     }
 
     /// Mutably borrow internal storage.
     pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
-        &mut self.config.storage
+        &mut self.storage
     }
 
     /// Sets the keybindings used by the file dialog.
@@ -1560,7 +1593,7 @@ impl FileDialog {
         if self.config.show_hidden_option
             && ui
                 .checkbox(
-                    &mut self.config.storage.show_hidden,
+                    &mut self.storage.show_hidden,
                     &self.config.labels.show_hidden,
                 )
                 .clicked()
@@ -1572,7 +1605,7 @@ impl FileDialog {
         if self.config.show_system_files_option
             && ui
                 .checkbox(
-                    &mut self.config.storage.show_system_files,
+                    &mut self.storage.show_system_files,
                     &self.config.labels.show_system_files,
                 )
                 .clicked()
@@ -1736,14 +1769,7 @@ impl FileDialog {
     fn ui_update_pinned_folders(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
-        for (i, pinned) in self
-            .config
-            .storage
-            .pinned_folders
-            .clone()
-            .iter()
-            .enumerate()
-        {
+        for (i, pinned) in self.storage.pinned_folders.clone().iter().enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label(self.config.labels.heading_pinned.as_str());
@@ -2991,21 +3017,19 @@ impl FileDialog {
     /// Pins a path to the left sidebar.
     fn pin_path(&mut self, path: PathBuf) {
         let pinned = PinnedFolder::from_path(path);
-        self.config.storage.pinned_folders.push(pinned);
+        self.storage.pinned_folders.push(pinned);
     }
 
     /// Unpins a path from the left sidebar.
     fn unpin_path(&mut self, path: &Path) {
-        self.config
-            .storage
+        self.storage
             .pinned_folders
             .retain(|p| p.path.as_path() != path);
     }
 
     /// Checks if the path is pinned to the left sidebar.
     fn is_pinned(&self, path: &Path) -> bool {
-        self.config
-            .storage
+        self.storage
             .pinned_folders
             .iter()
             .any(|p| p.path.as_path() == path)
@@ -3024,7 +3048,6 @@ impl FileDialog {
 
         if let Some(renamed) = renamed {
             let old = self
-                .config
                 .storage
                 .pinned_folders
                 .iter_mut()
@@ -3049,8 +3072,10 @@ impl FileDialog {
     /// Resets the dialog to use default values.
     /// Configuration variables are retained.
     fn reset(&mut self) {
+        let storage = self.storage.clone();
         let config = self.config.clone();
         *self = Self::with_config(config);
+        self.storage = storage;
     }
 
     /// Refreshes the dialog.
@@ -3075,7 +3100,7 @@ impl FileDialog {
             return;
         }
 
-        self.config.storage.last_picked_dir = self.current_directory().map(PathBuf::from);
+        self.storage.last_picked_dir = self.current_directory().map(PathBuf::from);
 
         match &self.mode {
             DialogMode::PickDirectory | DialogMode::PickFile => {
@@ -3130,13 +3155,11 @@ impl FileDialog {
         let path = match self.config.opening_mode {
             OpeningMode::AlwaysInitialDir => &self.config.initial_directory,
             OpeningMode::LastVisitedDir => self
-                .config
                 .storage
                 .last_visited_dir
                 .as_deref()
                 .unwrap_or(&self.config.initial_directory),
             OpeningMode::LastPickedDir => self
-                .config
                 .storage
                 .last_picked_dir
                 .as_deref()
@@ -3459,7 +3482,7 @@ impl FileDialog {
 
     /// Loads the directory content of the given path.
     fn load_directory_content(&mut self, path: &Path) {
-        self.config.storage.last_visited_dir = Some(path.to_path_buf());
+        self.storage.last_visited_dir = Some(path.to_path_buf());
 
         let selected_file_filter = match self.mode {
             DialogMode::PickFile | DialogMode::PickMultiple => self.get_selected_file_filter(),
@@ -3473,13 +3496,19 @@ impl FileDialog {
             None
         };
 
+        let filter = DirectoryFilter {
+            show_files: self.show_files,
+            show_hidden: self.storage.show_hidden,
+            show_system_files: self.storage.show_system_files,
+            file_filter: selected_file_filter.cloned(),
+            filter_extension: selected_save_extension.map(str::to_string),
+        };
+
         self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,
-            self.show_files,
-            selected_file_filter,
-            selected_save_extension,
             self.config.file_system.clone(),
+            filter,
         );
 
         self.create_directory_dialog.close();

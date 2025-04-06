@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### 🚨 Breaking Changes
+- Moved `FileDialogStorage` out of `FileDialogConfig` [#259](https://github.com/jannistpl/egui-file-dialog/pull/259)
 
 #### Breaking changes due to new features and updated configuration
 - Added `save_extensions` and `default_save_extension` to `FileDialogConfig` [#248](https://github.com/jannistpl/egui-file-dialog/pull/248)

@@ -29,35 +29,6 @@ impl PinnedFolder {
     }
 }
 
-/// Contains data of the `FileDialog` that should be stored persistently.
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct FileDialogStorage {
-    /// The folders the user pinned to the left sidebar.
-    pub pinned_folders: Vec<PinnedFolder>,
-    /// If hidden files and folders should be listed inside the directory view.
-    pub show_hidden: bool,
-    /// If system files should be listed inside the directory view.
-    pub show_system_files: bool,
-    /// The last directory the user visited.
-    pub last_visited_dir: Option<PathBuf>,
-    /// The last directory from which the user picked an item.
-    pub last_picked_dir: Option<PathBuf>,
-}
-
-impl Default for FileDialogStorage {
-    /// Creates a new object with default values
-    fn default() -> Self {
-        Self {
-            pinned_folders: Vec::new(),
-            show_hidden: false,
-            show_system_files: false,
-            last_visited_dir: None,
-            last_picked_dir: None,
-        }
-    }
-}
-
 /// Sets which directory is loaded when opening the file dialog.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum OpeningMode {
@@ -105,8 +76,6 @@ pub struct FileDialogConfig {
     // Core:
     /// File system browsed by the file dialog; may be native or virtual.
     pub file_system: Arc<dyn FileSystem + Send + Sync>,
-    /// Persistent data of the file dialog.
-    pub storage: FileDialogStorage,
     /// The labels that the dialog uses.
     pub labels: FileDialogLabels,
     /// Keybindings used by the file dialog.
@@ -263,7 +232,6 @@ impl FileDialogConfig {
     /// Creates a new configuration with default values
     pub fn default_from_filesystem(file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
-            storage: FileDialogStorage::default(),
             labels: FileDialogLabels::default(),
             keybindings: FileDialogKeyBindings::default(),
 
@@ -339,14 +307,6 @@ impl FileDialogConfig {
 }
 
 impl FileDialogConfig {
-    /// Sets the storage used by the file dialog.
-    /// Storage includes all data that is persistently stored between multiple
-    /// file dialog instances.
-    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
-        self.storage = storage;
-        self
-    }
-
     /// Adds a new file filter the user can select from a dropdown widget.
     ///
     /// NOTE: The name must be unique. If a filter with the same name already exists,
