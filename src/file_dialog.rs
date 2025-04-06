@@ -1762,7 +1762,7 @@ impl FileDialog {
                 pinned.path.as_path(),
             );
 
-            self.ui_update_pinned_folder_context_menu(&response, &pinned);
+            self.ui_update_pinned_folder_context_menu(&response, pinned);
         }
 
         visible
@@ -3039,7 +3039,7 @@ impl FileDialog {
     fn is_pinned_folder_being_renamed(&self, pinned: &PinnedFolder) -> bool {
         self.rename_pinned_folder
             .as_ref()
-            .map_or(false, |p| p.path == pinned.path)
+            .is_some_and(|p| p.path == pinned.path)
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
