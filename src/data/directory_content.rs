@@ -377,7 +377,6 @@ fn apply_search_value(entry: &DirectoryEntry, value: &str) -> bool {
 }
 
 /// Loads the contents of the given directory.
-/// TODO: Move filter options to struct
 fn load_directory(
     config: &FileDialogConfig,
     path: &Path,
