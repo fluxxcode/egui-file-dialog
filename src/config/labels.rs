@@ -80,7 +80,7 @@ pub struct FileDialogLabels {
     pub pin_folder: String,
     /// Text used for the option to unpin a folder.
     pub unpin_folder: String,
-    /// Text user for the option to rename a pinned folder.
+    /// Text used for the option to rename a pinned folder.
     pub rename_pinned_folder: String,
 
     // ------------------------------------------------------------------------
