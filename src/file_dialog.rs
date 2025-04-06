@@ -163,7 +163,7 @@ pub struct FileDialog {
     rename_pinned_folder: Option<PinnedFolder>,
     /// If the text input of the pinned folder being renamed should request focus in
     /// the next frame.
-    renamed_pinned_folder_request_focus: bool,
+    rename_pinned_folder_request_focus: bool,
 }
 
 /// This tests if file dialog is send and sync.
@@ -243,7 +243,7 @@ impl FileDialog {
             any_focused_last_frame: false,
 
             rename_pinned_folder: None,
-            renamed_pinned_folder_request_focus: false,
+            rename_pinned_folder_request_focus: false,
         }
     }
 
@@ -1776,7 +1776,7 @@ impl FileDialog {
                 .cursor_at_end(true)
                 .show(ui);
 
-            if self.renamed_pinned_folder_request_focus {
+            if self.rename_pinned_folder_request_focus {
                 output.state.cursor.set_char_range(Some(CCursorRange::two(
                     CCursor::new(0),
                     CCursor::new(r.label.chars().count()),
@@ -1785,7 +1785,7 @@ impl FileDialog {
 
                 output.response.request_focus();
 
-                self.renamed_pinned_folder_request_focus = false;
+                self.rename_pinned_folder_request_focus = false;
             }
 
             if output.response.lost_focus() {
@@ -3014,7 +3014,7 @@ impl FileDialog {
     /// Starts to rename a pinned folder by showing the user a text input field.
     fn begin_rename_pinned_folder(&mut self, pinned: PinnedFolder) {
         self.rename_pinned_folder = Some(pinned);
-        self.renamed_pinned_folder_request_focus = true;
+        self.rename_pinned_folder_request_focus = true;
     }
 
     /// Ends the renaming of a pinned folder. This updates the real pinned folder
