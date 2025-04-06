@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use crate::{FileSystem, NativeFileSystem};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PinnedFolder {
     pub path: PathBuf,

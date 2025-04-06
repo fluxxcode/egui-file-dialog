@@ -157,6 +157,13 @@ pub struct FileDialog {
     /// This is used to prevent the dialog from closing when pressing the escape key
     /// inside a text input.
     any_focused_last_frame: bool,
+
+    /// The current pinned folder being renamed.
+    /// None if no folder is being renamed.
+    rename_pinned_folder: Option<PinnedFolder>,
+    /// If the text input of the pinned folder being renamed should request focus in
+    /// the next frame.
+    renamed_pinned_folder_request_focus: bool,
 }
 
 /// This tests if file dialog is send and sync.
@@ -195,7 +202,10 @@ impl FileDialog {
     #[must_use]
     pub fn new() -> Self {
         let file_system = Arc::new(NativeFileSystem);
+
         Self {
+            config: FileDialogConfig::default_from_filesystem(file_system.clone()),
+
             modals: Vec::new(),
 
             mode: DialogMode::PickDirectory,
@@ -212,7 +222,7 @@ impl FileDialog {
             directory_offset: 0,
             directory_content: DirectoryContent::default(),
 
-            create_directory_dialog: CreateDirectoryDialog::from_filesystem(file_system.clone()),
+            create_directory_dialog: CreateDirectoryDialog::from_filesystem(file_system),
 
             path_edit_visible: false,
             path_edit_value: String::new(),
@@ -232,7 +242,8 @@ impl FileDialog {
 
             any_focused_last_frame: false,
 
-            config: FileDialogConfig::default_from_filesystem(file_system),
+            rename_pinned_folder: None,
+            renamed_pinned_folder_request_focus: false,
         }
     }
 
@@ -1462,7 +1473,7 @@ impl FileDialog {
                                 return;
                             }
 
-                            self.ui_update_path_context_menu(&re, &path.clone());
+                            self.ui_update_central_panel_path_context_menu(&re, &path.clone());
                         }
                     }
                 });
@@ -1652,7 +1663,8 @@ impl FileDialog {
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
 
                     // Update paths pinned to the left sidebar by the user
-                    if self.config.show_pinned_folders && self.ui_update_pinned_paths(ui, spacing) {
+                    if self.config.show_pinned_folders && self.ui_update_pinned_folders(ui, spacing)
+                    {
                         spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
@@ -1721,7 +1733,7 @@ impl FileDialog {
     ///
     /// Returns true if at least one directory item was included in the list and the
     /// heading is visible. If no item was listed, false is returned.
-    fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
+    fn ui_update_pinned_folders(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
         for (i, pinned) in self
@@ -1739,16 +1751,57 @@ impl FileDialog {
                 visible = true;
             }
 
+            if self.is_pinned_folder_being_renamed(pinned) {
+                self.ui_update_pinned_folder_rename(ui);
+                continue;
+            }
+
             let response = self.ui_update_left_panel_entry(
                 ui,
                 &format!("{}  {}", self.config.pinned_icon, &pinned.label),
                 pinned.path.as_path(),
             );
 
-            self.ui_update_path_context_menu(&response, &pinned.path);
+            self.ui_update_pinned_folder_context_menu(&response, &pinned);
         }
 
         visible
+    }
+
+    fn ui_update_pinned_folder_rename(&mut self, ui: &mut egui::Ui) {
+        if let Some(r) = &mut self.rename_pinned_folder {
+            let re = ui.text_edit_singleline(&mut r.label);
+
+            if self.renamed_pinned_folder_request_focus {
+                re.request_focus();
+                self.renamed_pinned_folder_request_focus = false;
+            }
+
+            if re.lost_focus() {
+                self.end_rename_pinned_folder();
+            }
+        }
+    }
+
+    fn ui_update_pinned_folder_context_menu(
+        &mut self,
+        item: &egui::Response,
+        pinned: &PinnedFolder,
+    ) {
+        item.context_menu(|ui| {
+            if ui.button(&self.config.labels.unpin_folder).clicked() {
+                self.unpin_path(&pinned.path);
+                ui.close_menu();
+            }
+
+            if ui
+                .button(&self.config.labels.rename_pinned_folder)
+                .clicked()
+            {
+                self.begin_rename_pinned_folder(pinned.clone());
+                ui.close_menu();
+            }
+        });
     }
 
     /// Updates the list of user directories (Places).
@@ -2326,7 +2379,7 @@ impl FileDialog {
         }
 
         if item.is_dir() {
-            self.ui_update_path_context_menu(&re, item.as_path());
+            self.ui_update_central_panel_path_context_menu(&re, item.as_path());
 
             if re.context_menu_opened() {
                 self.select_item(item);
@@ -2492,20 +2545,19 @@ impl FileDialog {
         clicked
     }
 
-    /// Updates the context menu of a path.
+    /// Updates the context menu of a path inside the central panel.
     ///
     /// # Arguments
     ///
-    /// * `item_response` - The response of the egui item for which the context menu should
-    ///                     be opened.
+    /// * `item` - The response of the egui item for which the context menu should be opened.
     /// * `path` - The path for which the context menu should be opened.
-    fn ui_update_path_context_menu(&mut self, item_response: &egui::Response, path: &Path) {
+    fn ui_update_central_panel_path_context_menu(&mut self, item: &egui::Response, path: &Path) {
         // Path context menus are currently only used for pinned folders.
         if !self.config.show_pinned_folders {
             return;
         }
 
-        item_response.context_menu(|ui| {
+        item.context_menu(|ui| {
             let pinned = self.is_pinned(path);
 
             if pinned {
@@ -2712,6 +2764,10 @@ impl FileDialog {
             if let Some(dir) = self.create_directory_dialog.submit().directory() {
                 self.process_new_folder(&dir);
             }
+            return;
+        }
+
+        if self.any_focused_last_frame {
             return;
         }
 
@@ -2942,6 +2998,37 @@ impl FileDialog {
             .pinned_folders
             .iter()
             .any(|p| p.path.as_path() == path)
+    }
+
+    /// Starts to rename a pinned folder by showing the user a text input field.
+    fn begin_rename_pinned_folder(&mut self, pinned: PinnedFolder) {
+        self.rename_pinned_folder = Some(pinned);
+        self.renamed_pinned_folder_request_focus = true;
+    }
+
+    /// Ends the renaming of a pinned folder. This updates the real pinned folder
+    /// in `FileDialogStorage`.
+    fn end_rename_pinned_folder(&mut self) {
+        let renamed = std::mem::take(&mut self.rename_pinned_folder);
+
+        if let Some(renamed) = renamed {
+            let old = self
+                .config
+                .storage
+                .pinned_folders
+                .iter_mut()
+                .find(|p| p.path == renamed.path);
+            if let Some(old) = old {
+                old.label = renamed.label;
+            }
+        }
+    }
+
+    /// Checks if the given pinned folder is currently being renamed.
+    fn is_pinned_folder_being_renamed(&self, pinned: &PinnedFolder) -> bool {
+        self.rename_pinned_folder
+            .as_ref()
+            .map_or(false, |p| p.path == pinned.path)
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
