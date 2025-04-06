@@ -80,6 +80,8 @@ pub struct FileDialogLabels {
     pub pin_folder: String,
     /// Text used for the option to unpin a folder.
     pub unpin_folder: String,
+    /// Text used for the option to rename a pinned folder.
+    pub rename_pinned_folder: String,
 
     // ------------------------------------------------------------------------
     // Bottom panel:
@@ -150,8 +152,9 @@ impl Default for FileDialogLabels {
             pictures_dir: "🖼  Pictures".to_string(),
             videos_dir: "🎞  Videos".to_string(),
 
-            pin_folder: "📌 Pin folder".to_string(),
-            unpin_folder: "✖ Unpin folder".to_string(),
+            pin_folder: "📌 Pin".to_string(),
+            unpin_folder: "✖ Unpin".to_string(),
+            rename_pinned_folder: "✏ Rename".to_string(),
 
             selected_directory: "Selected directory:".to_string(),
             selected_file: "Selected file:".to_string(),

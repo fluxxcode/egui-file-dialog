@@ -7,6 +7,8 @@
 #### Breaking changes due to new features and updated configuration
 - Added `save_extensions` and `default_save_extension` to `FileDialogConfig` [#248](https://github.com/jannistpl/egui-file-dialog/pull/248)
 - Added `save_extension_any` to `FileDialogLabels` [#248](https://github.com/jannistpl/egui-file-dialog/pull/248)
+- Added `rename_pinned_folder` to `FileDialogLabels` [#258](https://github.com/jannistpl/egui-file-dialog/pull/258)
+- Changed `FileDialogStorage::pinned_folders` from `Vec<DirectoryEntry>` to `Vec<PinnedFolder>` [#258](https://github.com/jannistpl/egui-file-dialog/pull/258)
 
 ### ✨ Features
 
@@ -14,6 +16,7 @@
 - Added file extensions and filters when saving a file using `FileDialog::add_save_extension`, `FileDialogConfig::add_save_extension` and `FileDialog::default_save_extension` [#248](https://github.com/fluxxcode/egui-file-dialog/pull/248)
 - Added ability to open path context menu from a segment inside the navigation bar [#253](https://github.com/fluxxcode/egui-file-dialog/pull/253)
 - Added `FileDialog::set_operation_id` to set the ID of the operation for which the dialog is currently being used after opening it [#257](https://github.com/jannistpl/egui-file-dialog/pull/257)
+- Added ability to rename a pinnend folder via its context menu [#258](https://github.com/jannistpl/egui-file-dialog/pull/258)
 
 ### ☢️ Deprecated
 
