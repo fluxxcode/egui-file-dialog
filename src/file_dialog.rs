@@ -1770,14 +1770,25 @@ impl FileDialog {
 
     fn ui_update_pinned_folder_rename(&mut self, ui: &mut egui::Ui) {
         if let Some(r) = &mut self.rename_pinned_folder {
-            let re = ui.text_edit_singleline(&mut r.label);
+            let id = self.window_id.with("pinned_folder_rename").with(&r.path);
+            let mut output = egui::TextEdit::singleline(&mut r.label)
+                .id(id)
+                .cursor_at_end(true)
+                .show(ui);
 
             if self.renamed_pinned_folder_request_focus {
-                re.request_focus();
+                output.state.cursor.set_char_range(Some(CCursorRange::two(
+                    CCursor::new(0),
+                    CCursor::new(r.label.chars().count()),
+                )));
+                output.state.store(ui.ctx(), output.response.id);
+
+                output.response.request_focus();
+
                 self.renamed_pinned_folder_request_focus = false;
             }
 
-            if re.lost_focus() {
+            if output.response.lost_focus() {
                 self.end_rename_pinned_folder();
             }
         }
