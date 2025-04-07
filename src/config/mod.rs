@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use crate::{FileSystem, NativeFileSystem};
 
+/// Folder that the user pinned to the left sidebar.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PinnedFolder {
