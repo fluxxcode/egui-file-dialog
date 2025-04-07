@@ -231,7 +231,7 @@ mod modals;
 
 pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, IconFilter, KeyBinding, OpeningMode,
-    QuickAccess, QuickAccessPath,
+    QuickAccess, QuickAccessPath, PinnedFolder,
 };
 pub use data::{DirectoryEntry, Disk, Disks, Metadata, UserDirectories};
 pub use file_dialog::{DialogMode, DialogState, FileDialog, FileDialogStorage};
