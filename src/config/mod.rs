@@ -10,14 +10,19 @@ use std::sync::Arc;
 
 use crate::{FileSystem, NativeFileSystem};
 
+/// Folder that the user pinned to the left sidebar.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PinnedFolder {
+    /// Path to the folder.
     pub path: PathBuf,
+    /// Display name of the folder shown in the left panel.
     pub label: String,
 }
 
 impl PinnedFolder {
+    /// Creates a new `PinnedFolder` instance from a path.
+    /// The path's file name is used as the label of the pinned folder.
     pub fn from_path(path: PathBuf) -> Self {
         let label = path
             .file_name()
