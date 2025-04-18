@@ -369,7 +369,7 @@ impl FileDialogConfig {
     ///
     /// FileDialog::new()
     ///     .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
-    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"])
+    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"]);
     pub fn add_file_filter_extensions(self, name: &str, extensions: Vec<&'static str>) -> Self {
         self.add_file_filter(
             name,

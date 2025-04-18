@@ -717,7 +717,7 @@ impl FileDialog {
     ///
     /// FileDialog::new()
     ///     .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
-    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"])
+    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"]);
     pub fn add_file_filter_extensions(mut self, name: &str, extensions: Vec<&'static str>) -> Self {
         self.config = self.config.add_file_filter_extensions(name, extensions);
         self
