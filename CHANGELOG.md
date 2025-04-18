@@ -18,6 +18,7 @@
 - Added ability to open path context menu from a segment inside the navigation bar [#253](https://github.com/fluxxcode/egui-file-dialog/pull/253)
 - Added `FileDialog::set_operation_id` to set the ID of the operation for which the dialog is currently being used after opening it [#257](https://github.com/jannistpl/egui-file-dialog/pull/257)
 - Added ability to rename a pinnend folder via its context menu [#258](https://github.com/jannistpl/egui-file-dialog/pull/258)
+- Added shortcut methods `FileDialog::add_file_filter_extensions` and `FileDialogConfig::add_file_filter_extensions` which allow adding a filter matching specific file extensions [#263](https://github.com/jannistpl/egui-file-dialog/pull/263)
 
 ### ☢️ Deprecated
 
