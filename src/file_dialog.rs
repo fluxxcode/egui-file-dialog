@@ -703,6 +703,26 @@ impl FileDialog {
         self
     }
 
+    /// Shortctut method to add a file filter that matches specific extensions.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the filter
+    /// * `extensions` - The extensions of the files to be filtered
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// FileDialog::new()
+    ///     .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
+    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"])
+    pub fn add_file_filter_extensions(mut self, name: &str, extensions: Vec<&'static str>) -> Self {
+        self.config = self.config.add_file_filter_extensions(name, extensions);
+        self
+    }
+
     /// Name of the file filter to be selected by default.
     ///
     /// No file filter is selected if there is no file filter with that name.

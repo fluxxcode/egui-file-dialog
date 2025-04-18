@@ -355,6 +355,35 @@ impl FileDialogConfig {
         self
     }
 
+    /// Shortctut method to add a file filter that matches specific extensions.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the filter
+    /// * `extensions` - The extensions of the files to be filtered
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// FileDialog::new()
+    ///     .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
+    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"])
+    pub fn add_file_filter_extensions(self, name: &str, extensions: Vec<&'static str>) -> Self {
+        self.add_file_filter(
+            name,
+            Arc::new(move |p| {
+                let extension = p
+                    .extension()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default();
+                extensions.contains(&extension)
+            }),
+        )
+    }
+
     /// Adds a new file extension that the user can select in a dropdown widget when
     /// saving a file.
     ///
