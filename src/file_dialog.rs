@@ -312,10 +312,10 @@ impl FileDialog {
     ///
     /// * `mode` - The mode in which the dialog should be opened
     /// * `show_files` - If files should also be displayed to the user in addition to directories.
-    ///    This is ignored if the mode is `DialogMode::SelectFile`.
+    ///   This is ignored if the mode is `DialogMode::SelectFile`.
     /// * `operation_id` - Sets an ID for which operation the dialog was opened.
-    ///    This is useful when the dialog can be used for various operations in a single view.
-    ///    The ID can then be used to check which action the user selected an item for.
+    ///   This is useful when the dialog can be used for various operations in a single view.
+    ///   The ID can then be used to check which action the user selected an item for.
     ///
     /// # Examples
     ///
@@ -1513,7 +1513,7 @@ impl FileDialog {
                             if self.is_pinned(&path) {
                                 segment_str =
                                     format!("{} {}", &self.config.pinned_icon, segment_str);
-                            };
+                            }
 
                             if i != 0 {
                                 ui.label(self.config.directory_separator.as_str());
@@ -2074,7 +2074,7 @@ impl FileDialog {
                         self.submit();
                     }
                 }
-            };
+            }
 
             if !filter_selection_separate_line && render_filter_selection {
                 if self.mode == DialogMode::SaveFile {
@@ -3021,7 +3021,7 @@ impl FileDialog {
         match action {
             ModalAction::None => {}
             ModalAction::SaveFile(path) => self.state = DialogState::Picked(path),
-        };
+        }
     }
 
     /// Canonicalizes the specified path if canonicalization is enabled.
@@ -3409,7 +3409,7 @@ impl FileDialog {
 
     /// Closes the text field at the top to edit the current path without loading
     /// the entered directory.
-    fn close_path_edit(&mut self) {
+    const fn close_path_edit(&mut self) {
         self.path_edit_visible = false;
     }
 
