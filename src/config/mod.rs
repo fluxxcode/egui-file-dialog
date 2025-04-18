@@ -365,9 +365,9 @@ impl FileDialogConfig {
     /// # Examples
     ///
     /// ```
-    /// use egui_file_dialog::FileDialog;
+    /// use egui_file_dialog::FileDialogConfig;
     ///
-    /// FileDialog::new()
+    /// FileDialogConfig::default()
     ///     .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
     ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"]);
     pub fn add_file_filter_extensions(self, name: &str, extensions: Vec<&'static str>) -> Self {
