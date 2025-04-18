@@ -40,11 +40,11 @@ impl KeyBinding {
     /// # Arguments
     ///
     /// * `ignore_if_any_focused` - Determines whether keyboard shortcuts pressed while another
-    ///    widget is currently in focus should be ignored.
-    ///    In most cases, this should be enabled so that no shortcuts are executed if,
-    ///    for example, the search  text field is currently in focus. With the selection
-    ///    keybindings, however, it is desired that when they are pressed, the text fields
-    ///    lose focus and the keybinding is executed.
+    ///   widget is currently in focus should be ignored.
+    ///   In most cases, this should be enabled so that no shortcuts are executed if,
+    ///   for example, the search  text field is currently in focus. With the selection
+    ///   keybindings, however, it is desired that when they are pressed, the text fields
+    ///   lose focus and the keybinding is executed.
     pub fn pressed(&self, ctx: &egui::Context, ignore_if_any_focused: bool) -> bool {
         let any_focused = ctx.memory(egui::Memory::focused).is_some();
 
