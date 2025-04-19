@@ -20,10 +20,7 @@ impl MyApp {
                 s.add_path("📷  Media", "media");
                 s.add_path("📂  Source", "src");
             })
-            .add_file_filter(
-                "PNG files",
-                Arc::new(|p| p.extension().unwrap_or_default() == "png"),
-            )
+            .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
             .add_file_filter(
                 "RS files",
                 Arc::new(|p| p.extension().unwrap_or_default() == "rs"),
