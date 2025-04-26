@@ -30,6 +30,7 @@
 - Fixed triggering branches in CI [#247](https://github.com/jannistpl/egui-file-dialog/pull/247)
 - Changed default file name from an empty string to `Untitled` [#248](https://github.com/jannistpl/egui-file-dialog/pull/248)
 - Fixed new clippy errors added in the latest rust version [#262](https://github.com/jannistpl/egui-file-dialog/pull/262)
+- Updated `sysinfo` from v`0.33` to v`0.34` [#265](https://github.com/jannistpl/egui-file-dialog/pull/265)
 
 ### 📚 Documentation
 
