@@ -1,13 +1,15 @@
 [package]
 name = "egui-file-dialog"
-description = "An easy-to-use file dialog for egui"
+description = "easy-to-use and customizable file dialog for egui"
 version = "0.9.0"
 edition = "2021"
-authors = ["fluxxcode"]
-repository = "https://github.com/fluxxcode/egui-file-dialog"
-homepage = "https://github.com/fluxxcode/egui-file-dialog"
+authors = ["Jannis Teipel <jannistpl@gmail.com>"]
+repository = "https://github.com/jannistpl/egui-file-dialog"
+homepage = "https://github.com/jannistpl/egui-file-dialog"
 readme = "README.md"
 license = "MIT"
+exclude = ["media/", ".github/"]
+include = ["media/readme/"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,7 +21,7 @@ directories = "6.0"
 # canonicalize paths
 dunce = "1.0.5"
 # fetch disks
-sysinfo = { version = "0.33", default-features = false, features = ["disk"] }
+sysinfo = { version = "0.34", default-features = false, features = ["disk"] }
 # persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
 # meta-data storage
@@ -68,3 +70,4 @@ missing_fields_in_debug = { level = "allow", priority = 14 }
 missing_errors_doc = { level = "allow", priority = 15 }
 module_name_repetitions = { level = "allow", priority = 16 }
 cast_precision_loss = { level = "allow", priority = 17 }
+missing_const_for_fn = { level = "allow", priority = 18 }

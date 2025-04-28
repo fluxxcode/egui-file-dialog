@@ -20,10 +20,7 @@ impl MyApp {
                 s.add_path("📷  Media", "media");
                 s.add_path("📂  Source", "src");
             })
-            .add_file_filter(
-                "PNG files",
-                Arc::new(|p| p.extension().unwrap_or_default() == "png"),
-            )
+            .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
             .add_file_filter(
                 "RS files",
                 Arc::new(|p| p.extension().unwrap_or_default() == "rs"),
@@ -32,6 +29,10 @@ impl MyApp {
                 "TOML files",
                 Arc::new(|p| p.extension().unwrap_or_default() == "toml"),
             )
+            .add_save_extension("Picture", "png")
+            .add_save_extension("Rust Source File", "rs")
+            .add_save_extension("Configuration File", "toml")
+            .default_save_extension("Picture")
             .id("egui_file_dialog");
 
         if let Some(storage) = cc.storage {

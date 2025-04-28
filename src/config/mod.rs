@@ -4,6 +4,7 @@ pub use labels::FileDialogLabels;
 mod keybindings;
 pub use keybindings::{FileDialogKeyBindings, KeyBinding};
 
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -11,32 +12,27 @@ use crate::data::DirectoryEntry;
 use crate::file_dialog::{SortBy, SortOrder};
 use crate::{FileSystem, NativeFileSystem};
 
-/// Contains data of the `FileDialog` that should be stored persistently.
+/// Folder that the user pinned to the left sidebar.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct FileDialogStorage {
-    /// The folders the user pinned to the left sidebar.
-    pub pinned_folders: Vec<DirectoryEntry>,
-    /// If hidden files and folders should be listed inside the directory view.
-    pub show_hidden: bool,
-    /// If system files should be listed inside the directory view.
-    pub show_system_files: bool,
-    /// The last directory the user visited.
-    pub last_visited_dir: Option<PathBuf>,
-    /// The last directory from which the user picked an item.
-    pub last_picked_dir: Option<PathBuf>,
+pub struct PinnedFolder {
+    /// Path to the folder.
+    pub path: PathBuf,
+    /// Display name of the folder shown in the left panel.
+    pub label: String,
 }
 
-impl Default for FileDialogStorage {
-    /// Creates a new object with default values
-    fn default() -> Self {
-        Self {
-            pinned_folders: Vec::new(),
-            show_hidden: false,
-            show_system_files: false,
-            last_visited_dir: None,
-            last_picked_dir: None,
-        }
+impl PinnedFolder {
+    /// Creates a new `PinnedFolder` instance from a path.
+    /// The path's file name is used as the label of the pinned folder.
+    pub fn from_path(path: PathBuf) -> Self {
+        let label = path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .into_owned();
+
+        Self { path, label }
     }
 }
 
@@ -87,8 +83,6 @@ pub struct FileDialogConfig {
     // Core:
     /// File system browsed by the file dialog; may be native or virtual.
     pub file_system: Arc<dyn FileSystem + Send + Sync>,
-    /// Persistent data of the file dialog.
-    pub storage: FileDialogStorage,
     /// The labels that the dialog uses.
     pub labels: FileDialogLabels,
     /// Keybindings used by the file dialog.
@@ -150,6 +144,10 @@ pub struct FileDialogConfig {
     pub file_filters: Vec<FileFilter>,
     /// Name of the file filter to be selected by default.
     pub default_file_filter: Option<String>,
+    /// File extensions presented to the user in a dropdown when saving a file.
+    pub save_extensions: Vec<SaveExtension>,
+    /// Name of the file extension selected by default.
+    pub default_save_extension: Option<String>,
     /// Sets custom icons for different files or folders.
     /// Use `FileDialogConfig::set_file_icon` to add a new icon to this list.
     pub file_icon_filters: Vec<IconFilter>,
@@ -205,6 +203,8 @@ pub struct FileDialogConfig {
     pub show_menu_button: bool,
     /// If the reload button inside the top panel menu should be visible.
     pub show_reload_button: bool,
+    /// If the working directory shortcut in the hamburger menu should be visible.
+    pub show_working_directory_button: bool,
     /// If the show hidden files and folders option inside the top panel menu should be visible.
     pub show_hidden_option: bool,
     /// If the show system files option inside the top panel menu should be visible.
@@ -246,7 +246,6 @@ impl FileDialogConfig {
     /// Creates a new configuration with default values
     pub fn default_from_filesystem(file_system: Arc<dyn FileSystem + Send + Sync>) -> Self {
         Self {
-            storage: FileDialogStorage::default(),
             labels: FileDialogLabels::default(),
             keybindings: FileDialogKeyBindings::default(),
 
@@ -254,7 +253,7 @@ impl FileDialogConfig {
             as_modal: true,
             modal_overlay_color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 120),
             initial_directory: file_system.current_dir().unwrap_or_default(),
-            default_file_name: String::new(),
+            default_file_name: String::from("Untitled"),
             allow_file_overwrite: true,
             allow_path_edit_to_save_file_without_extension: false,
             directory_separator: String::from(">"),
@@ -277,6 +276,8 @@ impl FileDialogConfig {
 
             file_filters: Vec::new(),
             default_file_filter: None,
+            save_extensions: Vec::new(),
+            default_save_extension: None,
             file_icon_filters: Vec::new(),
 
             quick_accesses: Vec::new(),
@@ -302,6 +303,7 @@ impl FileDialogConfig {
             show_path_edit_button: true,
             show_menu_button: true,
             show_reload_button: true,
+            show_working_directory_button: true,
             show_hidden_option: true,
             show_system_files_option: true,
             show_search: true,
@@ -323,14 +325,6 @@ impl FileDialogConfig {
 }
 
 impl FileDialogConfig {
-    /// Sets the storage used by the file dialog.
-    /// Storage includes all data that is persistently stored between multiple
-    /// file dialog instances.
-    pub fn storage(mut self, storage: FileDialogStorage) -> Self {
-        self.storage = storage;
-        self
-    }
-
     /// Adds a new file filter the user can select from a dropdown widget.
     ///
     /// NOTE: The name must be unique. If a filter with the same name already exists,
@@ -359,6 +353,7 @@ impl FileDialogConfig {
     pub fn add_file_filter(mut self, name: &str, filter: Filter<Path>) -> Self {
         let id = egui::Id::new(name);
 
+        // Replace filter if a filter with the same name already exists.
         if let Some(item) = self.file_filters.iter_mut().find(|p| p.id == id) {
             item.filter = filter.clone();
             return self;
@@ -366,8 +361,76 @@ impl FileDialogConfig {
 
         self.file_filters.push(FileFilter {
             id,
-            name: name.to_string(),
+            name: name.to_owned(),
             filter,
+        });
+
+        self
+    }
+
+    /// Shortctut method to add a file filter that matches specific extensions.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the filter
+    /// * `extensions` - The extensions of the files to be filtered
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use egui_file_dialog::FileDialogConfig;
+    ///
+    /// FileDialogConfig::default()
+    ///     .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
+    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"]);
+    pub fn add_file_filter_extensions(self, name: &str, extensions: Vec<&'static str>) -> Self {
+        self.add_file_filter(
+            name,
+            Arc::new(move |p| {
+                let extension = p
+                    .extension()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default();
+                extensions.contains(&extension)
+            }),
+        )
+    }
+
+    /// Adds a new file extension that the user can select in a dropdown widget when
+    /// saving a file.
+    ///
+    /// NOTE: The name must be unique. If an extension with the same name already exists,
+    ///       it will be overwritten.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the save extension.
+    /// * `file_extension` - The file extension to use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialogConfig;
+    ///
+    /// let config = FileDialogConfig::default()
+    ///     .add_save_extension("PNG files", "png")
+    ///     .add_save_extension("JPG files", "jpg");
+    /// ```
+    pub fn add_save_extension(mut self, name: &str, file_extension: &str) -> Self {
+        let id = egui::Id::new(name);
+
+        // Replace extension when an extension with the same name already exists.
+        if let Some(item) = self.save_extensions.iter_mut().find(|p| p.id == id) {
+            file_extension.clone_into(&mut item.file_extension);
+            return self;
+        }
+
+        self.save_extensions.push(SaveExtension {
+            id,
+            name: name.to_owned(),
+            file_extension: file_extension.to_owned(),
         });
 
         self
@@ -451,6 +514,23 @@ impl std::fmt::Debug for FileFilter {
         f.debug_struct("FileFilter")
             .field("name", &self.name)
             .finish()
+    }
+}
+
+/// Defines a specific file extension that the user can select when saving a file.
+#[derive(Clone, Debug)]
+pub struct SaveExtension {
+    /// The ID of the file filter, used internally for identification.
+    pub id: egui::Id,
+    /// The display name of the file filter.
+    pub name: String,
+    /// The file extension to use.
+    pub file_extension: String,
+}
+
+impl Display for SaveExtension {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{} (.{})", &self.name, &self.file_extension))
     }
 }
 

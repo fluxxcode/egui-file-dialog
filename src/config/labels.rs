@@ -41,6 +41,8 @@ pub struct FileDialogLabels {
     // Top panel:
     /// Text used for the option to reload the file dialog.
     pub reload: String,
+    /// Text used for the option to open the working directory.
+    pub working_directory: String,
     /// Text used for the option to show or hide hidden files and folders.
     pub show_hidden: String,
     /// Text used for the option to show or hide system files.
@@ -78,6 +80,8 @@ pub struct FileDialogLabels {
     pub pin_folder: String,
     /// Text used for the option to unpin a folder.
     pub unpin_folder: String,
+    /// Text used for the option to rename a pinned folder.
+    pub rename_pinned_folder: String,
     /// Text used for the file name column.
     pub file_name_header: String,
     /// Text used for the file size column.
@@ -99,6 +103,8 @@ pub struct FileDialogLabels {
     pub file_name: String,
     /// Text displayed in the file filter dropdown for the "All Files" option.
     pub file_filter_all_files: String,
+    /// Text displayed in the save extension dropdown for the "Any" option.
+    pub save_extension_any: String,
 
     /// Button text to open the selected item.
     pub open_button: String,
@@ -137,6 +143,7 @@ impl Default for FileDialogLabels {
             overwrite: "Overwrite".to_string(),
 
             reload: "⟲  Reload".to_string(),
+            working_directory: "↗  Go to working directory".to_string(),
             show_hidden: " Show hidden".to_string(),
             show_system_files: " Show system files".to_string(),
 
@@ -153,8 +160,9 @@ impl Default for FileDialogLabels {
             pictures_dir: "🖼  Pictures".to_string(),
             videos_dir: "🎞  Videos".to_string(),
 
-            pin_folder: "📌 Pin folder".to_string(),
-            unpin_folder: "✖ Unpin folder".to_string(),
+            pin_folder: "📌 Pin".to_string(),
+            unpin_folder: "✖ Unpin".to_string(),
+            rename_pinned_folder: "✏ Rename".to_string(),
 
             file_name_header: "Name".to_string(),
             file_size_header: "File Size".to_string(),
@@ -165,6 +173,7 @@ impl Default for FileDialogLabels {
             selected_items: "Selected items:".to_string(),
             file_name: "File name:".to_string(),
             file_filter_all_files: "All Files".to_string(),
+            save_extension_any: "Any".to_string(),
 
             open_button: "🗀  Open".to_string(),
             save_button: "📥  Save".to_string(),

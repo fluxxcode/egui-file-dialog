@@ -7,6 +7,20 @@ use std::sync::{mpsc, Arc};
 use std::time::SystemTime;
 use std::{io, thread};
 
+#[derive(Clone, Debug)]
+pub struct DirectoryFilter {
+    /// If files should be included.
+    pub show_files: bool,
+    /// If hidden files and folders should be included.
+    pub show_hidden: bool,
+    /// If system files should be included.
+    pub show_system_files: bool,
+    /// Optional filter to further filter files.
+    pub file_filter: Option<FileFilter>,
+    /// Optional file extension to filter by.
+    pub filter_extension: Option<String>,
+}
+
 /// Contains the metadata of a directory item.
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -212,37 +226,28 @@ impl DirectoryContent {
     pub fn from_path(
         config: &FileDialogConfig,
         path: &Path,
-        include_files: bool,
-        file_filter: Option<&FileFilter>,
         file_system: Arc<dyn FileSystem + Sync + Send + 'static>,
+        filter: DirectoryFilter,
     ) -> Self {
         if config.load_via_thread {
-            Self::with_thread(config, path, include_files, file_filter, file_system)
+            Self::with_thread(config, path, file_system, filter)
         } else {
-            Self::without_thread(config, path, include_files, file_filter, &*file_system)
+            Self::without_thread(config, path, &*file_system, &filter)
         }
     }
 
     fn with_thread(
         config: &FileDialogConfig,
         path: &Path,
-        include_files: bool,
-        file_filter: Option<&FileFilter>,
         file_system: Arc<dyn FileSystem + Send + Sync + 'static>,
+        filter: DirectoryFilter,
     ) -> Self {
         let (tx, rx) = mpsc::channel();
 
         let c = config.clone();
         let p = path.to_path_buf();
-        let f = file_filter.cloned();
         thread::spawn(move || {
-            let _ = tx.send(load_directory(
-                &c,
-                &p,
-                include_files,
-                f.as_ref(),
-                &*file_system,
-            ));
+            let _ = tx.send(load_directory(&c, &p, &*file_system, &filter));
         });
 
         Self {
@@ -255,11 +260,10 @@ impl DirectoryContent {
     fn without_thread(
         config: &FileDialogConfig,
         path: &Path,
-        include_files: bool,
-        file_filter: Option<&FileFilter>,
         file_system: &dyn FileSystem,
+        filter: &DirectoryFilter,
     ) -> Self {
-        match load_directory(config, path, include_files, file_filter, file_system) {
+        match load_directory(config, path, file_system, filter) {
             Ok(c) => Self {
                 state: DirectoryContentState::Success,
                 content: c,
@@ -427,28 +431,40 @@ fn apply_search_value(entry: &DirectoryEntry, value: &str) -> bool {
 fn load_directory(
     config: &FileDialogConfig,
     path: &Path,
-    include_files: bool,
-    file_filter: Option<&FileFilter>,
     file_system: &dyn FileSystem,
+    filter: &DirectoryFilter,
 ) -> io::Result<Vec<DirectoryEntry>> {
     let mut result: Vec<DirectoryEntry> = Vec::new();
     for path in file_system.read_dir(path)? {
         let entry = DirectoryEntry::from_path(config, &path, file_system);
 
-        if !config.storage.show_system_files && entry.is_system_file() {
+        if !filter.show_system_files && entry.is_system_file() {
             continue;
         }
 
-        if !include_files && entry.is_file() {
+        if !filter.show_files && entry.is_file() {
             continue;
         }
 
-        if !config.storage.show_hidden && entry.is_hidden() {
+        if !filter.show_hidden && entry.is_hidden() {
             continue;
         }
 
-        if let Some(file_filter) = file_filter {
+        if let Some(file_filter) = &filter.file_filter {
             if entry.is_file() && !(file_filter.filter)(entry.as_path()) {
+                continue;
+            }
+        }
+
+        if let Some(ex) = &filter.filter_extension {
+            if entry.is_file()
+                && path
+                    .extension()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default()
+                    != ex
+            {
                 continue;
             }
         }

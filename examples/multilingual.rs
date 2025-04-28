@@ -20,6 +20,7 @@ fn get_labels_german() -> FileDialogLabels {
         overwrite: "Überschreiben".to_string(),
 
         reload: "⟲  Neu laden".to_string(),
+        working_directory: "Arbeitsverzeichnis öffnen".to_string(),
         show_hidden: " Versteckte Dateien anzeigen".to_string(),
         show_system_files: " Systemdateien anzeigen".to_string(),
 
@@ -38,6 +39,7 @@ fn get_labels_german() -> FileDialogLabels {
 
         pin_folder: "📌 Ordner anheften".to_string(),
         unpin_folder: "✖ Ordner loslösen".to_string(),
+        rename_pinned_folder: "✏ Ordner umbenennen".to_string(),
 
         file_name_header: "Name".to_string(),
         file_size_header: "Grösse".to_string(),
@@ -49,6 +51,7 @@ fn get_labels_german() -> FileDialogLabels {
         selected_items: "Ausgewählte Elemente:".to_string(),
         file_name: "Dateiname:".to_string(),
         file_filter_all_files: "Alle Dateien".to_string(),
+        save_extension_any: "Alle".to_string(),
 
         open_button: "🗀  Öffnen".to_string(),
         save_button: "📥  Speichern".to_string(),

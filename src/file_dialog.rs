@@ -1,10 +1,11 @@
 use crate::config::{
-    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileDialogStorage, FileFilter,
-    Filter, OpeningMode, QuickAccess,
+    FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, FileFilter, Filter, OpeningMode,
+    PinnedFolder, QuickAccess, SaveExtension,
 };
 use crate::create_directory_dialog::CreateDirectoryDialog;
 use crate::data::{
-    DirectoryContent, DirectoryContentState, DirectoryEntry, Disk, Disks, UserDirectories,
+    DirectoryContent, DirectoryContentState, DirectoryEntry, DirectoryFilter, Disk, Disks,
+    UserDirectories,
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
 use crate::utils::{calc_text_width, format_bytes, truncate_date, truncate_filename};
@@ -94,6 +95,35 @@ pub enum DialogState {
     Cancelled,
 }
 
+/// Contains data of the `FileDialog` that should be stored persistently.
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub struct FileDialogStorage {
+    /// The folders the user pinned to the left sidebar.
+    pub pinned_folders: Vec<PinnedFolder>,
+    /// If hidden files and folders should be listed inside the directory view.
+    pub show_hidden: bool,
+    /// If system files should be listed inside the directory view.
+    pub show_system_files: bool,
+    /// The last directory the user visited.
+    pub last_visited_dir: Option<PathBuf>,
+    /// The last directory from which the user picked an item.
+    pub last_picked_dir: Option<PathBuf>,
+}
+
+impl Default for FileDialogStorage {
+    /// Creates a new object with default values
+    fn default() -> Self {
+        Self {
+            pinned_folders: Vec::new(),
+            show_hidden: false,
+            show_system_files: false,
+            last_visited_dir: None,
+            last_picked_dir: None,
+        }
+    }
+}
+
 /// Represents a file dialog instance.
 ///
 /// The `FileDialog` instance can be used multiple times and for different actions.
@@ -121,8 +151,10 @@ pub enum DialogState {
 /// ```
 #[derive(Debug)]
 pub struct FileDialog {
-    /// The configuration of the file dialog
+    /// The configuration of the file dialog.
     config: FileDialogConfig,
+    /// Persistent data of the file dialog.
+    storage: FileDialogStorage,
 
     /// Stack of modal windows to be displayed.
     /// The top element is what is currently being rendered.
@@ -187,8 +219,10 @@ pub struct FileDialog {
     file_name_input_error: Option<String>,
     /// If the file name input text field should request focus in the next frame.
     file_name_input_request_focus: bool,
-    /// The file filter the user selected
+    /// The file filter the user selected.
     selected_file_filter: Option<egui::Id>,
+    /// The save extension that the user selected.
+    selected_save_extension: Option<egui::Id>,
 
     /// If we should scroll to the item selected by the user in the next frame.
     scroll_to_selection: bool,
@@ -201,6 +235,13 @@ pub struct FileDialog {
     /// This is used to prevent the dialog from closing when pressing the escape key
     /// inside a text input.
     any_focused_last_frame: bool,
+
+    /// The current pinned folder being renamed.
+    /// None if no folder is being renamed.
+    rename_pinned_folder: Option<PinnedFolder>,
+    /// If the text input of the pinned folder being renamed should request focus in
+    /// the next frame.
+    rename_pinned_folder_request_focus: bool,
 }
 
 /// This tests if file dialog is send and sync.
@@ -239,7 +280,11 @@ impl FileDialog {
     #[must_use]
     pub fn new() -> Self {
         let file_system = Arc::new(NativeFileSystem);
+
         Self {
+            config: FileDialogConfig::default_from_filesystem(file_system.clone()),
+            storage: FileDialogStorage::default(),
+
             modals: Vec::new(),
 
             mode: DialogMode::PickDirectory,
@@ -256,7 +301,7 @@ impl FileDialog {
             directory_offset: 0,
             directory_content: DirectoryContent::default(),
 
-            create_directory_dialog: CreateDirectoryDialog::from_filesystem(file_system.clone()),
+            create_directory_dialog: CreateDirectoryDialog::from_filesystem(file_system),
 
             path_edit_visible: false,
             path_edit_value: String::new(),
@@ -268,6 +313,7 @@ impl FileDialog {
             file_name_input_error: None,
             file_name_input_request_focus: true,
             selected_file_filter: None,
+            selected_save_extension: None,
 
             scroll_to_selection: false,
             search_value: String::new(),
@@ -275,7 +321,8 @@ impl FileDialog {
 
             any_focused_last_frame: false,
 
-            config: FileDialogConfig::default_from_filesystem(file_system),
+            rename_pinned_folder: None,
+            rename_pinned_folder_request_focus: false,
         }
     }
 
@@ -311,10 +358,10 @@ impl FileDialog {
     ///
     /// * `mode` - The mode in which the dialog should be opened
     /// * `show_files` - If files should also be displayed to the user in addition to directories.
-    ///    This is ignored if the mode is `DialogMode::SelectFile`.
+    ///   This is ignored if the mode is `DialogMode::SelectFile`.
     /// * `operation_id` - Sets an ID for which operation the dialog was opened.
-    ///    This is useful when the dialog can be used for various operations in a single view.
-    ///    The ID can then be used to check which action the user selected an item for.
+    ///   This is useful when the dialog can be used for various operations in a single view.
+    ///   The ID can then be used to check which action the user selected an item for.
     ///
     /// # Examples
     ///
@@ -356,6 +403,11 @@ impl FileDialog {
     ///     }
     /// }
     /// ```
+    #[deprecated(
+        since = "0.10.0",
+        note = "Use `pick_file` / `pick_directory` / `pick_multiple` in combination with \
+                `set_operation_id` instead"
+    )]
     pub fn open(&mut self, mode: DialogMode, mut show_files: bool, operation_id: Option<&str>) {
         self.reset();
         self.refresh();
@@ -365,18 +417,16 @@ impl FileDialog {
         }
 
         if mode == DialogMode::SaveFile {
+            self.file_name_input_request_focus = true;
             self.file_name_input
                 .clone_from(&self.config.default_file_name);
         }
 
-        // Select the default file filter
-        if let Some(name) = &self.config.default_file_filter {
-            for filter in &self.config.file_filters {
-                if filter.name == name.as_str() {
-                    self.selected_file_filter = Some(filter.id);
-                }
-            }
-        }
+        self.selected_file_filter = None;
+        self.selected_save_extension = None;
+
+        self.set_default_file_filter();
+        self.set_default_save_extension();
 
         self.mode = mode;
         self.state = DialogState::Open;
@@ -399,6 +449,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_directory(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::PickDirectory, false, None);
     }
 
@@ -408,6 +460,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_file(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::PickFile, true, None);
     }
 
@@ -418,6 +472,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn pick_multiple(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::PickMultiple, true, None);
     }
 
@@ -427,6 +483,8 @@ impl FileDialog {
     ///
     /// The function ignores the result of the initial directory loading operation.
     pub fn save_file(&mut self) {
+        // `FileDialog::open` will only be marked as private in the future.
+        #[allow(deprecated)]
         self.open(DialogMode::SaveFile, true, None);
     }
 
@@ -497,13 +555,13 @@ impl FileDialog {
     /// Storage includes all data that is persistently stored between multiple
     /// file dialog instances.
     pub fn storage(mut self, storage: FileDialogStorage) -> Self {
-        self.config.storage = storage;
+        self.storage = storage;
         self
     }
 
     /// Mutably borrow internal storage.
     pub fn storage_mut(&mut self) -> &mut FileDialogStorage {
-        &mut self.config.storage
+        &mut self.storage
     }
 
     /// Sets the keybindings used by the file dialog.
@@ -563,7 +621,7 @@ impl FileDialog {
 
     /// Sets the default file name when opening the dialog in `DialogMode::SaveFile` mode.
     pub fn default_file_name(mut self, name: &str) -> Self {
-        self.config.default_file_name = name.to_string();
+        name.clone_into(&mut self.config.default_file_name);
         self
     }
 
@@ -696,11 +754,65 @@ impl FileDialog {
         self
     }
 
+    /// Shortctut method to add a file filter that matches specific extensions.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the filter
+    /// * `extensions` - The extensions of the files to be filtered
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// FileDialog::new()
+    ///     .add_file_filter_extensions("Pictures", vec!["png", "jpg", "dds"])
+    ///     .add_file_filter_extensions("Rust files", vec!["rs", "toml", "lock"]);
+    pub fn add_file_filter_extensions(mut self, name: &str, extensions: Vec<&'static str>) -> Self {
+        self.config = self.config.add_file_filter_extensions(name, extensions);
+        self
+    }
+
     /// Name of the file filter to be selected by default.
     ///
     /// No file filter is selected if there is no file filter with that name.
     pub fn default_file_filter(mut self, name: &str) -> Self {
         self.config.default_file_filter = Some(name.to_string());
+        self
+    }
+
+    /// Adds a new file extension that the user can select in a dropdown widget when
+    /// saving a file.
+    ///
+    /// NOTE: The name must be unique. If an extension with the same name already exists,
+    ///       it will be overwritten.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Display name of the save extension.
+    /// * `file_extension` - The file extension to use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use egui_file_dialog::FileDialog;
+    ///
+    /// let config = FileDialog::default()
+    ///     .add_save_extension("PNG files", "png")
+    ///     .add_save_extension("JPG files", "jpg");
+    /// ```
+    pub fn add_save_extension(mut self, name: &str, file_extension: &str) -> Self {
+        self.config = self.config.add_save_extension(name, file_extension);
+        self
+    }
+
+    /// Name of the file extension to be selected by default when saving a file.
+    ///
+    /// No file extension is selected if there is no extension with that name.
+    pub fn default_save_extension(mut self, name: &str) -> Self {
+        self.config.default_save_extension = Some(name.to_string());
         self
     }
 
@@ -899,6 +1011,20 @@ impl FileDialog {
         self
     }
 
+    /// Sets if the "Open working directory" button should be visible in the hamburger menu.
+    /// The working directory button opens to the currently returned working directory
+    /// from `std::env::current_dir()`.
+    ///
+    /// Has no effect when `FileDialog::show_top_panel` or
+    /// `FileDialog::show_menu_button` is disabled.
+    pub const fn show_working_directory_button(
+        mut self,
+        show_working_directory_button: bool,
+    ) -> Self {
+        self.config.show_working_directory_button = show_working_directory_button;
+        self
+    }
+
     /// Sets whether the show hidden files and folders option inside the top panel
     /// menu should be visible.
     ///
@@ -1054,6 +1180,13 @@ impl FileDialog {
     /// See `FileDialog::open` for more information.
     pub fn operation_id(&self) -> Option<&str> {
         self.operation_id.as_deref()
+    }
+
+    /// Sets the ID of the operation for which the dialog is currently being used.
+    ///
+    /// See `FileDialog::open` for more information.
+    pub fn set_operation_id(&mut self, operation_id: &str) {
+        self.operation_id = Some(operation_id.to_owned());
     }
 
     /// Returns the mode the dialog is currently in.
@@ -1300,9 +1433,10 @@ impl FileDialog {
                 self.ui_update_current_path(ui, path_display_width);
             }
 
-            // Menu button containing reload button and different options
+            // Hamburger menu containing different options
             if self.config.show_menu_button
                 && (self.config.show_reload_button
+                    || self.config.show_working_directory_button
                     || self.config.show_hidden_option
                     || self.config.show_system_files_option)
             {
@@ -1311,36 +1445,7 @@ impl FileDialog {
                     egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
                     |ui| {
                         ui.menu_button("☰", |ui| {
-                            if self.config.show_reload_button
-                                && ui.button(&self.config.labels.reload).clicked()
-                            {
-                                self.refresh();
-                                ui.close_menu();
-                            }
-
-                            if self.config.show_hidden_option
-                                && ui
-                                    .checkbox(
-                                        &mut self.config.storage.show_hidden,
-                                        &self.config.labels.show_hidden,
-                                    )
-                                    .clicked()
-                            {
-                                self.refresh();
-                                ui.close_menu();
-                            }
-
-                            if self.config.show_system_files_option
-                                && ui
-                                    .checkbox(
-                                        &mut self.config.storage.show_system_files,
-                                        &self.config.labels.show_system_files,
-                                    )
-                                    .clicked()
-                            {
-                                self.refresh();
-                                ui.close_menu();
-                            }
+                            self.ui_update_hamburger_menu(ui);
                         });
                     },
                 );
@@ -1450,20 +1555,29 @@ impl FileDialog {
 
                     let mut path = PathBuf::new();
 
-                    if let Some(data) = self.current_directory() {
+                    if let Some(data) = self.current_directory().map(Path::to_path_buf) {
                         for (i, segment) in data.iter().enumerate() {
                             path.push(segment);
 
-                            let segment_str = segment.to_str().unwrap_or("<ERR>");
+                            let mut segment_str = segment.to_str().unwrap_or_default().to_string();
+
+                            if self.is_pinned(&path) {
+                                segment_str =
+                                    format!("{} {}", &self.config.pinned_icon, segment_str);
+                            }
 
                             if i != 0 {
                                 ui.label(self.config.directory_separator.as_str());
                             }
 
-                            if ui.button(segment_str).clicked() {
+                            let re = ui.button(segment_str);
+
+                            if re.clicked() {
                                 self.load_directory(path.as_path());
                                 return;
                             }
+
+                            self.ui_update_central_panel_path_context_menu(&re, &path.clone());
                         }
                     }
                 });
@@ -1517,6 +1631,58 @@ impl FileDialog {
 
         if !response.has_focus() && !btn_response.contains_pointer() {
             self.path_edit_visible = false;
+        }
+    }
+
+    /// Updates the hamburger menu containing different options.
+    fn ui_update_hamburger_menu(&mut self, ui: &mut egui::Ui) {
+        const SEPARATOR_SPACING: f32 = 2.0;
+
+        if self.config.show_reload_button && ui.button(&self.config.labels.reload).clicked() {
+            self.refresh();
+            ui.close_menu();
+        }
+
+        let working_dir = self.config.file_system.current_dir();
+
+        if self.config.show_working_directory_button
+            && working_dir.is_ok()
+            && ui.button(&self.config.labels.working_directory).clicked()
+        {
+            self.load_directory(&working_dir.unwrap_or_default());
+            ui.close_menu();
+        }
+
+        if (self.config.show_reload_button || self.config.show_working_directory_button)
+            && (self.config.show_hidden_option || self.config.show_system_files_option)
+        {
+            ui.add_space(SEPARATOR_SPACING);
+            ui.separator();
+            ui.add_space(SEPARATOR_SPACING);
+        }
+
+        if self.config.show_hidden_option
+            && ui
+                .checkbox(
+                    &mut self.storage.show_hidden,
+                    &self.config.labels.show_hidden,
+                )
+                .clicked()
+        {
+            self.refresh();
+            ui.close_menu();
+        }
+
+        if self.config.show_system_files_option
+            && ui
+                .checkbox(
+                    &mut self.storage.show_system_files,
+                    &self.config.labels.show_system_files,
+                )
+                .clicked()
+        {
+            self.refresh();
+            ui.close_menu();
         }
     }
 
@@ -1601,7 +1767,8 @@ impl FileDialog {
                     let mut spacing = ui.ctx().style().spacing.item_spacing.y * 2.0;
 
                     // Update paths pinned to the left sidebar by the user
-                    if self.config.show_pinned_folders && self.ui_update_pinned_paths(ui, spacing) {
+                    if self.config.show_pinned_folders && self.ui_update_pinned_folders(ui, spacing)
+                    {
                         spacing = ui.ctx().style().spacing.item_spacing.y * SPACING_MULTIPLIER;
                     }
 
@@ -1670,17 +1837,10 @@ impl FileDialog {
     ///
     /// Returns true if at least one directory item was included in the list and the
     /// heading is visible. If no item was listed, false is returned.
-    fn ui_update_pinned_paths(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
+    fn ui_update_pinned_folders(&mut self, ui: &mut egui::Ui, spacing: f32) -> bool {
         let mut visible = false;
 
-        for (i, path) in self
-            .config
-            .storage
-            .pinned_folders
-            .clone()
-            .iter()
-            .enumerate()
-        {
+        for (i, pinned) in self.storage.pinned_folders.clone().iter().enumerate() {
             if i == 0 {
                 ui.add_space(spacing);
                 ui.label(self.config.labels.heading_pinned.as_str());
@@ -1688,16 +1848,68 @@ impl FileDialog {
                 visible = true;
             }
 
+            if self.is_pinned_folder_being_renamed(pinned) {
+                self.ui_update_pinned_folder_rename(ui);
+                continue;
+            }
+
             let response = self.ui_update_left_panel_entry(
                 ui,
-                &format!("{}  {}", self.config.pinned_icon, path.file_name()),
-                path.as_path(),
+                &format!("{}  {}", self.config.pinned_icon, &pinned.label),
+                pinned.path.as_path(),
             );
 
-            self.ui_update_path_context_menu(&response, path);
+            self.ui_update_pinned_folder_context_menu(&response, pinned);
         }
 
         visible
+    }
+
+    fn ui_update_pinned_folder_rename(&mut self, ui: &mut egui::Ui) {
+        if let Some(r) = &mut self.rename_pinned_folder {
+            let id = self.window_id.with("pinned_folder_rename").with(&r.path);
+            let mut output = egui::TextEdit::singleline(&mut r.label)
+                .id(id)
+                .cursor_at_end(true)
+                .show(ui);
+
+            if self.rename_pinned_folder_request_focus {
+                output.state.cursor.set_char_range(Some(CCursorRange::two(
+                    CCursor::new(0),
+                    CCursor::new(r.label.chars().count()),
+                )));
+                output.state.store(ui.ctx(), output.response.id);
+
+                output.response.request_focus();
+
+                self.rename_pinned_folder_request_focus = false;
+            }
+
+            if output.response.lost_focus() {
+                self.end_rename_pinned_folder();
+            }
+        }
+    }
+
+    fn ui_update_pinned_folder_context_menu(
+        &mut self,
+        item: &egui::Response,
+        pinned: &PinnedFolder,
+    ) {
+        item.context_menu(|ui| {
+            if ui.button(&self.config.labels.unpin_folder).clicked() {
+                self.unpin_path(&pinned.path);
+                ui.close_menu();
+            }
+
+            if ui
+                .button(&self.config.labels.rename_pinned_folder)
+                .clicked()
+            {
+                self.begin_rename_pinned_folder(pinned.clone());
+                ui.close_menu();
+            }
+        });
     }
 
     /// Updates the list of user directories (Places).
@@ -1720,7 +1932,6 @@ impl FileDialog {
             if let Some(path) = dirs.home_dir() {
                 self.ui_update_left_panel_entry(ui, &labels.home_dir, path);
             }
-
             if let Some(path) = dirs.desktop_dir() {
                 self.ui_update_left_panel_entry(ui, &labels.desktop_dir, path);
             }
@@ -1836,8 +2047,8 @@ impl FileDialog {
 
         self.ui_update_selection_preview(ui, button_size);
 
-        if self.mode == DialogMode::SaveFile {
-            ui.add_space(ui.style().spacing.item_spacing.y * 2.0);
+        if self.mode == DialogMode::SaveFile && self.config.save_extensions.is_empty() {
+            ui.add_space(ui.style().spacing.item_spacing.y);
         }
 
         self.ui_update_action_buttons(ui, button_size);
@@ -1848,8 +2059,9 @@ impl FileDialog {
         const SELECTION_PREVIEW_MIN_WIDTH: f32 = 50.0;
         let item_spacing = ui.style().spacing.item_spacing;
 
-        let render_filter_selection = !self.config.file_filters.is_empty()
-            && (self.mode == DialogMode::PickFile || self.mode == DialogMode::PickMultiple);
+        let render_filter_selection = (!self.config.file_filters.is_empty()
+            && (self.mode == DialogMode::PickFile || self.mode == DialogMode::PickMultiple))
+            || (!self.config.save_extensions.is_empty() && self.mode == DialogMode::SaveFile);
 
         let filter_selection_width = button_size.x.mul_add(2.0, item_spacing.x);
         let mut filter_selection_separate_line = false;
@@ -1863,8 +2075,9 @@ impl FileDialog {
             };
 
             // Make sure there is enough width for the selection preview. If the available
-            // width is not enough, render the drop-down menu to select a file filter on
-            // a separate line and give the selection preview the entire available width.
+            // width is not enough, render the drop-down menu to select a file filter or
+            // save extension on a separate line and give the selection preview
+            // the entire available width.
             let mut scroll_bar_width: f32 =
                 ui.available_width() - filter_selection_width - item_spacing.x;
 
@@ -1889,35 +2102,63 @@ impl FileDialog {
                         });
                 }
                 DialogMode::SaveFile => {
-                    let response = ui.add(
-                        egui::TextEdit::singleline(&mut self.file_name_input)
-                            .desired_width(f32::INFINITY),
-                    );
+                    let mut output = egui::TextEdit::singleline(&mut self.file_name_input)
+                        .cursor_at_end(false)
+                        .margin(egui::Margin::symmetric(4, 3))
+                        .desired_width(scroll_bar_width - item_spacing.x)
+                        .show(ui);
 
                     if self.file_name_input_request_focus {
-                        response.request_focus();
+                        self.highlight_file_name_input(&mut output);
+                        output.state.store(ui.ctx(), output.response.id);
+
+                        output.response.request_focus();
                         self.file_name_input_request_focus = false;
                     }
 
-                    if response.changed() {
+                    if output.response.changed() {
                         self.file_name_input_error = self.validate_file_name_input();
                     }
 
-                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    if output.response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))
+                    {
                         self.submit();
                     }
                 }
-            };
+            }
 
             if !filter_selection_separate_line && render_filter_selection {
-                self.ui_update_file_filter_selection(ui, filter_selection_width);
+                if self.mode == DialogMode::SaveFile {
+                    self.ui_update_save_extension_selection(ui, filter_selection_width);
+                } else {
+                    self.ui_update_file_filter_selection(ui, filter_selection_width);
+                }
             }
         });
 
         if filter_selection_separate_line && render_filter_selection {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                self.ui_update_file_filter_selection(ui, filter_selection_width);
+                if self.mode == DialogMode::SaveFile {
+                    self.ui_update_save_extension_selection(ui, filter_selection_width);
+                } else {
+                    self.ui_update_file_filter_selection(ui, filter_selection_width);
+                }
             });
+        }
+    }
+
+    /// Highlights the characters inside the file name input until the file extension.
+    /// Do not forget to store these changes after calling this function:
+    /// `output.state.store(ui.ctx(), output.response.id);`
+    fn highlight_file_name_input(&self, output: &mut egui::text_edit::TextEditOutput) {
+        if let Some(pos) = self.file_name_input.rfind('.') {
+            let range = if pos == 0 {
+                CCursorRange::two(CCursor::new(0), CCursor::new(0))
+            } else {
+                CCursorRange::two(CCursor::new(0), CCursor::new(pos))
+            };
+
+            output.state.cursor.set_char_range(Some(range));
         }
     }
 
@@ -1961,8 +2202,8 @@ impl FileDialog {
         };
 
         // The item that the user selected inside the drop down.
-        // If none, no item was selected by the user.
-        let mut select_filter: Option<Option<egui::Id>> = None;
+        // If none, the user did not change the selected item this frame.
+        let mut select_filter: Option<Option<FileFilter>> = None;
 
         egui::containers::ComboBox::from_id_salt(self.window_id.with("file_filter_selection"))
             .width(width)
@@ -1973,7 +2214,7 @@ impl FileDialog {
                     let selected = selected_filter.is_some_and(|f| f.id == filter.id);
 
                     if ui.selectable_label(selected, &filter.name).clicked() {
-                        select_filter = Some(Some(filter.id));
+                        select_filter = Some(Some(filter.clone()));
                     }
                 }
 
@@ -1989,9 +2230,41 @@ impl FileDialog {
             });
 
         if let Some(i) = select_filter {
-            self.selected_file_filter = i;
-            self.selected_item = None;
-            self.refresh();
+            self.select_file_filter(i);
+        }
+    }
+
+    fn ui_update_save_extension_selection(&mut self, ui: &mut egui::Ui, width: f32) {
+        let selected_extension = self.get_selected_save_extension();
+        let selected_text = match selected_extension {
+            Some(e) => &e.to_string(),
+            None => &self.config.labels.save_extension_any,
+        };
+
+        // The item that the user selected inside the drop down.
+        // If none, the user did not change the selected item this frame.
+        let mut select_extension: Option<Option<SaveExtension>> = None;
+
+        egui::containers::ComboBox::from_id_salt(self.window_id.with("save_extension_selection"))
+            .width(width)
+            .selected_text(selected_text)
+            .wrap_mode(egui::TextWrapMode::Truncate)
+            .show_ui(ui, |ui| {
+                for extension in &self.config.save_extensions {
+                    let selected = selected_extension.is_some_and(|s| s.id == extension.id);
+
+                    if ui
+                        .selectable_label(selected, extension.to_string())
+                        .clicked()
+                    {
+                        select_extension = Some(Some(extension.clone()));
+                    }
+                }
+            });
+
+        if let Some(i) = select_extension {
+            self.file_name_input_request_focus = true;
+            self.select_save_extension(i);
         }
     }
 
@@ -2248,6 +2521,47 @@ impl FileDialog {
         self.ui_update_central_panel_entry(row, item);
 
         let primary_selected = self.is_primary_selected(item);
+        let pinned = self.is_pinned(item.as_path());
+
+        let icons = if pinned {
+            format!("{} {} ", item.icon(), self.config.pinned_icon)
+        } else {
+            format!("{} ", item.icon())
+        };
+
+        let icons_width = Self::calc_text_width(ui, &icons);
+
+        // Calc available width for the file name and include a small margin
+        let available_width = ui.available_width() - icons_width - 15.0;
+
+        let truncate = self.config.truncate_filenames
+            && available_width < Self::calc_text_width(ui, file_name);
+
+        let text = if truncate {
+            Self::truncate_filename(ui, item, available_width)
+        } else {
+            file_name.to_owned()
+        };
+
+        let mut re =
+            ui.selectable_label(primary_selected || item.selected, format!("{icons}{text}"));
+
+        if truncate {
+            re = re.on_hover_text(file_name);
+        }
+
+        if item.is_dir() {
+            self.ui_update_central_panel_path_context_menu(&re, item.as_path());
+
+            if re.context_menu_opened() {
+                self.select_item(item);
+            }
+        }
+
+        if primary_selected && self.scroll_to_selection {
+            re.scroll_to_me(Some(egui::Align::Center));
+            self.scroll_to_selection = false;
+        }
 
         // The user wants to select the item as the primary selected item
         if row.response().clicked() && !command_modifier && !shift_modifier {
@@ -2538,24 +2852,19 @@ impl FileDialog {
         clicked
     }
 
-    /// Updates the context menu of a path.
+    /// Updates the context menu of a path inside the central panel.
     ///
     /// # Arguments
     ///
-    /// * `item_response` - The response of the egui item for which the context menu should
-    ///                     be opened.
+    /// * `item` - The response of the egui item for which the context menu should be opened.
     /// * `path` - The path for which the context menu should be opened.
-    fn ui_update_path_context_menu(
-        &mut self,
-        item_response: &egui::Response,
-        path: &DirectoryEntry,
-    ) {
+    fn ui_update_central_panel_path_context_menu(&mut self, item: &egui::Response, path: &Path) {
         // Path context menus are currently only used for pinned folders.
         if !self.config.show_pinned_folders {
             return;
         }
 
-        item_response.context_menu(|ui| {
+        item.context_menu(|ui| {
             let pinned = self.is_pinned(path);
 
             if pinned {
@@ -2564,7 +2873,7 @@ impl FileDialog {
                     ui.close_menu();
                 }
             } else if ui.button(&self.config.labels.pin_folder).clicked() {
-                self.pin_path(path.clone());
+                self.pin_path(path.to_path_buf());
                 ui.close_menu();
             }
         });
@@ -2684,6 +2993,10 @@ impl FileDialog {
             return;
         }
 
+        if self.any_focused_last_frame {
+            return;
+        }
+
         // Check if there is a directory selected we can open
         if let Some(item) = &self.selected_item {
             // Make sure the selected item is visible inside the directory view.
@@ -2776,6 +3089,73 @@ impl FileDialog {
             .and_then(|id| self.config.file_filters.iter().find(|p| p.id == id))
     }
 
+    /// Sets the default file filter to use.
+    fn set_default_file_filter(&mut self) {
+        if let Some(name) = &self.config.default_file_filter {
+            for filter in &self.config.file_filters {
+                if filter.name == name.as_str() {
+                    self.selected_file_filter = Some(filter.id);
+                }
+            }
+        }
+    }
+
+    /// Selects the given file filter and applies the appropriate filters.
+    fn select_file_filter(&mut self, filter: Option<FileFilter>) {
+        self.selected_file_filter = filter.map(|f| f.id);
+        self.selected_item = None;
+        self.refresh();
+    }
+
+    /// Get the save extension the user currently selected.
+    fn get_selected_save_extension(&self) -> Option<&SaveExtension> {
+        self.selected_save_extension
+            .and_then(|id| self.config.save_extensions.iter().find(|p| p.id == id))
+    }
+
+    /// Sets the save extension to use.
+    fn set_default_save_extension(&mut self) {
+        let config = std::mem::take(&mut self.config);
+
+        if let Some(name) = &config.default_save_extension {
+            for extension in &config.save_extensions {
+                if extension.name == name.as_str() {
+                    self.selected_save_extension = Some(extension.id);
+                    self.set_file_name_extension(&extension.file_extension);
+                }
+            }
+        }
+
+        self.config = config;
+    }
+
+    /// Selects the given save extension.
+    fn select_save_extension(&mut self, extension: Option<SaveExtension>) {
+        if let Some(ex) = extension {
+            self.selected_save_extension = Some(ex.id);
+            self.set_file_name_extension(&ex.file_extension);
+        }
+
+        self.selected_item = None;
+        self.refresh();
+    }
+
+    /// Updates the extension of `Self::file_name_input`.
+    fn set_file_name_extension(&mut self, extension: &str) {
+        // Prevent `PathBuf::set_extension` to append the file extension when there is
+        // already one without a file name. For example `.png` would be changed to `.png.txt`
+        // when using `PathBuf::set_extension`.
+        let dot_count = self.file_name_input.chars().filter(|c| *c == '.').count();
+        let use_simple = dot_count == 1 && self.file_name_input.chars().nth(0) == Some('.');
+
+        let mut p = PathBuf::from(&self.file_name_input);
+        if !use_simple && p.set_extension(extension) {
+            self.file_name_input = p.to_string_lossy().into_owned();
+        } else {
+            self.file_name_input = format!(".{extension}");
+        }
+    }
+
     /// Gets a filtered iterator of the directory content of this object.
     fn get_dir_content_filtered_iter(&self) -> impl Iterator<Item = &DirectoryEntry> {
         self.directory_content.filtered_iter(&self.search_value)
@@ -2810,7 +3190,7 @@ impl FileDialog {
         match action {
             ModalAction::None => {}
             ModalAction::SaveFile(path) => self.state = DialogState::Picked(path),
-        };
+        }
     }
 
     /// Canonicalizes the specified path if canonicalization is enabled.
@@ -2824,25 +3204,54 @@ impl FileDialog {
     }
 
     /// Pins a path to the left sidebar.
-    fn pin_path(&mut self, path: DirectoryEntry) {
-        self.config.storage.pinned_folders.push(path);
+    fn pin_path(&mut self, path: PathBuf) {
+        let pinned = PinnedFolder::from_path(path);
+        self.storage.pinned_folders.push(pinned);
     }
 
     /// Unpins a path from the left sidebar.
-    fn unpin_path(&mut self, path: &DirectoryEntry) {
-        self.config
-            .storage
+    fn unpin_path(&mut self, path: &Path) {
+        self.storage
             .pinned_folders
-            .retain(|p| !p.path_eq(path));
+            .retain(|p| p.path.as_path() != path);
     }
 
     /// Checks if the path is pinned to the left sidebar.
-    fn is_pinned(&self, path: &DirectoryEntry) -> bool {
-        self.config
-            .storage
+    fn is_pinned(&self, path: &Path) -> bool {
+        self.storage
             .pinned_folders
             .iter()
-            .any(|p| path.path_eq(p))
+            .any(|p| p.path.as_path() == path)
+    }
+
+    /// Starts to rename a pinned folder by showing the user a text input field.
+    fn begin_rename_pinned_folder(&mut self, pinned: PinnedFolder) {
+        self.rename_pinned_folder = Some(pinned);
+        self.rename_pinned_folder_request_focus = true;
+    }
+
+    /// Ends the renaming of a pinned folder. This updates the real pinned folder
+    /// in `FileDialogStorage`.
+    fn end_rename_pinned_folder(&mut self) {
+        let renamed = std::mem::take(&mut self.rename_pinned_folder);
+
+        if let Some(renamed) = renamed {
+            let old = self
+                .storage
+                .pinned_folders
+                .iter_mut()
+                .find(|p| p.path == renamed.path);
+            if let Some(old) = old {
+                old.label = renamed.label;
+            }
+        }
+    }
+
+    /// Checks if the given pinned folder is currently being renamed.
+    fn is_pinned_folder_being_renamed(&self, pinned: &PinnedFolder) -> bool {
+        self.rename_pinned_folder
+            .as_ref()
+            .is_some_and(|p| p.path == pinned.path)
     }
 
     fn is_primary_selected(&self, item: &DirectoryEntry) -> bool {
@@ -2852,8 +3261,10 @@ impl FileDialog {
     /// Resets the dialog to use default values.
     /// Configuration variables are retained.
     fn reset(&mut self) {
+        let storage = self.storage.clone();
         let config = self.config.clone();
         *self = Self::with_config(config);
+        self.storage = storage;
     }
 
     /// Refreshes the dialog.
@@ -2878,7 +3289,7 @@ impl FileDialog {
             return;
         }
 
-        self.config.storage.last_picked_dir = self.current_directory().map(PathBuf::from);
+        self.storage.last_picked_dir = self.current_directory().map(PathBuf::from);
 
         match &self.mode {
             DialogMode::PickDirectory | DialogMode::PickFile => {
@@ -2933,13 +3344,11 @@ impl FileDialog {
         let path = match self.config.opening_mode {
             OpeningMode::AlwaysInitialDir => &self.config.initial_directory,
             OpeningMode::LastVisitedDir => self
-                .config
                 .storage
                 .last_visited_dir
                 .as_deref()
                 .unwrap_or(&self.config.initial_directory),
             OpeningMode::LastPickedDir => self
-                .config
                 .storage
                 .last_picked_dir
                 .as_deref()
@@ -3169,7 +3578,7 @@ impl FileDialog {
 
     /// Closes the text field at the top to edit the current path without loading
     /// the entered directory.
-    fn close_path_edit(&mut self) {
+    const fn close_path_edit(&mut self) {
         self.path_edit_visible = false;
     }
 
@@ -3262,14 +3671,33 @@ impl FileDialog {
 
     /// Loads the directory content of the given path.
     fn load_directory_content(&mut self, path: &Path) {
-        self.config.storage.last_visited_dir = Some(path.to_path_buf());
+        self.storage.last_visited_dir = Some(path.to_path_buf());
+
+        let selected_file_filter = match self.mode {
+            DialogMode::PickFile | DialogMode::PickMultiple => self.get_selected_file_filter(),
+            _ => None,
+        };
+
+        let selected_save_extension = if self.mode == DialogMode::SaveFile {
+            self.get_selected_save_extension()
+                .map(|e| e.file_extension.as_str())
+        } else {
+            None
+        };
+
+        let filter = DirectoryFilter {
+            show_files: self.show_files,
+            show_hidden: self.storage.show_hidden,
+            show_system_files: self.storage.show_system_files,
+            file_filter: selected_file_filter.cloned(),
+            filter_extension: selected_save_extension.map(str::to_string),
+        };
 
         self.directory_content = DirectoryContent::from_path(
             &self.config,
             path,
-            self.show_files,
-            self.get_selected_file_filter(),
             self.config.file_system.clone(),
+            filter,
         );
 
         self.create_directory_dialog.close();
