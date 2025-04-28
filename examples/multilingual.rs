@@ -41,6 +41,11 @@ fn get_labels_german() -> FileDialogLabels {
         unpin_folder: "✖ Ordner loslösen".to_string(),
         rename_pinned_folder: "✏ Ordner umbenennen".to_string(),
 
+        file_name_header: "Name".to_string(),
+        file_size_header: "Grösse".to_string(),
+        created_date_header: "Erstellt".to_string(),
+        modified_date_header: "Geändert".to_string(),
+
         selected_directory: "Ausgewählter Ordner:".to_string(),
         selected_file: "Ausgewählte Datei:".to_string(),
         selected_items: "Ausgewählte Elemente:".to_string(),
