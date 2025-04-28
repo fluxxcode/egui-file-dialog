@@ -8,7 +8,6 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::data::DirectoryEntry;
 use crate::file_dialog::{SortBy, SortOrder};
 use crate::{FileSystem, NativeFileSystem};
 

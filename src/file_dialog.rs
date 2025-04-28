@@ -2521,47 +2521,6 @@ impl FileDialog {
         self.ui_update_central_panel_entry(row, item);
 
         let primary_selected = self.is_primary_selected(item);
-        let pinned = self.is_pinned(item.as_path());
-
-        let icons = if pinned {
-            format!("{} {} ", item.icon(), self.config.pinned_icon)
-        } else {
-            format!("{} ", item.icon())
-        };
-
-        let icons_width = Self::calc_text_width(ui, &icons);
-
-        // Calc available width for the file name and include a small margin
-        let available_width = ui.available_width() - icons_width - 15.0;
-
-        let truncate = self.config.truncate_filenames
-            && available_width < Self::calc_text_width(ui, file_name);
-
-        let text = if truncate {
-            Self::truncate_filename(ui, item, available_width)
-        } else {
-            file_name.to_owned()
-        };
-
-        let mut re =
-            ui.selectable_label(primary_selected || item.selected, format!("{icons}{text}"));
-
-        if truncate {
-            re = re.on_hover_text(file_name);
-        }
-
-        if item.is_dir() {
-            self.ui_update_central_panel_path_context_menu(&re, item.as_path());
-
-            if re.context_menu_opened() {
-                self.select_item(item);
-            }
-        }
-
-        if primary_selected && self.scroll_to_selection {
-            re.scroll_to_me(Some(egui::Align::Center));
-            self.scroll_to_selection = false;
-        }
 
         // The user wants to select the item as the primary selected item
         if row.response().clicked() && !command_modifier && !shift_modifier {
@@ -2574,7 +2533,7 @@ impl FileDialog {
         }
 
         if item.is_dir() {
-            self.ui_update_path_context_menu(&row.response(), item);
+            self.ui_update_central_panel_path_context_menu(&row.response(), item.as_path());
 
             if row.response().context_menu_opened() {
                 self.select_item(item);
@@ -2690,7 +2649,7 @@ impl FileDialog {
     fn ui_update_central_panel_entry(&self, row: &mut TableRow, item: &DirectoryEntry) {
         let file_name = item.file_name();
         let primary_selected = self.is_primary_selected(item);
-        let pinned = self.is_pinned(item);
+        let pinned = self.is_pinned(item.as_path());
 
         let selected = item.selected;
         let metadata = item.metadata();
