@@ -20,7 +20,7 @@ directories = "6.0"
 # canonicalize paths
 dunce = "1.0.5"
 # fetch disks
-sysinfo = { version = "0.34", default-features = false, features = ["disk"] }
+sysinfo = { version = "0.35", default-features = false, features = ["disk"] }
 # persistent storage
 serde = { version = "1", features = ["derive"], optional = true }
 # meta-data storage
