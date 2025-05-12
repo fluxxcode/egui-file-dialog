@@ -1,6 +1,6 @@
 # egui-file-dialog changelog
 
-## Unreleased
+## 2025-05-12 - v0.10.0 - File extension filter for save dialog and QoL changes
 
 ### 🚨 Breaking Changes
 - Moved `FileDialogStorage` out of `FileDialogConfig` [#259](https://github.com/jannistpl/egui-file-dialog/pull/259)
