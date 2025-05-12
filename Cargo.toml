@@ -8,8 +8,7 @@ repository = "https://github.com/jannistpl/egui-file-dialog"
 homepage = "https://github.com/jannistpl/egui-file-dialog"
 readme = "README.md"
 license = "MIT"
-exclude = ["media/", ".github/"]
-include = ["media/readme/"]
+exclude = ["media/", "!media/readme/", ".github/"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
