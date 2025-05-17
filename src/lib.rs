@@ -228,6 +228,7 @@ mod file_system;
 /// Information panel showing the preview and metadata of the selected item
 pub mod information_panel;
 mod modals;
+mod utils;
 
 pub use config::{
     FileDialogConfig, FileDialogKeyBindings, FileDialogLabels, IconFilter, KeyBinding, OpeningMode,
