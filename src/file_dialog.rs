@@ -1121,7 +1121,7 @@ impl FileDialog {
 
     /// Stores custom user data inside this file dialog.
     ///
-    /// This user data can used for example to track what purpose you have opened the dialog for.
+    /// This user data can be used for example to track what purpose you have opened the dialog for.
     ///
     /// For example, You might have an action for opening a document,
     /// and also an action for loading a configuration file.
