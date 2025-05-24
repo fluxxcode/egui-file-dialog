@@ -1112,11 +1112,18 @@ impl FileDialog {
         self.get_dir_content_filtered_iter().filter(|p| p.selected)
     }
 
-    /// Returns the currently stored user data.
+    /// Returns a reference to the currently stored user data.
     ///
     /// See [`FileDialog::set_user_data`].
     pub fn user_data<U: Any>(&self) -> Option<&U> {
         self.user_data.as_ref().and_then(|u| u.downcast_ref())
+    }
+
+    /// Returns a mutable reference to the currently stored user data.
+    ///
+    /// See [`FileDialog::set_user_data`].
+    pub fn user_data_mut<U: Any>(&mut self) -> Option<&mut U> {
+        self.user_data.as_mut().and_then(|u| u.downcast_mut())
     }
 
     /// Stores custom user data inside this file dialog.
