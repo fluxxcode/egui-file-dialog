@@ -313,9 +313,6 @@ impl FileDialog {
     ///
     /// # Examples
     ///
-    /// The following example shows how the dialog can be used for multiple
-    /// actions using the `operation_id`.
-    ///
     /// ```
     /// use std::path::PathBuf;
     ///
@@ -329,11 +326,7 @@ impl FileDialog {
     ///
     /// impl MyApp {
     ///     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-    ///         if ui.button("Pick file a").clicked() {
-    ///             let _ = self.file_dialog.open(DialogMode::PickFile, true);
-    ///         }
-    ///
-    ///         if ui.button("Pick file b").clicked() {
+    ///         if ui.button("Pick file").clicked() {
     ///             let _ = self.file_dialog.open(DialogMode::PickFile, true);
     ///         }
     ///
