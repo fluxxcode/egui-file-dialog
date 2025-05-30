@@ -349,7 +349,7 @@ impl FileDialog {
     #[deprecated(
         since = "0.10.0",
         note = "Use `pick_file` / `pick_directory` / `pick_multiple` in combination with \
-                `set_operation_id` instead"
+                `set_user_data` instead"
     )]
     pub fn open(&mut self, mode: DialogMode, mut show_files: bool) {
         self.reset();
