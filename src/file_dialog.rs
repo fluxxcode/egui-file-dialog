@@ -310,9 +310,6 @@ impl FileDialog {
     /// * `mode` - The mode in which the dialog should be opened
     /// * `show_files` - If files should also be displayed to the user in addition to directories.
     ///   This is ignored if the mode is `DialogMode::SelectFile`.
-    /// * `operation_id` - Sets an ID for which operation the dialog was opened.
-    ///   This is useful when the dialog can be used for various operations in a single view.
-    ///   The ID can then be used to check which action the user selected an item for.
     ///
     /// # Examples
     ///
