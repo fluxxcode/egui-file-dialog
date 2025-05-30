@@ -122,6 +122,8 @@ pub struct FileDialog {
     /// If files are displayed in addition to directories.
     /// This option will be ignored when mode == `DialogMode::SelectFile`.
     show_files: bool,
+    /// Custom data set by the API consumer, to track things like the purpose
+    /// the file dialog was opened for.
     user_data: Option<Box<dyn Any + Send + Sync>>,
     /// The currently used window ID.
     window_id: egui::Id,
