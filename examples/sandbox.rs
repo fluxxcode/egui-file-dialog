@@ -86,7 +86,7 @@ impl eframe::App for MyApp {
 
             if let Some(items) = &self.picked_multiple {
                 for item in items {
-                    ui.label(format!("{item:?}"));
+                    ui.label(format!("{}", item.display()));
                 }
             } else {
                 ui.label("None");
