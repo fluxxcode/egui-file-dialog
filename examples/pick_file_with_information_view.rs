@@ -28,7 +28,8 @@ impl MyApp {
                 // add additional metadata loader
                 .add_metadata_loader("pdf", |other_meta_data, path| {
                     // as a simple example, just show the Filename of the PDF
-                    other_meta_data.insert("PDF Filename".to_string(), format!("{path:?}"));
+                    other_meta_data
+                        .insert("PDF Filename".to_string(), format!("{}", path.display()));
                 }),
             selected_file: None,
         }
