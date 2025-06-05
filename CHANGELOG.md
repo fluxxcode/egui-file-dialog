@@ -1,5 +1,15 @@
 # egui-file-dialog changelog
 
+## Unreleased
+
+### 🚨 Breaking Changes
+
+- Replace `operation_id` and `set_operation_id` with `user_data`, `user_data_mut` and `set_user_data` [#269](https://github.com/jannistpl/egui-file-dialog/pull/269) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+
+### 📚 Documentation
+
+- Use Display trait to print paths in examples, to satisfy clippy lint [#270](https://github.com/jannistpl/egui-file-dialog/pull/270) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+
 ## 2025-05-12 - v0.10.0 - File extension filter for save dialog and QoL changes
 
 ### 🚨 Breaking Changes
