@@ -281,6 +281,7 @@ impl FileDialog {
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
+        obj.create_directory_dialog = CreateDirectoryDialog::from_filesystem(obj.config.file_system.clone());
         obj
     }
 
@@ -290,6 +291,7 @@ impl FileDialog {
         let mut obj = Self::new();
         obj.config.initial_directory = file_system.current_dir().unwrap_or_default();
         obj.config.file_system = file_system;
+        obj.create_directory_dialog = CreateDirectoryDialog::from_filesystem(obj.config.file_system.clone());
         obj
     }
 
