@@ -6,6 +6,10 @@
 
 - Replace `operation_id` and `set_operation_id` with `user_data`, `user_data_mut` and `set_user_data` [#269](https://github.com/jannistpl/egui-file-dialog/pull/269) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 
+### 🐛 Bug Fixes
+
+- Fix create directory dialog uses incorrect file system  [#272](https://github.com/jannistpl/egui-file-dialog/pull/272) (thanks [@cadyn](https://github.com/cadyn)!)
+
 ### 📚 Documentation
 
 - Use Display trait to print paths in examples, to satisfy clippy lint [#270](https://github.com/jannistpl/egui-file-dialog/pull/270) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
