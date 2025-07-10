@@ -10,6 +10,10 @@
 
 - Fix create directory dialog uses incorrect file system  [#272](https://github.com/jannistpl/egui-file-dialog/pull/272) (thanks [@cadyn](https://github.com/cadyn)!)
 
+### 🔧 Changes
+
+- Updated `sysinfo` from v`0.35` to v`0.36` [#277](https://github.com/jannistpl/egui-file-dialog/pull/277)
+
 ### 📚 Documentation
 
 - Use Display trait to print paths in examples, to satisfy clippy lint [#270](https://github.com/jannistpl/egui-file-dialog/pull/270) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
