@@ -1600,7 +1600,7 @@ impl FileDialog {
 
         if self.config.show_reload_button && ui.button(&self.config.labels.reload).clicked() {
             self.refresh();
-            ui.close_menu();
+            ui.close();
         }
 
         let working_dir = self.config.file_system.current_dir();
@@ -1610,7 +1610,7 @@ impl FileDialog {
             && ui.button(&self.config.labels.working_directory).clicked()
         {
             self.load_directory(&working_dir.unwrap_or_default());
-            ui.close_menu();
+            ui.close();
         }
 
         if (self.config.show_reload_button || self.config.show_working_directory_button)
@@ -1630,7 +1630,7 @@ impl FileDialog {
                 .clicked()
         {
             self.refresh();
-            ui.close_menu();
+            ui.close();
         }
 
         if self.config.show_system_files_option
@@ -1642,7 +1642,7 @@ impl FileDialog {
                 .clicked()
         {
             self.refresh();
-            ui.close_menu();
+            ui.close();
         }
     }
 
@@ -1859,7 +1859,7 @@ impl FileDialog {
         item.context_menu(|ui| {
             if ui.button(&self.config.labels.unpin_folder).clicked() {
                 self.unpin_path(&pinned.path);
-                ui.close_menu();
+                ui.close();
             }
 
             if ui
@@ -1867,7 +1867,7 @@ impl FileDialog {
                 .clicked()
             {
                 self.begin_rename_pinned_folder(pinned.clone());
-                ui.close_menu();
+                ui.close();
             }
         });
     }
@@ -2631,11 +2631,11 @@ impl FileDialog {
             if pinned {
                 if ui.button(&self.config.labels.unpin_folder).clicked() {
                     self.unpin_path(path);
-                    ui.close_menu();
+                    ui.close();
                 }
             } else if ui.button(&self.config.labels.pin_folder).clicked() {
                 self.pin_path(path.to_path_buf());
-                ui.close_menu();
+                ui.close();
             }
         });
     }

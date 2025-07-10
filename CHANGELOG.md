@@ -4,6 +4,7 @@
 
 ### 🚨 Breaking Changes
 
+- Updated `egui` from version `0.31` to version `0.32` [#276](https://github.com/jannistpl/egui-file-dialog/pull/276), [#278](https://github.com/jannistpl/egui-file-dialog/pull/278) (thanks [@David-OConnor](https://github.com/David-OConnor)!)
 - Replace `operation_id` and `set_operation_id` with `user_data`, `user_data_mut` and `set_user_data` [#269](https://github.com/jannistpl/egui-file-dialog/pull/269) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
 
 ### 🐛 Bug Fixes

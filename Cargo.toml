@@ -30,7 +30,7 @@ image-meta = { version = "0.1.2", optional = true }
 chrono = { version = "0.4.39", optional = true }
 
 [dev-dependencies]
-eframe = { version = "0.31.0", default-features = false, features = [
+eframe = { version = "0.32.0", default-features = false, features = [
     "glow",
     "persistence",
     "wayland",
