@@ -11,6 +11,7 @@ use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal
 use crate::utils::{calc_text_width, format_bytes, truncate_date, truncate_filename};
 use crate::{FileSystem, NativeFileSystem};
 use egui::text::{CCursor, CCursorRange};
+use std::any::Any;
 use egui::TextStyle;
 use egui_extras::{Column, TableBuilder, TableRow};
 use std::cmp::PartialEq;
@@ -167,13 +168,9 @@ pub struct FileDialog {
     /// If files are displayed in addition to directories.
     /// This option will be ignored when mode == `DialogMode::SelectFile`.
     show_files: bool,
-    /// This is an optional ID that can be set when opening the dialog to determine which
-    /// operation the dialog is used for. This is useful if the dialog is used multiple times
-    /// for different actions in the same view. The ID then makes it possible to distinguish
-    /// for which action the user has selected an item.
-    /// This ID is not used internally.
-    operation_id: Option<String>,
-
+    /// Custom data set by the API consumer, to track things like the purpose
+    /// the file dialog was opened for.
+    user_data: Option<Box<dyn Any + Send + Sync>>,
     /// The currently used window ID.
     window_id: egui::Id,
 
@@ -290,7 +287,7 @@ impl FileDialog {
             mode: DialogMode::PickDirectory,
             state: DialogState::Closed,
             show_files: true,
-            operation_id: None,
+            user_data: None,
 
             window_id: egui::Id::new("file_dialog"),
 
@@ -330,6 +327,8 @@ impl FileDialog {
     pub fn with_config(config: FileDialogConfig) -> Self {
         let mut obj = Self::new();
         *obj.config_mut() = config;
+        obj.create_directory_dialog =
+            CreateDirectoryDialog::from_filesystem(obj.config.file_system.clone());
         obj
     }
 
@@ -339,6 +338,8 @@ impl FileDialog {
         let mut obj = Self::new();
         obj.config.initial_directory = file_system.current_dir().unwrap_or_default();
         obj.config.file_system = file_system;
+        obj.create_directory_dialog =
+            CreateDirectoryDialog::from_filesystem(obj.config.file_system.clone());
         obj
     }
 
@@ -359,14 +360,8 @@ impl FileDialog {
     /// * `mode` - The mode in which the dialog should be opened
     /// * `show_files` - If files should also be displayed to the user in addition to directories.
     ///   This is ignored if the mode is `DialogMode::SelectFile`.
-    /// * `operation_id` - Sets an ID for which operation the dialog was opened.
-    ///   This is useful when the dialog can be used for various operations in a single view.
-    ///   The ID can then be used to check which action the user selected an item for.
     ///
     /// # Examples
-    ///
-    /// The following example shows how the dialog can be used for multiple
-    /// actions using the `operation_id`.
     ///
     /// ```
     /// use std::path::PathBuf;
@@ -376,29 +371,19 @@ impl FileDialog {
     /// struct MyApp {
     ///     file_dialog: FileDialog,
     ///
-    ///     picked_file_a: Option<PathBuf>,
-    ///     picked_file_b: Option<PathBuf>,
+    ///     picked_file: Option<PathBuf>,
     /// }
     ///
     /// impl MyApp {
     ///     fn update(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-    ///         if ui.button("Pick file a").clicked() {
-    ///             let _ = self.file_dialog.open(DialogMode::PickFile, true, Some("pick_a"));
-    ///         }
-    ///
-    ///         if ui.button("Pick file b").clicked() {
-    ///             let _ = self.file_dialog.open(DialogMode::PickFile, true, Some("pick_b"));
+    ///         if ui.button("Pick file").clicked() {
+    ///             let _ = self.file_dialog.open(DialogMode::PickFile, true);
     ///         }
     ///
     ///         self.file_dialog.update(ctx);
     ///
     ///         if let Some(path) = self.file_dialog.picked() {
-    ///             if self.file_dialog.operation_id() == Some("pick_a") {
-    ///                 self.picked_file_a = Some(path.to_path_buf());
-    ///             }
-    ///             if self.file_dialog.operation_id() == Some("pick_b") {
-    ///                 self.picked_file_b = Some(path.to_path_buf());
-    ///             }
+    ///             self.picked_file = Some(path.to_path_buf());
     ///         }
     ///     }
     /// }
@@ -406,9 +391,9 @@ impl FileDialog {
     #[deprecated(
         since = "0.10.0",
         note = "Use `pick_file` / `pick_directory` / `pick_multiple` in combination with \
-                `set_operation_id` instead"
+                `set_user_data` instead"
     )]
-    pub fn open(&mut self, mode: DialogMode, mut show_files: bool, operation_id: Option<&str>) {
+    pub fn open(&mut self, mode: DialogMode, mut show_files: bool) {
         self.reset();
         self.refresh();
 
@@ -431,7 +416,6 @@ impl FileDialog {
         self.mode = mode;
         self.state = DialogState::Open;
         self.show_files = show_files;
-        self.operation_id = operation_id.map(String::from);
 
         self.window_id = self
             .config
@@ -451,7 +435,7 @@ impl FileDialog {
     pub fn pick_directory(&mut self) {
         // `FileDialog::open` will only be marked as private in the future.
         #[allow(deprecated)]
-        self.open(DialogMode::PickDirectory, false, None);
+        self.open(DialogMode::PickDirectory, false);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick a file.
@@ -462,7 +446,7 @@ impl FileDialog {
     pub fn pick_file(&mut self) {
         // `FileDialog::open` will only be marked as private in the future.
         #[allow(deprecated)]
-        self.open(DialogMode::PickFile, true, None);
+        self.open(DialogMode::PickFile, true);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to pick multiple
@@ -474,7 +458,7 @@ impl FileDialog {
     pub fn pick_multiple(&mut self) {
         // `FileDialog::open` will only be marked as private in the future.
         #[allow(deprecated)]
-        self.open(DialogMode::PickMultiple, true, None);
+        self.open(DialogMode::PickMultiple, true);
     }
 
     /// Shortcut function to open the file dialog to prompt the user to save a file.
@@ -485,7 +469,7 @@ impl FileDialog {
     pub fn save_file(&mut self) {
         // `FileDialog::open` will only be marked as private in the future.
         #[allow(deprecated)]
-        self.open(DialogMode::SaveFile, true, None);
+        self.open(DialogMode::SaveFile, true);
     }
 
     /// The main update method that should be called every frame if the dialog is to be visible.
@@ -1175,18 +1159,45 @@ impl FileDialog {
         self.get_dir_content_filtered_iter().filter(|p| p.selected)
     }
 
-    /// Returns the ID of the operation for which the dialog is currently being used.
+    /// Returns a reference to the currently stored user data.
     ///
-    /// See `FileDialog::open` for more information.
-    pub fn operation_id(&self) -> Option<&str> {
-        self.operation_id.as_deref()
+    /// See [`FileDialog::set_user_data`].
+    pub fn user_data<U: Any>(&self) -> Option<&U> {
+        self.user_data.as_ref().and_then(|u| u.downcast_ref())
     }
 
-    /// Sets the ID of the operation for which the dialog is currently being used.
+    /// Returns a mutable reference to the currently stored user data.
     ///
-    /// See `FileDialog::open` for more information.
-    pub fn set_operation_id(&mut self, operation_id: &str) {
-        self.operation_id = Some(operation_id.to_owned());
+    /// See [`FileDialog::set_user_data`].
+    pub fn user_data_mut<U: Any>(&mut self) -> Option<&mut U> {
+        self.user_data.as_mut().and_then(|u| u.downcast_mut())
+    }
+
+    /// Stores custom user data inside this file dialog.
+    ///
+    /// This user data can be used for example to track what purpose you have opened the dialog for.
+    ///
+    /// For example, You might have an action for opening a document,
+    /// and also an action for loading a configuration file.
+    ///
+    /// ```
+    /// enum Action {
+    ///     OpenDocument,
+    ///     LoadConfig,
+    /// }
+    /// let mut dialog = egui_file_dialog::FileDialog::new();
+    /// // ...
+    /// // When the user presses "Open document" button
+    /// dialog.set_user_data(Action::OpenDocument);
+    /// // ... later, you check what action to perform
+    /// match dialog.user_data::<Action>() {
+    ///     Some(Action::OpenDocument) => { /* Open the document */ },
+    ///     Some(Action::LoadConfig) => { /* Load the config file */},
+    ///     None => { /* Do nothing */}
+    /// }
+    /// ```
+    pub fn set_user_data<U: Any + Send + Sync>(&mut self, user_data: U) {
+        self.user_data = Some(Box::new(user_data));
     }
 
     /// Returns the mode the dialog is currently in.
@@ -1640,7 +1651,7 @@ impl FileDialog {
 
         if self.config.show_reload_button && ui.button(&self.config.labels.reload).clicked() {
             self.refresh();
-            ui.close_menu();
+            ui.close();
         }
 
         let working_dir = self.config.file_system.current_dir();
@@ -1650,7 +1661,7 @@ impl FileDialog {
             && ui.button(&self.config.labels.working_directory).clicked()
         {
             self.load_directory(&working_dir.unwrap_or_default());
-            ui.close_menu();
+            ui.close();
         }
 
         if (self.config.show_reload_button || self.config.show_working_directory_button)
@@ -1670,7 +1681,7 @@ impl FileDialog {
                 .clicked()
         {
             self.refresh();
-            ui.close_menu();
+            ui.close();
         }
 
         if self.config.show_system_files_option
@@ -1682,7 +1693,7 @@ impl FileDialog {
                 .clicked()
         {
             self.refresh();
-            ui.close_menu();
+            ui.close();
         }
     }
 
@@ -1899,7 +1910,7 @@ impl FileDialog {
         item.context_menu(|ui| {
             if ui.button(&self.config.labels.unpin_folder).clicked() {
                 self.unpin_path(&pinned.path);
-                ui.close_menu();
+                ui.close();
             }
 
             if ui
@@ -1907,7 +1918,7 @@ impl FileDialog {
                 .clicked()
             {
                 self.begin_rename_pinned_folder(pinned.clone());
-                ui.close_menu();
+                ui.close();
             }
         });
     }
@@ -2829,11 +2840,11 @@ impl FileDialog {
             if pinned {
                 if ui.button(&self.config.labels.unpin_folder).clicked() {
                     self.unpin_path(path);
-                    ui.close_menu();
+                    ui.close();
                 }
             } else if ui.button(&self.config.labels.pin_folder).clicked() {
                 self.pin_path(path.to_path_buf());
-                ui.close_menu();
+                ui.close();
             }
         });
     }

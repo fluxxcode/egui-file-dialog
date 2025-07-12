@@ -1,6 +1,25 @@
 # egui-file-dialog changelog
 
-## Unreleased
+## 2025-07-10 - v0.11.0 - egui update and QoL changes
+
+### 🚨 Breaking Changes
+
+- Updated `egui` from version `0.31` to version `0.32` [#276](https://github.com/jannistpl/egui-file-dialog/pull/276), [#278](https://github.com/jannistpl/egui-file-dialog/pull/278) (thanks [@David-OConnor](https://github.com/David-OConnor)!)
+- Replace `operation_id` and `set_operation_id` with `user_data`, `user_data_mut` and `set_user_data` [#269](https://github.com/jannistpl/egui-file-dialog/pull/269) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+
+### 🐛 Bug Fixes
+
+- Fix create directory dialog uses incorrect file system  [#272](https://github.com/jannistpl/egui-file-dialog/pull/272) (thanks [@cadyn](https://github.com/cadyn)!)
+
+### 🔧 Changes
+
+- Updated `sysinfo` from v`0.35` to v`0.36` [#277](https://github.com/jannistpl/egui-file-dialog/pull/277)
+
+### 📚 Documentation
+
+- Use Display trait to print paths in examples, to satisfy clippy lint [#270](https://github.com/jannistpl/egui-file-dialog/pull/270) (thanks [@crumblingstatue](https://github.com/crumblingstatue)!)
+
+## 2025-05-12 - v0.10.0 - File extension filter for save dialog and QoL changes
 
 ### 🚨 Breaking Changes
 - Moved `FileDialogStorage` out of `FileDialogConfig` [#259](https://github.com/jannistpl/egui-file-dialog/pull/259)
@@ -30,7 +49,7 @@
 - Fixed triggering branches in CI [#247](https://github.com/jannistpl/egui-file-dialog/pull/247)
 - Changed default file name from an empty string to `Untitled` [#248](https://github.com/jannistpl/egui-file-dialog/pull/248)
 - Fixed new clippy errors added in the latest rust version [#262](https://github.com/jannistpl/egui-file-dialog/pull/262)
-- Updated `sysinfo` from v`0.33` to v`0.34` [#265](https://github.com/jannistpl/egui-file-dialog/pull/265)
+- Updated `sysinfo` from version `0.33` to version `0.35` [#265](https://github.com/jannistpl/egui-file-dialog/pull/265), [#266](https://github.com/jannistpl/egui-file-dialog/pull/266)
 
 ### 📚 Documentation
 
