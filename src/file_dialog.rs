@@ -11,9 +11,9 @@ use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal
 use crate::utils::{calc_text_width, format_bytes, truncate_date, truncate_filename};
 use crate::{FileSystem, NativeFileSystem};
 use egui::text::{CCursor, CCursorRange};
-use std::any::Any;
-use egui::TextStyle;
+use egui::{Button, TextStyle};
 use egui_extras::{Column, TableBuilder, TableRow};
+use std::any::Any;
 use std::cmp::PartialEq;
 use std::fmt::{Debug, Display, Formatter};
 use std::path::{Path, PathBuf};
@@ -2628,7 +2628,7 @@ impl FileDialog {
             if ui
                 .add_sized(
                     [available_width, ui.spacing().interact_size.y],
-                    egui::SelectableLabel::new(self.config.sort_by == sort_by, current_sort_label),
+                    Button::selectable(self.config.sort_by == sort_by, current_sort_label),
                 )
                 .clicked()
             {
