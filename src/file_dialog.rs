@@ -8,12 +8,58 @@ use crate::data::{
     UserDirectories,
 };
 use crate::modals::{FileDialogModal, ModalAction, ModalState, OverwriteFileModal};
+use crate::utils::{calc_text_width, format_bytes, truncate_date, truncate_filename};
 use crate::{FileSystem, NativeFileSystem};
 use egui::text::{CCursor, CCursorRange};
+use egui::{Button, TextStyle};
+use egui_extras::{Column, TableBuilder, TableRow};
 use std::any::Any;
-use std::fmt::Debug;
+use std::cmp::PartialEq;
+use std::fmt::{Debug, Display, Formatter};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+/// Enum to set what we sort the directory entry by
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub enum SortBy {
+    Filename,
+    Size,
+    DateCreated,
+    DateLastModified,
+}
+
+/// Sets the sort order
+#[derive(Debug, Clone)]
+pub enum SortOrder {
+    Ascending,
+    Descending,
+}
+
+impl SortOrder {
+    pub fn invert(&mut self) {
+        match self {
+            Self::Ascending => {
+                *self = Self::Descending;
+            }
+            Self::Descending => {
+                *self = Self::Ascending;
+            }
+        }
+    }
+}
+
+impl Display for SortOrder {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ascending => {
+                write!(f, "🔼")
+            }
+            Self::Descending => {
+                write!(f, "🔽")
+            }
+        }
+    }
+}
 
 /// Represents the mode the file dialog is currently in.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -443,6 +489,11 @@ impl FileDialog {
     /// Sets the width of the right panel.
     pub fn set_right_panel_width(&mut self, width: f32) {
         self.config.right_panel_width = Some(width);
+    }
+
+    /// Gets the width of the right panel.
+    pub fn get_right_panel_width(&mut self) -> Option<f32> {
+        self.config.right_panel_width
     }
 
     /// Clears the width of the right panel by setting it to None.
@@ -1990,12 +2041,12 @@ impl FileDialog {
         // Calculate the width of the action buttons
         let label_submit_width = match self.mode {
             DialogMode::PickDirectory | DialogMode::PickFile | DialogMode::PickMultiple => {
-                Self::calc_text_width(ui, &self.config.labels.open_button)
+                calc_text_width(ui, &self.config.labels.open_button)
             }
-            DialogMode::SaveFile => Self::calc_text_width(ui, &self.config.labels.save_button),
+            DialogMode::SaveFile => calc_text_width(ui, &self.config.labels.save_button),
         };
 
-        let mut btn_width = Self::calc_text_width(ui, &self.config.labels.cancel_button);
+        let mut btn_width = calc_text_width(ui, &self.config.labels.cancel_button);
         if label_submit_width > btn_width {
             btn_width = label_submit_width;
         }
@@ -2316,6 +2367,7 @@ impl FileDialog {
 
     /// Updates the contents of the currently open directory.
     /// TODO: Refactor
+    #[allow(clippy::too_many_lines)]
     fn ui_update_central_panel_content(&mut self, ui: &mut egui::Ui) {
         // Temporarily take ownership of the directory content.
         let mut data = std::mem::take(&mut self.directory_content);
@@ -2331,50 +2383,119 @@ impl FileDialog {
         // If we should return after updating the directory entries.
         let mut should_return = false;
 
-        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            let scroll_area = egui::containers::ScrollArea::vertical().auto_shrink([false, false]);
+        let scroll_offset = self
+            .selected_item
+            .as_ref()
+            .map_or(0, |item| data.get_index(item).unwrap_or(0));
 
-            if self.search_value.is_empty()
-                && !self.create_directory_dialog.is_open()
-                && !self.scroll_to_selection
-            {
-                // Only update visible items when the search value is empty,
-                // the create directory dialog is closed and we are currently not scrolling
-                // to the current item.
-                scroll_area.show_rows(ui, ui.spacing().interact_size.y, data.len(), |ui, range| {
-                    for item in data.iter_range_mut(range) {
-                        if self.ui_update_central_panel_entry(
-                            ui,
-                            item,
-                            &mut reset_multi_selection,
-                            &mut batch_select_item_b,
-                        ) {
-                            should_return = true;
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            let shift_modifier = ui.input(|i| i.modifiers.shift_only());
+            let command_modifier = ui.input(|i| i.modifiers.command);
+            let shift_only_modifier = ui.input(|i| i.modifiers.shift_only());
+
+            let row_height = Self::get_row_height(ui);
+
+            let mut table_builder = TableBuilder::new(ui)
+                .sense(egui::Sense::click())
+                .striped(true)
+                .resizable(true)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center));
+            if self.scroll_to_selection {
+                table_builder =
+                    table_builder.scroll_to_row(scroll_offset, Some(egui::Align::Center));
+                self.scroll_to_selection = false;
+            }
+            let table = if self.config.show_only_file_name {
+                table_builder
+                    .column(Column::remainder().at_least(120.0)) // "Date Modified"
+                    .header(row_height, |mut header| {
+                        let labels = self.config.labels.clone();
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.file_name_header,
+                            SortBy::Filename,
+                            &mut data,
+                        );
+                    })
+            } else {
+                table_builder
+                    .column(Column::auto().at_least(120.0)) // "Name"
+                    .column(Column::auto().at_least(70.0)) // "File Size"
+                    .column(Column::auto().at_least(60.0)) // "Date Created"
+                    .column(Column::remainder().at_least(60.0)) // "Date Modified"
+                    .header(row_height, |mut header| {
+                        let labels = self.config.labels.clone();
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.file_name_header,
+                            SortBy::Filename,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.file_size_header,
+                            SortBy::Size,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.created_date_header,
+                            SortBy::DateCreated,
+                            &mut data,
+                        );
+                        self.add_sortable_column(
+                            &mut header,
+                            &labels.modified_date_header,
+                            SortBy::DateLastModified,
+                            &mut data,
+                        );
+                    })
+            };
+
+            if self.should_render_all_items() {
+                table.body(|body| {
+                    body.rows(row_height, data.len(), |mut row| {
+                        if let Some(item) = &mut data.get(row.index()) {
+                            self.render_table_row(
+                                &mut row,
+                                item,
+                                &mut reset_multi_selection,
+                                &mut batch_select_item_b,
+                                command_modifier,
+                                shift_modifier,
+                                shift_only_modifier,
+                                &mut should_return,
+                            );
                         }
-                    }
+                    });
                 });
             } else {
-                // Update each element if the search value is not empty as we apply the
-                // search value in every frame. We can't use `egui::ScrollArea::show_rows`
-                // because we don't know how many files the search value applies to.
-                // We also have to update every item when the create directory dialog is open as
-                // it's displayed as the last element.
-                scroll_area.show(ui, |ui| {
-                    for item in data.filtered_iter_mut(&self.search_value.clone()) {
-                        if self.ui_update_central_panel_entry(
-                            ui,
-                            item,
-                            &mut reset_multi_selection,
-                            &mut batch_select_item_b,
-                        ) {
-                            should_return = true;
-                        }
-                    }
-
-                    if let Some(entry) = self.ui_update_create_directory_dialog(ui) {
-                        data.push(entry);
-                    }
+                table.body(|body| {
+                    body.rows(
+                        row_height,
+                        data.filtered_count(&self.search_value),
+                        |mut row| {
+                            if let Some(item) =
+                                data.filtered_get(row.index(), &self.search_value.clone())
+                            {
+                                self.render_table_row(
+                                    &mut row,
+                                    item,
+                                    &mut reset_multi_selection,
+                                    &mut batch_select_item_b,
+                                    command_modifier,
+                                    shift_modifier,
+                                    shift_only_modifier,
+                                    &mut should_return,
+                                );
+                            }
+                        },
+                    );
                 });
+            }
+
+            if let Some(entry) = self.ui_update_create_directory_dialog(ui) {
+                data.push(entry);
             }
         });
 
@@ -2382,20 +2503,10 @@ impl FileDialog {
             return;
         }
 
-        // Reset the multi selection except the currently selected primary item
         if reset_multi_selection {
-            for item in data.filtered_iter_mut(&self.search_value) {
-                if let Some(selected_item) = &self.selected_item {
-                    if selected_item.path_eq(item) {
-                        continue;
-                    }
-                }
-
-                item.selected = false;
-            }
+            self.reset_multi_selection(&mut data);
         }
 
-        // Check if we should perform a batch selection
         if let Some(item_b) = batch_select_item_b {
             if let Some(item_a) = &self.selected_item {
                 self.batch_select_between(&mut data, item_a, &item_b);
@@ -2406,65 +2517,25 @@ impl FileDialog {
         self.scroll_to_selection = false;
     }
 
-    /// Updates a single directory content entry.
-    /// TODO: Refactor
-    fn ui_update_central_panel_entry(
+    #[allow(clippy::too_many_arguments)]
+    fn render_table_row(
         &mut self,
-        ui: &mut egui::Ui,
+        row: &mut TableRow,
         item: &mut DirectoryEntry,
         reset_multi_selection: &mut bool,
         batch_select_item_b: &mut Option<DirectoryEntry>,
-    ) -> bool {
-        let file_name = item.file_name();
+        command_modifier: bool,
+        shift_modifier: bool,
+        shift_only_modifier: bool,
+        should_return: &mut bool,
+    ) {
+        self.ui_update_central_panel_entry(row, item);
+
         let primary_selected = self.is_primary_selected(item);
-        let pinned = self.is_pinned(item.as_path());
-
-        let icons = if pinned {
-            format!("{} {} ", item.icon(), self.config.pinned_icon)
-        } else {
-            format!("{} ", item.icon())
-        };
-
-        let icons_width = Self::calc_text_width(ui, &icons);
-
-        // Calc available width for the file name and include a small margin
-        let available_width = ui.available_width() - icons_width - 15.0;
-
-        let truncate = self.config.truncate_filenames
-            && available_width < Self::calc_text_width(ui, file_name);
-
-        let text = if truncate {
-            Self::truncate_filename(ui, item, available_width)
-        } else {
-            file_name.to_owned()
-        };
-
-        let mut re =
-            ui.selectable_label(primary_selected || item.selected, format!("{icons}{text}"));
-
-        if truncate {
-            re = re.on_hover_text(file_name);
-        }
-
-        if item.is_dir() {
-            self.ui_update_central_panel_path_context_menu(&re, item.as_path());
-
-            if re.context_menu_opened() {
-                self.select_item(item);
-            }
-        }
-
-        if primary_selected && self.scroll_to_selection {
-            re.scroll_to_me(Some(egui::Align::Center));
-            self.scroll_to_selection = false;
-        }
 
         // The user wants to select the item as the primary selected item
-        if re.clicked()
-            && !ui.input(|i| i.modifiers.command)
-            && !ui.input(|i| i.modifiers.shift_only())
-        {
-            self.select_item(item);
+        if row.response().clicked() && !command_modifier && !shift_modifier {
+            self.select_item(&mut item.clone());
 
             // Reset the multi selection except the now primary selected item
             if self.mode == DialogMode::PickMultiple {
@@ -2472,12 +2543,17 @@ impl FileDialog {
             }
         }
 
+        if item.is_dir() {
+            self.ui_update_central_panel_path_context_menu(&row.response(), item.as_path());
+
+            if row.response().context_menu_opened() {
+                self.select_item(item);
+            }
+        }
+
         // The user wants to select or unselect the item as part of a
         // multi selection
-        if self.mode == DialogMode::PickMultiple
-            && re.clicked()
-            && ui.input(|i| i.modifiers.command)
-        {
+        if self.mode == DialogMode::PickMultiple && row.response().clicked() && command_modifier {
             if primary_selected {
                 // If the clicked item is the primary selected item,
                 // deselect it and remove it from the multi selection
@@ -2495,9 +2571,7 @@ impl FileDialog {
 
         // The user wants to select every item between the last selected item
         // and the current item
-        if self.mode == DialogMode::PickMultiple
-            && re.clicked()
-            && ui.input(|i| i.modifiers.shift_only())
+        if self.mode == DialogMode::PickMultiple && row.response().clicked() && shift_only_modifier
         {
             if let Some(selected_item) = self.selected_item.clone() {
                 // We perform a batch selection from the item that was
@@ -2512,18 +2586,153 @@ impl FileDialog {
 
         // The user double clicked on the directory entry.
         // Either open the directory or submit the dialog.
-        if re.double_clicked() && !ui.input(|i| i.modifiers.command) {
+        if row.response().double_clicked() && !command_modifier {
             if item.is_dir() {
                 self.load_directory(&item.to_path_buf());
-                return true;
+                *should_return = true;
+                return;
             }
 
             self.select_item(item);
 
             self.submit();
         }
+    }
 
-        false
+    fn reset_multi_selection(&self, data: &mut DirectoryContent) {
+        for item in data.filtered_iter_mut(&self.search_value) {
+            if let Some(selected_item) = &self.selected_item {
+                if selected_item.path_eq(item) {
+                    continue;
+                }
+            }
+            item.selected = false;
+        }
+    }
+
+    fn add_sortable_column(
+        &mut self,
+        header: &mut TableRow,
+        label: &str,
+        sort_by: SortBy,
+        data: &mut DirectoryContent,
+    ) {
+        let current_sort_label = if self.config.sort_by == sort_by {
+            format!("{}{}", label, self.config.sort_order)
+        } else {
+            label.to_string()
+        };
+
+        header.col(|ui| {
+            let available_width = ui.available_width();
+            if ui
+                .add_sized(
+                    [available_width, ui.spacing().interact_size.y],
+                    Button::selectable(self.config.sort_by == sort_by, current_sort_label),
+                )
+                .clicked()
+            {
+                if self.config.sort_by == sort_by {
+                    self.config.sort_order.invert();
+                } else {
+                    self.config.sort_by = sort_by;
+                }
+                data.sort_directory_entries(&self.config.sort_by, &self.config.sort_order);
+            }
+        });
+    }
+
+    fn get_row_height(ui: &egui::Ui) -> f32 {
+        ui.style()
+            .text_styles
+            .get(&TextStyle::Body)
+            .map_or(15.0, |font_id| 1.0 + ui.fonts(|f| f.row_height(font_id)))
+    }
+
+    fn should_render_all_items(&self) -> bool {
+        self.search_value.is_empty()
+            && !self.create_directory_dialog.is_open()
+            && !self.scroll_to_selection
+    }
+
+    /// Updates a single directory content entry.
+    /// TODO: Refactor
+    fn ui_update_central_panel_entry(&self, row: &mut TableRow, item: &DirectoryEntry) {
+        let file_name = item.file_name();
+        let primary_selected = self.is_primary_selected(item);
+        let pinned = self.is_pinned(item.as_path());
+
+        let selected = item.selected;
+        let metadata = item.metadata();
+
+        let icons = if pinned {
+            format!("{} {} ", item.icon(), self.config.pinned_icon)
+        } else {
+            format!("{} ", item.icon())
+        };
+
+        let mut truncate = false;
+        row.set_selected(primary_selected || selected);
+
+        row.col(|ui| {
+            let icons_width = calc_text_width(ui, &icons);
+
+            let text_width = calc_text_width(ui, file_name);
+
+            // Calc available width for the file name and include a small margin
+            let available_width = ui.available_width() - icons_width - 15.0;
+
+            truncate = self.config.truncate_filenames && available_width < text_width;
+
+            let text = if truncate {
+                truncate_filename(ui, item, available_width)
+            } else {
+                file_name.to_owned()
+            };
+            let display_name = format!("{icons} {text}");
+            let name_response = ui.add(egui::Label::new(display_name).selectable(false));
+            if truncate {
+                name_response.on_hover_text(file_name);
+            }
+        });
+        if !self.config.show_only_file_name {
+            row.col(|ui| {
+                if item.is_dir() {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                } else if let Some(size) = metadata.size {
+                    ui.add(egui::Label::new(format_bytes(size)).selectable(false))
+                        .clicked();
+                } else {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                }
+            });
+
+            row.col(|ui| {
+                if let Some(created) = metadata.created {
+                    // Calc available width for the file name and include a small margin
+                    let available_width = ui.available_width() - 10.0;
+
+                    let text = truncate_date(ui, created, available_width);
+
+                    ui.add(egui::Label::new(text).selectable(false));
+                } else {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                }
+            });
+
+            row.col(|ui| {
+                if let Some(last_modified) = metadata.last_modified {
+                    // Calc available width for the file name and include a small margin
+                    let available_width = ui.available_width() - 10.0;
+
+                    let text = truncate_date(ui, last_modified, available_width);
+
+                    ui.add(egui::Label::new(text).selectable(false));
+                } else {
+                    ui.add(egui::Label::new(String::new()).selectable(false));
+                }
+            });
+        }
     }
 
     fn ui_update_create_directory_dialog(&mut self, ui: &mut egui::Ui) -> Option<DirectoryEntry> {
@@ -2654,87 +2863,6 @@ impl FileDialog {
                 .set_char_range(Some(CCursorRange::one(CCursor::new(data.len()))));
             state.store(&re.ctx, re.id);
         }
-    }
-
-    /// Calculates the width of a single char.
-    fn calc_char_width(ui: &egui::Ui, char: char) -> f32 {
-        ui.fonts(|f| f.glyph_width(&egui::TextStyle::Body.resolve(ui.style()), char))
-    }
-
-    /// Calculates the width of the specified text using the current font configuration.
-    /// Does not take new lines or text breaks into account!
-    fn calc_text_width(ui: &egui::Ui, text: &str) -> f32 {
-        let mut width = 0.0;
-
-        for char in text.chars() {
-            width += Self::calc_char_width(ui, char);
-        }
-
-        width
-    }
-
-    fn truncate_filename(ui: &egui::Ui, item: &DirectoryEntry, max_length: f32) -> String {
-        const TRUNCATE_STR: &str = "...";
-
-        let path = item.as_path();
-
-        let file_stem = if item.is_file() {
-            path.file_stem().and_then(|f| f.to_str()).unwrap_or("")
-        } else {
-            item.file_name()
-        };
-
-        let extension = if item.is_file() {
-            path.extension().map_or(String::new(), |ext| {
-                format!(".{}", ext.to_str().unwrap_or(""))
-            })
-        } else {
-            String::new()
-        };
-
-        let extension_width = Self::calc_text_width(ui, &extension);
-        let reserved = extension_width + Self::calc_text_width(ui, TRUNCATE_STR);
-
-        if max_length <= reserved {
-            return format!("{TRUNCATE_STR}{extension}");
-        }
-
-        let mut width = reserved;
-        let mut front = String::new();
-        let mut back = String::new();
-
-        for (i, char) in file_stem.chars().enumerate() {
-            let w = Self::calc_char_width(ui, char);
-
-            if width + w > max_length {
-                break;
-            }
-
-            front.push(char);
-            width += w;
-
-            let back_index = file_stem.len() - i - 1;
-
-            if back_index <= i {
-                break;
-            }
-
-            if let Some(char) = file_stem.chars().nth(back_index) {
-                let w = Self::calc_char_width(ui, char);
-
-                if width + w > max_length {
-                    break;
-                }
-
-                back.push(char);
-                width += w;
-            }
-        }
-
-        format!(
-            "{front}{TRUNCATE_STR}{}{extension}",
-            back.chars().rev().collect::<String>()
-        )
     }
 }
 

@@ -1,4 +1,5 @@
 use crate::config::{FileDialogConfig, FileFilter};
+use crate::file_dialog::{SortBy, SortOrder};
 use crate::FileSystem;
 use egui::mutex::Mutex;
 use std::path::{Path, PathBuf};
@@ -323,13 +324,16 @@ impl DirectoryContent {
         &self.state
     }
 
-    /// Returns an iterator in the given range of the directory cotnents.
-    /// No filters are applied using this iterator.
-    pub fn iter_range_mut(
-        &mut self,
-        range: std::ops::Range<usize>,
-    ) -> impl Iterator<Item = &mut DirectoryEntry> {
-        self.content[range].iter_mut()
+    /// Returns one directory entry by index
+    pub fn get(&mut self, i: usize) -> Option<&mut DirectoryEntry> {
+        self.content.get_mut(i)
+    }
+
+    /// Returns one directory entry by index
+    pub fn get_index(&self, item: &DirectoryEntry) -> Option<usize> {
+        self.content
+            .iter()
+            .position(|entry| entry.path == item.path)
     }
 
     pub fn filtered_iter<'s>(
@@ -348,6 +352,53 @@ impl DirectoryContent {
         self.content
             .iter_mut()
             .filter(|p| apply_search_value(p, search_value))
+    }
+
+    pub fn filtered_get<'s>(
+        &'s mut self,
+        index: usize,
+        search_value: &'s str,
+    ) -> Option<&'s mut DirectoryEntry> {
+        self.content
+            .iter_mut()
+            .filter(|p| apply_search_value(p, search_value))
+            .nth(index)
+    }
+
+    pub fn filtered_count(&self, search_value: &str) -> usize {
+        self.filtered_iter(search_value).count()
+    }
+
+    pub fn sort_directory_entries(&mut self, sort_by: &SortBy, order: &SortOrder) {
+        self.content.sort_by(|a, b| {
+            let cmp = match sort_by {
+                SortBy::Filename => {
+                    let a_name = a.path.file_name().unwrap_or_default().to_string_lossy();
+                    let b_name = b.path.file_name().unwrap_or_default().to_string_lossy();
+                    a_name.cmp(&b_name)
+                }
+                SortBy::Size => {
+                    let a_size = a.metadata.size.unwrap_or(0);
+                    let b_size = b.metadata.size.unwrap_or(0);
+                    a_size.cmp(&b_size)
+                }
+                SortBy::DateCreated => {
+                    let a_created = a.metadata.created.unwrap_or(SystemTime::UNIX_EPOCH);
+                    let b_created = b.metadata.created.unwrap_or(SystemTime::UNIX_EPOCH);
+                    a_created.cmp(&b_created)
+                }
+                SortBy::DateLastModified => {
+                    let a_modified = a.metadata.last_modified.unwrap_or(SystemTime::UNIX_EPOCH);
+                    let b_modified = b.metadata.last_modified.unwrap_or(SystemTime::UNIX_EPOCH);
+                    a_modified.cmp(&b_modified)
+                }
+            };
+
+            match order {
+                SortOrder::Ascending => cmp,
+                SortOrder::Descending => cmp.reverse(),
+            }
+        });
     }
 
     /// Marks each element in the content as unselected.
